@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantaID - 下一代统一身份认证与访问控制平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0E2E91',
+                        accent: '#36CFFB',
+                        dark: '#1D2939',
+                        light: '#F9FAFB'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 20px rgba(22, 93, 255, 0.15);
+            }
+            .number-animate {
+                counter-reset: num 0;
+                animation: count 2s forwards ease-out;
+            }
+            @keyframes count {
+                to { counter-reset: num var(--target); }
+            }
+            .number-animate::after {
+                content: counter(num);
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="font-inter bg-light text-dark antialiased">
+<!-- 导航栏 -->
+<nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm shadow-sm z-50 transition-all duration-300">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <i class="fa fa-shield text-primary text-2xl mr-2"></i>
+                    <span class="text-xl font-bold text-primary">QuantaID</span>
+                </div>
+                <div class="hidden md:ml-10 md:flex md:space-x-8">
+                    <a href="#mission" class="text-dark hover:text-primary px-3 py-2 text-sm font-medium transition-colors">使命与定位</a>
+                    <a href="#solutions" class="text-dark hover:text-primary px-3 py-2 text-sm font-medium transition-colors">核心解决方案</a>
+                    <a href="#features" class="text-dark hover:text-primary px-3 py-2 text-sm font-medium transition-colors">核心功能</a>
+                    <a href="#scenarios" class="text-dark hover:text-primary px-3 py-2 text-sm font-medium transition-colors">业务场景</a>
+                    <a href="#architecture" class="text-dark hover:text-primary px-3 py-2 text-sm font-medium transition-colors">架构解析</a>
+                    <a href="#docs" class="text-dark hover:text-primary px-3 py-2 text-sm font-medium transition-colors">文档资源</a>
+                    <a href="#vision" class="text-dark hover:text-primary px-3 py-2 text-sm font-medium transition-colors">长期愿景</a>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center">
+                <a href="https://github.com/turtacn/QuantaID" target="_blank" class="flex items-center text-primary hover:text-secondary transition-colors">
+                    <i class="fa fa-github mr-2"></i>
+                    <span>GitHub</span>
+                </a>
+            </div>
+            <div class="md:hidden">
+                <button type="button" class="text-dark hover:text-primary" aria-expanded="false">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero 区域 -->
+<header class="pt-28 pb-20 bg-gradient-to-br from-primary/5 to-secondary/5">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight mb-6">
+                <span class="bg-gradient-to-r from-primary to-secondary text-gradient">下一代统一身份认证</span>
+                <br>与访问控制平台
+            </h1>
+            <p class="text-[clamp(1rem,2vw,1.25rem)] text-gray-600 mb-10 max-w-3xl mx-auto">
+                以轻量级、插件化、标准化架构，彻底解决企业身份系统碎片化、定制成本高、集成复杂等核心痛点，重塑身份管理价值
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 mb-12">
+                <a href="https://github.com/turtacn/QuantaID" target="_blank" class="px-8 py-3 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-colors shadow-lg hover:shadow-xl">
+                    <i class="fa fa-github mr-2"></i>立即探索
+                </a>
+                <a href="#quickstart" class="px-8 py-3 bg-white text-primary border border-primary rounded-lg font-medium hover:bg-primary/5 transition-colors shadow-md hover:shadow-lg">
+                    <i class="fa fa-rocket mr-2"></i>快速上手
+                </a>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div class="p-4 bg-white rounded-lg shadow-md">
+                    <p class="text-3xl font-bold text-primary number-animate" style="--target:60">0</p>
+                    <p class="text-gray-600 text-sm">交付时间减少(%)</p>
+                </div>
+                <div class="p-4 bg-white rounded-lg shadow-md">
+                    <p class="text-3xl font-bold text-primary number-animate" style="--target:90">0</p>
+                    <p class="text-gray-600 text-sm">代码复用率(%)</p>
+                </div>
+                <div class="p-4 bg-white rounded-lg shadow-md">
+                    <p class="text-3xl font-bold text-primary">5+</p>
+                    <p class="text-gray-600 text-sm">核心认证协议</p>
+                </div>
+                <div class="p-4 bg-white rounded-lg shadow-md">
+                    <p class="text-3xl font-bold text-primary">5+</p>
+                    <p class="text-gray-600 text-sm">多语言SDK</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 使命与定位 -->
+<section id="mission" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">使命与核心定位</h2>
+            <div class="w-20 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-600 text-lg">QuantaID 不仅是一个身份认证工具，更是企业数字化转型中身份管理的"基础设施"，通过标准化与可扩展性平衡安全与效率</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h3 class="text-2xl font-semibold mb-6 text-dark">核心使命</h3>
+                <p class="text-gray-600 mb-6 leading-relaxed">
+                    革新企业身份管理模式，提供轻量级、插件化、符合标准的统一认证平台，解决多样化企业环境下身份系统碎片化、定制成本高、集成复杂的核心痛点。
+                </p>
+                <h3 class="text-2xl font-semibold mb-6 text-dark">核心差异</h3>
+                <ul class="space-y-4">
+                    <li class="flex items-start">
+                        <i class="fa fa-check-circle text-primary mt-1 mr-3"></i>
+                        <span class="text-gray-600">摒弃"一刀切"的重型方案，以"配置驱动"替代"定制开发"，降低企业使用门槛</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check-circle text-primary mt-1 mr-3"></i>
+                        <span class="text-gray-600">原生支持混合云部署，无缝衔接企业现有IT架构（本地数据中心+公有云+私有云）</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check-circle text-primary mt-1 mr-3"></i>
+                        <span class="text-gray-600">以"身份为中心"构建安全边界，而非依赖网络隔离，适配云原生时代的动态环境</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-gradient-to-br from-primary/10 to-secondary/10 p-8 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-6 text-dark text-center">企业身份管理的核心挑战</h3>
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md card-hover">
+                        <div class="flex items-center mb-3">
+                            <i class="fa fa-code-fork text-primary text-xl mr-3"></i>
+                            <h4 class="font-semibold text-lg">系统碎片化</h4>
+                        </div>
+                        <p class="text-gray-600 text-sm">企业内部ERP、CRM、OA、云服务等系统各自独立认证，用户需记忆多套账号密码，体验极差</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md card-hover">
+                        <div class="flex items-center mb-3">
+                            <i class="fa fa-money text-primary text-xl mr-3"></i>
+                            <h4 class="font-semibold text-lg">定制成本高</h4>
+                        </div>
+                        <p class="text-gray-600 text-sm">每新增一个身份集成需求，需投入数周甚至数月的定制开发，人力与时间成本陡增</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md card-hover">
+                        <div class="flex items-center mb-3">
+                            <i class="fa fa-shield text-primary text-xl mr-3"></i>
+                            <h4 class="font-semibold text-lg">合规风险大</h4>
+                        </div>
+                        <p class="text-gray-600 text-sm">不同系统安全基线不一致，难以满足GDPR、ISO27001、等保2.0等合规要求，审计困难</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md card-hover">
+                        <div class="flex items-center mb-3">
+                            <i class="fa fa-history text-primary text-xl mr-3"></i>
+                            <h4 class="font-semibold text-lg">技术债务重</h4>
+                        </div>
+                        <p class="text-gray-600 text-sm"> legacy认证系统迭代缓慢，与新业务系统兼容性差，成为企业数字化转型的"绊脚石"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 核心解决方案 -->
+<section id="solutions" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">核心挑战与解决方案</h2>
+            <div class="w-20 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-600 text-lg">每一个解决方案都直击企业痛点，通过技术创新转化为可量化的业务价值</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white rounded-lg shadow-lg overflow-hidden">
+                <thead class="bg-primary text-white">
+                <tr>
+                    <th class="py-4 px-6 text-left text-sm font-semibold uppercase tracking-wider">企业核心挑战</th>
+                    <th class="py-4 px-6 text-left text-sm font-semibold uppercase tracking-wider">QuantaID 解决方案</th>
+                    <th class="py-4 px-6 text-left text-sm font-semibold uppercase tracking-wider">量化业务价值</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-wrench text-primary mr-3"></i>
+                            <span class="font-medium">高定制开发成本</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">每新增身份集成需数周定制</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-cogs text-primary mr-3"></i>
+                            <span class="font-medium">配置驱动架构</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">通过可视化配置替代代码开发，支持动态调整认证流程</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <span class="text-primary font-bold">60% 交付时间减少</span>
+                        <p class="text-gray-500 mt-1 text-xs">从"月级"到"周级"甚至"日级"交付</p>
+                    </td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-repeat text-primary mr-3"></i>
+                            <span class="font-medium">组件复用性低</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">认证组件无法跨产品共享</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-puzzle-piece text-primary mr-3"></i>
+                            <span class="font-medium">插件生态与SDK</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">提供统一插件框架+多语言SDK，组件一次开发多端复用</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <span class="text-primary font-bold">90% 代码复用率</span>
+                        <p class="text-gray-500 mt-1 text-xs">降低重复开发成本，提升维护效率</p>
+                    </td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-globe text-primary mr-3"></i>
+                            <span class="font-medium">全球部署复杂</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">跨国团队认证体验不一致，合规要求差异大</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-mobile text-primary mr-3"></i>
+                            <span class="font-medium">多因素认证交付</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">支持短信、邮件、TOTP、WebAuthn等多MFA方式，适配不同地区法规</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <span class="text-primary font-bold">简化国际化扩展</span>
+                        <p class="text-gray-500 mt-1 text-xs">统一全球认证体验，降低合规成本</p>
+                    </td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-shield text-primary mr-3"></i>
+                            <span class="font-medium">安全基线不一致</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">不同系统安全策略碎片化，审计困难</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-certificate text-primary mr-3"></i>
+                            <span class="font-medium">标准合规核心</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">基于OAuth 2.1/OIDC/SAML 2.0等国际标准，内置合规审计模块</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <span class="text-primary font-bold">统一合规姿态</span>
+                        <p class="text-gray-500 mt-1 text-xs">满足GDPR/ISO27001/等保2.0等要求</p>
+                    </td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-history text-primary mr-3"></i>
+                            <span class="font-medium">技术债务累积</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">legacy系统难以适配新业务，升级成本高</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <div class="flex items-center">
+                            <i class="fa fa-api text-primary mr-3"></i>
+                            <span class="font-medium">API优先设计</span>
+                        </div>
+                        <p class="text-gray-500 mt-1 text-xs">所有功能通过标准化API暴露，支持增量升级与平滑迁移</p>
+                    </td>
+                    <td class="py-4 px-6 text-sm">
+                        <span class="text-primary font-bold">前瞻性架构</span>
+                        <p class="text-gray-500 mt-1 text-xs">避免技术锁定，支持长期业务演进</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- 核心功能 -->
+<section id="features" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">企业级核心功能</h2>
+            <div class="w-20 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-600 text-lg">从认证引擎到授权管理，从部署灵活性到安全合规，覆盖企业身份管理全场景需求</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- 功能卡片1：通用认证引擎 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+                <div class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                    <i class="fa fa-key text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">通用认证引擎</h3>
+                <ul class="space-y-3 text-gray-600 text-sm">
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>支持OAuth 2.1/OIDC/SAML 2.0</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>兼容LDAP/LDAPS/RADIUS协议</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>WebAuthn/FIDO2无密码认证</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>基于风险的自适应MFA</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 功能卡片2：插件优先架构 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+                <div class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                    <i class="fa fa-puzzle-piece text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">插件优先架构</h3>
+                <ul class="space-y-3 text-gray-600 text-sm">
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>可扩展身份源连接器</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>拖拽式认证流程编排</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>Go/Java/Node.js多语言SDK</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>插件生命周期管理</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 功能卡片3：企业级特性 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+                <div class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                    <i class="fa fa-building text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">企业级特性</h3>
+                <ul class="space-y-3 text-gray-600 text-sm">
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>自动化身份生命周期管理</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>RBAC/ABAC/ReBAC细粒度授权</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>结构化合规审计日志</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>集群高可用与自动故障转移</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 功能卡片4：灵活部署模式 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+                <div class="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                    <i class="fa fa-cloud text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">灵活部署模式</h3>
+                <ul class="space-y-3 text-gray-600 text-sm">
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>零依赖独立二进制部署</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>Kubernetes原生+Helm图表</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>SDK深度集成高性能场景</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-check text-primary mt-1 mr-2"></i>
+                        <span>支持混合云/本地部署</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 业务场景 -->
+<section id="scenarios" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">细化业务场景落地</h2>
+            <div class="w-20 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-600 text-lg">针对不同行业、不同规模企业的核心需求，提供场景化解决方案，让身份管理真正服务业务</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12">
+            <!-- 场景1：大型集团跨域SSO -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 bg-gradient-to-r from-primary to-secondary relative">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fa fa-sitemap text-white text-6xl opacity-80"></i>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                        <h3 class="text-2xl font-bold text-white">大型集团跨域SSO</h3>
+                        <p class="text-white/80 text-sm">覆盖子公司、多业务线的统一身份入口</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold text-lg mb-3">核心挑战</h4>
+                    <p class="text-gray-600 text-sm mb-6">集团旗下子公司IT系统独立建设，用户需在ERP、CRM、OA、财务系统间频繁切换登录，IT团队需维护多套身份体系，管理成本高。</p>
+
+                    <h4 class="font-semibold text-lg mb-3">QuantaID 解决方案</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>构建集团统一身份中台，通过SAML/OIDC协议对接各子公司系统</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>支持"集团-子公司"多级权限隔离，基于RBAC实现精细化权限管控</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>统一审计日志，实时监控跨系统身份操作，满足内控合规要求</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold text-lg mb-3">业务价值</h4>
+                    <p class="text-gray-600 text-sm">用户登录体验提升90%，IT维护成本降低60%，跨系统数据安全合规性显著增强。</p>
+                </div>
+            </div>
+
+            <!-- 场景2：金融行业自适应MFA -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 bg-gradient-to-r from-primary to-accent relative">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fa fa-bank text-white text-6xl opacity-80"></i>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                        <h3 class="text-2xl font-bold text-white">金融行业自适应MFA</h3>
+                        <p class="text-white/80 text-sm">基于风险动态调整认证强度，平衡安全与体验</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold text-lg mb-3">核心挑战</h4>
+                    <p class="text-gray-600 text-sm mb-6">金融机构需满足严格的安全合规要求（如等保2.0），但传统"一刀切"的MFA模式（如每次登录都需短信验证）导致高净值客户体验差，同时无法有效识别异常登录风险。</p>
+
+                    <h4 class="font-semibold text-lg mb-3">QuantaID 解决方案</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>基于"设备指纹+地理位置+行为模式"构建风险评分模型</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>低风险场景（常用设备+常用地点）免MFA，高风险场景强制WebAuthn硬令牌</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>与交易系统联动，大额转账等敏感操作自动触发强化认证</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold text-lg mb-3">业务价值</h4>
+                    <p class="text-gray-600 text-sm">客户投诉率降低40%，异常登录拦截率提升85%，完全满足金融行业合规要求。</p>
+                </div>
+            </div>
+
+            <!-- 场景3：云原生环境集成 -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 bg-gradient-to-r from-secondary to-primary relative">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fa fa-docker text-white text-6xl opacity-80"></i>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                        <h3 class="text-2xl font-bold text-white">云原生环境集成</h3>
+                        <p class="text-white/80 text-sm">为K8s、微服务提供统一身份认证与授权</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold text-lg mb-3">核心挑战</h4>
+                    <p class="text-gray-600 text-sm mb-6">企业云原生转型中，K8s集群、微服务、API网关等组件身份认证方式各异，缺乏统一管控，开发者需维护多套凭证，同时存在"权限过宽"的安全风险。</p>
+
+                    <h4 class="font-semibold text-lg mb-3">QuantaID 解决方案</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>通过OIDC为K8s提供RBAC身份源，实现"人-服务账号"统一管理</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>为微服务提供JWT令牌认证，集成API网关实现细粒度接口授权</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>基于Helm Chart快速部署，与云原生监控体系（Prometheus/Grafana）联动</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold text-lg mb-3">业务价值</h4>
+                    <p class="text-gray-600 text-sm">开发者效率提升50%，微服务安全漏洞减少70%，云资源权限管控粒度细化至"接口级"。</p>
+                </div>
+            </div>
+
+            <!-- 场景4：跨国企业合规管理 -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="h-48 bg-gradient-to-r from-accent to-primary relative">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fa fa-globe text-white text-6xl opacity-80"></i>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                        <h3 class="text-2xl font-bold text-white">跨国企业合规管理</h3>
+                        <p class="text-white/80 text-sm">适配全球不同地区的数据隐私法规</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold text-lg mb-3">核心挑战</h4>
+                    <p class="text-gray-600 text-sm mb-6">跨国企业需同时满足欧盟GDPR、美国CCPA、中国个人信息保护法等不同地区法规，身份数据存储、传输、审计要求差异大，传统方案难以适配。</p>
+
+                    <h4 class="font-semibold text-lg mb-3">QuantaID 解决方案</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>支持"区域化数据存储"，身份数据本地化部署，避免跨境传输风险</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>内置GDPR"被遗忘权"功能，支持用户身份数据一键删除与导出</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>多语言审计报告，自动适配不同地区合规格式（如ISO27001报告模板）</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold text-lg mb-3">业务价值</h4>
+                    <p class="text-gray-600 text-sm">全球合规成本降低55%，避免因法规不合规导致的百万级罚款，提升用户数据信任度。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 架构解析 -->
+<section id="architecture" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">分层架构解析</h2>
+            <div class="w-20 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-600 text-lg">采用"分层解耦+插件化"设计，确保系统灵活性、可扩展性与可维护性，支持企业长期演进</p>
+        </div>
+
+        <div class="mb-16">
+            <!-- 架构图 -->
+            <div class="bg-gray-50 p-6 rounded-xl shadow-md">
+                <canvas id="architectureChart" height="400"></canvas>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-5 gap-8">
+            <!-- 客户端层 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-primary">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fa fa-desktop text-primary text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-3">客户端层</h3>
+                <ul class="space-y-2 text-gray-600 text-sm">
+                    <li>Web UI（管理控制台）</li>
+                    <li>CLI工具（快速配置）</li>
+                    <li>多语言SDK（Go/Java等）</li>
+                </ul>
+                <p class="text-gray-500 text-xs mt-4">面向开发者与管理员的交互入口，提供友好的操作体验</p>
+            </div>
+
+            <!-- API网关层 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-primary">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fa fa-exchange text-primary text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-3">API网关层</h3>
+                <ul class="space-y-2 text-gray-600 text-sm">
+                    <li>API Gateway</li>
+                    <li>Auth Middleware</li>
+                    <li>Rate Limiter</li>
+                </ul>
+                <p class="text-gray-500 text-xs mt-4">统一API入口，负责请求路由、认证鉴权与流量控制</p>
+            </div>
+
+            <!-- 服务层 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-primary">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fa fa-cogs text-primary text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-3">服务层</h3>
+                <ul class="space-y-2 text-gray-600 text-sm">
+                    <li>编排引擎</li>
+                    <li>认证引擎</li>
+                    <li>授权引擎</li>
+                    <li>身份管理</li>
+                    <li>联邦服务</li>
+                </ul>
+                <p class="text-gray-500 text-xs mt-4">系统核心业务逻辑，实现认证、授权、身份生命周期管理</p>
+            </div>
+
+            <!-- 插件层 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-primary">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fa fa-puzzle-piece text-primary text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-3">插件层</h3>
+                <ul class="space-y-2 text-gray-600 text-sm">
+                    <li>身份提供商（IDP）</li>
+                    <li>MFA提供商</li>
+                    <li>自定义连接器</li>
+                </ul>
+                <p class="text-gray-500 text-xs mt-4">通过插件扩展系统能力，适配不同身份源与认证方式</p>
+            </div>
+
+            <!-- 数据层 -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover border-t-4 border-primary">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fa fa-database text-primary text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-3">数据层</h3>
+                <ul class="space-y-2 text-gray-600 text-sm">
+                    <li>PostgreSQL（主数据）</li>
+                    <li>Redis（缓存/会话）</li>
+                    <li>Elasticsearch（日志）</li>
+                </ul>
+                <p class="text-gray-500 text-xs mt-4">分层存储不同类型数据，兼顾性能、可靠性与可查询性</p>
+            </div>
+        </div>
+
+        <!-- 技术栈说明 -->
+        <div class="mt-16 bg-gray-50 p-8 rounded-xl shadow-md">
+            <h3 class="text-2xl font-semibold mb-6 text-center">核心技术栈选型</h3>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h4 class="font-semibold text-lg mb-4 flex items-center">
+                        <i class="fa fa-code text-primary mr-2"></i>
+                        开发语言与框架
+                    </h4>
+                    <ul class="space-y-2 text-gray-600 text-sm">
+                        <li class="flex items-center">
+                            <span class="w-24">主语言</span>
+                            <span class="text-primary font-medium">Go 1.21+</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">Web框架</span>
+                            <span>Gin/Echo</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">RPC框架</span>
+                            <span>gRPC</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">前端框架</span>
+                            <span>React/Vue 3</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h4 class="font-semibold text-lg mb-4 flex items-center">
+                        <i class="fa fa-database text-primary mr-2"></i>
+                        数据存储
+                    </h4>
+                    <ul class="space-y-2 text-gray-600 text-sm">
+                        <li class="flex items-center">
+                            <span class="w-24">关系型数据库</span>
+                            <span class="text-primary font-medium">PostgreSQL 12+</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">缓存/会话</span>
+                            <span>Redis 6+</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">日志存储</span>
+                            <span>Elasticsearch 7+</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">消息队列</span>
+                            <span>Kafka/RabbitMQ（可选）</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h4 class="font-semibold text-lg mb-4 flex items-center">
+                        <i class="fa fa-cloud text-primary mr-2"></i>
+                        部署与运维
+                    </h4>
+                    <ul class="space-y-2 text-gray-600 text-sm">
+                        <li class="flex items-center">
+                            <span class="w-24">容器化</span>
+                            <span class="text-primary font-medium">Docker</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">编排工具</span>
+                            <span>Kubernetes</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">包管理</span>
+                            <span>Helm</span>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-24">监控告警</span>
+                            <span>Prometheus/Grafana</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 文档资源解析 -->
+<section id="docs" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">文档资源深度解析</h2>
+            <div class="w-20 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-600 text-lg">系统化的文档体系，从入门到深入，为不同角色用户提供清晰指引与最佳实践</p>
+        </div>
+
+        <!-- 文档结构可视化 -->
+        <div class="mb-16">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-xl font-semibold mb-6 text-center">文档结构与关系</h3>
+                <canvas id="docsStructureChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- README.md -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-file-text-o mr-2"></i>
+                        README.md
+                    </h3>
+                    <p class="text-white/80 text-sm">项目总览与快速入门</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">核心内容</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>项目简介与核心价值主张</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>核心功能与技术亮点概览</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>快速安装与基础使用指南</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>贡献指南与社区资源链接</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold mb-3">目标读者</h4>
+                    <p class="text-gray-600 text-sm mb-4">技术决策者、新用户、潜在贡献者</p>
+
+                    <h4 class="font-semibold mb-3">文档价值</h4>
+                    <p class="text-gray-600 text-sm">3分钟快速了解项目定位与核心能力，获取入门路径指引</p>
+                </div>
+            </div>
+
+            <!-- 架构文档 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-sitemap mr-2"></i>
+                        architecture.md
+                    </h3>
+                    <p class="text-white/80 text-sm">系统架构与设计理念</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">核心内容</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>分层架构设计与组件职责</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>核心技术选型与决策依据</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>认证流程与数据流转示意图</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>扩展性设计与定制化指南</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold mb-3">目标读者</h4>
+                    <p class="text-gray-600 text-sm mb-4">系统架构师、开发工程师、技术评估人员</p>
+
+                    <h4 class="font-semibold mb-3">文档价值</h4>
+                    <p class="text-gray-600 text-sm">深入理解系统设计思想，为集成与定制提供技术依据</p>
+                </div>
+            </div>
+
+            <!-- API参考文档 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-code mr-2"></i>
+                        api.md
+                    </h3>
+                    <p class="text-white/80 text-sm">接口规范与开发指南</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">核心内容</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>RESTful API与gRPC接口规范</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>请求/响应格式与错误码定义</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>认证授权与接口访问控制</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>接口调用示例与最佳实践</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold mb-3">目标读者</h4>
+                    <p class="text-gray-600 text-sm mb-4">开发工程师、集成工程师、SDK使用者</p>
+
+                    <h4 class="font-semibold mb-3">文档价值</h4>
+                    <p class="text-gray-600 text-sm">提供标准化接口参考，加速应用集成与二次开发</p>
+                </div>
+            </div>
+
+            <!-- 部署指南 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-cloud-upload mr-2"></i>
+                        deployment.md
+                    </h3>
+                    <p class="text-white/80 text-sm">环境部署与运维手册</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">核心内容</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>软硬件环境要求与依赖说明</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>二进制/容器/K8s部署步骤</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>配置参数详解与调优建议</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>高可用部署与灾备方案</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold mb-3">目标读者</h4>
+                    <p class="text-gray-600 text-sm mb-4">运维工程师、DevOps工程师、技术管理员</p>
+
+                    <h4 class="font-semibold mb-3">文档价值</h4>
+                    <p class="text-gray-600 text-sm">提供全方位部署指南，确保系统稳定高效运行</p>
+                </div>
+            </div>
+
+            <!-- 插件开发指南 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-puzzle-piece mr-2"></i>
+                        plugins.md
+                    </h3>
+                    <p class="text-white/80 text-sm">插件开发与扩展指南</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">核心内容</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>插件架构与开发规范</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>身份源/认证方式插件开发</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>插件测试与发布流程</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>官方插件示例与最佳实践</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold mb-3">目标读者</h4>
+                    <p class="text-gray-600 text-sm mb-4">高级开发工程师、生态合作伙伴</p>
+
+                    <h4 class="font-semibold mb-3">文档价值</h4>
+                    <p class="text-gray-600 text-sm">指导开发者扩展系统能力，丰富平台生态</p>
+                </div>
+            </div>
+
+            <!-- 最佳实践 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-lightbulb-o mr-2"></i>
+                        best-practices.md
+                    </h3>
+                    <p class="text-white/80 text-sm">场景化解决方案指南</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">核心内容</h4>
+                    <ul class="space-y-2 text-gray-600 text-sm mb-6">
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>不同规模企业部署方案</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>多场景认证流程配置示例</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>性能优化与安全加固指南</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-angle-right text-primary mt-1 mr-2"></i>
+                            <span>常见问题与解决方案</span>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-semibold mb-3">目标读者</h4>
+                    <p class="text-gray-600 text-sm mb-4">系统管理员、架构师、技术决策者</p>
+
+                    <h4 class="font-semibold mb-3">文档价值</h4>
+                    <p class="text-gray-600 text-sm">提供经实践验证的解决方案，降低实施风险</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 快速上手 -->
+<section id="quickstart" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4 text-dark">快速上手部署</h2>
+            <div class="w-20 h-1 bg-primary mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-600 text-lg">提供三种主流部署方式，满足不同场景需求，最快5分钟完成初始化</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- 方式1：二进制部署 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-file-code-o mr-2"></i>
+                        二进制部署
+                    </h3>
+                    <p class="text-white/80 text-sm">零依赖，适合快速测试与边缘场景</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">前提条件</h4>
+                    <p class="text-gray-600 text-sm mb-4">Go 1.21+（可选，仅编译需要）</p>
+
+                    <h4 class="font-semibold mb-3">部署步骤</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-700 font-mono overflow-x-auto">
+                        # 安装QuantaID CLI<br>
+                        go install github.com/turtacn/QuantaID/cmd/qid@latest<br><br>
+                        # 初始化部署配置<br>
+                        qid init --config-dir ./qid-config<br><br>
+                        # 启动QuantaID服务<br>
+                        qid server start --config ./qid-config/server.yaml
+                    </div>
+
+                    <h4 class="font-semibold mb-3">优势</h4>
+                    <p class="text-gray-600 text-sm">部署简单、资源占用小、启动速度快</p>
+                </div>
+            </div>
+
+            <!-- 方式2：Docker部署 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-docker mr-2"></i>
+                        Docker部署
+                    </h3>
+                    <p class="text-white/80 text-sm">环境一致，适合标准化生产环境</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">前提条件</h4>
+                    <p class="text-gray-600 text-sm mb-4">Docker 20.10+、Docker Compose 2.0+</p>
+
+                    <h4 class="font-semibold mb-3">部署步骤</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-700 font-mono overflow-x-auto">
+                        # 拉取最新镜像<br>
+                        docker pull quantaid/quantaid:latest<br><br>
+                        # 下载Docker Compose配置<br>
+                        curl -O https://raw.githubusercontent.com/turtacn/QuantaID/main/deployments/docker-compose.yml<br><br>
+                        # 启动服务<br>
+                        docker-compose up -d
+                    </div>
+
+                    <h4 class="font-semibold mb-3">优势</h4>
+                    <p class="text-gray-600 text-sm">环境隔离、版本管理方便、易于迁移</p>
+                </div>
+            </div>
+
+            <!-- 方式3：K8s部署 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="bg-primary text-white p-4">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa fa-kubernetes mr-2"></i>
+                        Kubernetes部署
+                    </h3>
+                    <p class="text-white/80 text-sm">云原生，适合大规模高可用场景</p>
+                </div>
+                <div class="p-6">
+                    <h4 class="font-semibold mb-3">前提条件</h4>
+                    <p class="text-gray-600 text-sm mb-4">Kubernetes 1.24+、Helm 3.8+</p>
+
+                    <h4 class="font-semibold mb-3">部署步骤</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-700 font-mono overflow-x-auto">
+                        # 添加QuantaID Helm仓库<br>
+                        helm repo add quantaid https://helm.quantaid.dev<br>
+                        helm repo update<br><br>
+                        # 安装QuantaID（内置PostgreSQL/Redis）<br>
+                        helm install quantaid quantaid/quantaid \
+                        --set postgresql.enabled=true \
+                        --set redis.enabled=true
+                    </div>
+
+                    <h4 class="font-semibold mb-3">优势</h4>
+                    <p class="text-gray-600 text-sm">自动扩缩容、高可用、运维自动化</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 基础使用示例 -->
+        <div class="mt-16 bg-gray-50 rounded-xl shadow-md p-8">
+            <h3 class="text-2xl font-semibold mb-6 text-center">基础使用示例（Go SDK）</h3>
+            <div class="bg-gray-900 rounded-lg p-6 text-sm text-gray-300 font-mono overflow-x-auto">
+                package main
+
+                import (
+                "context"
+                "log"
+
+                "github.com/turtacn/QuantaID/pkg/client"
+                "github.com/turtacn/QuantaID/pkg/types"
+                )
+
+                func main() {
+                // 初始化QuantaID客户端
+                qid, err := client.New(client.Config{
+                Endpoint: "https://your-quantaid-instance.com",
+                APIKey:   "your-api-key",
+                })
+                if err != nil {
+                log.Fatal(err)
+                }
+
+                // 配置OIDC身份提供商
+                provider := &types.IdentityProvider{
+                Name:     "corporate-sso",
+                Type:     "oidc",
+                Enabled:  true,
+                Config: map[string]interface{}{
+                "issuer_url":     "https://your-corp-sso.com",
+                "client_id":      "quantaid-client",
+                "client_secret":  "your-secret",
+                "scopes":         []string{"openid", "profile", "email"},
+                },
+                }
+
+                ctx := context.Background()
+                if err := qid.IdentityProviders.Create(ctx, provider); err != nil {
+                log.Fatal(err)
+                }
+
+                // 生成认证URL，引导用户跳转
+                authURL, err := qid.Auth.GetAuthorizationURL(ctx, &types.AuthRequest{
+                Provider:    "corporate-sso",
+                RedirectURI: "https://your-app.com/callback",
+                State:       "random-state-string",
+                })
+                if err != nil {
+                log.Fatal(err)
+                }
+
+                log.Printf("Redirect user to: %s", authURL)
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 长期愿景 -->
+<section id="vision" class="py-20 bg-gradient-to-br from-primary to-secondary text-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto mb-16 text-center">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">长期愿景与生态</h2>
+            <div class="w-20 h-1 bg-white mx-auto mb-8 rounded-full"></div>
+            <p class="text-white/80 text-lg">不止于"工具"，更致力于构建开放、互联、智能的身份管理生态</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12">
+            <div class="bg-white/10 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fa fa-sitemap text-white text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-4">构建身份认证生态</h3>
+                <p class="text-white/80 mb-6 leading-relaxed">
+                    打造开放的插件市场，汇聚第三方身份源（如企业微信、飞书、Okta）、MFA工具（如硬件令牌、生物识别）、合规审计插件，让企业无需定制开发即可快速集成各类身份服务。
+                </p>
+                <ul class="space-y-3 text-white/80">
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>标准化插件开发规范，降低第三方贡献门槛</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>建立插件质量认证体系，保障企业使用安全</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>提供插件商业化渠道，激励生态伙伴创新</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fa fa-brain text-white text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-4">AI驱动的智能安全</h3>
+                <p class="text-white/80 mb-6 leading-relaxed">
+                    将人工智能与身份安全深度融合，通过机器学习实时分析用户行为特征，精准识别异常登录（如账号盗用、恶意攻击），并自动调整认证策略，实现"预测式安全"。
+                </p>
+                <ul class="space-y-3 text-white/80">
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>基于联邦学习的行为模型训练，保护企业数据隐私</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>自适应风险阈值，平衡安全强度与用户体验</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>安全事件自动溯源与响应，降低人工干预成本</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fa fa-globe text-white text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-4">全场景身份互联</h3>
+                <p class="text-white/80 mb-6 leading-relaxed">
+                    打破"人-系统"的身份边界，将认证能力延伸至IoT设备、边缘计算、区块链等新兴场景，实现"人-设备-服务"的统一身份管理，适配未来数字化全场景需求。
+                </p>
+                <ul class="space-y-3 text-white/80">
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>支持MQTT/CoAP等IoT协议，为设备提供身份认证</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>探索Web3.0身份（DID）集成，适配去中心化场景</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>构建跨组织身份联邦，实现"一次认证、多域通行"</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fa fa-users text-white text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-semibold mb-4">开源社区共建</h3>
+                <p class="text-white/80 mb-6 leading-relaxed">
+                    坚持开源治理模式，邀请全球开发者、企业用户共同参与项目迭代，通过社区力量完善功能、修复漏洞、优化体验，让QuantaID成为真正"源于社区、服务社区"的身份管理解决方案。
+                </p>
+                <ul class="space-y-3 text-white/80">
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>建立清晰的贡献者指南与代码审查流程</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>定期举办黑客松、技术分享，活跃社区氛围</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-star mt-1 mr-3"></i>
+                        <span>设立社区治理委员会，确保项目方向符合用户需求</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="bg-dark text-white py-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-4 gap-8 mb-12">
+            <div>
+                <div class="flex items-center mb-6">
+                    <i class="fa fa-shield text-primary text-2xl mr-2"></i>
+                    <span class="text-xl font-bold">QuantaID</span>
+                </div>
+                <p class="text-gray-400 text-sm mb-6">
+                    下一代统一身份认证与访问控制平台，以开源之力重塑企业身份管理价值。
+                </p>
+                <div class="flex space-x-4">
+                    <a href="https://github.com/turtacn/QuantaID" target="_blank" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-6">快速链接</h4>
+                <ul class="space-y-3">
+                    <li><a href="#mission" class="text-gray-400 hover:text-primary transition-colors">使命与定位</a></li>
+                    <li><a href="#solutions" class="text-gray-400 hover:text-primary transition-colors">核心解决方案</a></li>
+                    <li><a href="#features" class="text-gray-400 hover:text-primary transition-colors">核心功能</a></li>
+                    <li><a href="#scenarios" class="text-gray-400 hover:text-primary transition-colors">业务场景</a></li>
+                    <li><a href="#architecture" class="text-gray-400 hover:text-primary transition-colors">架构解析</a></li>
+                    <li><a href="#docs" class="text-gray-400 hover:text-primary transition-colors">文档资源</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-6">资源中心</h4>
+                <ul class="space-y-3">
+                    <li><a href="https://github.com/turtacn/QuantaID" target="_blank" class="text-gray-400 hover:text-primary transition-colors">GitHub仓库</a></li>
+                    <li><a href="https://github.com/turtacn/QuantaID/blob/main/docs/architecture.md" target="_blank" class="text-gray-400 hover:text-primary transition-colors">架构文档</a></li>
+                    <li><a href="https://github.com/turtacn/QuantaID/blob/main/README.md" target="_blank" class="text-gray-400 hover:text-primary transition-colors">使用指南</a></li>
+                    <li><a href="https://github.com/turtacn/QuantaID/blob/main/CONTRIBUTING.md" target="_blank" class="text-gray-400 hover:text-primary transition-colors">贡献指南</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-primary transition-colors">API参考</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-6">联系我们</h4>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <i class="fa fa-envelope text-primary mt-1 mr-3"></i>
+                        <span class="text-gray-400">info@quantaid.dev</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-github text-primary mt-1 mr-3"></i>
+                        <span class="text-gray-400">github.com/turtacn/QuantaID</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-file-text text-primary mt-1 mr-3"></i>
+                        <span class="text-gray-400">Apache License 2.0</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 QuantaID. 下一代统一身份认证与访问控制平台. 保留所有权利.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- JavaScript -->
+<script>
+    // 导航栏滚动效果
+    window.addEventListener('scroll', function() {
+        const nav = document.querySelector('nav');
+        if (window.scrollY > 50) {
+            nav.classList.add('shadow-md');
+            nav.classList.remove('shadow-sm');
+        } else {
+            nav.classList.remove('shadow-md');
+            nav.classList.add('shadow-sm');
+        }
+    });
+
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+    // 架构图表
+    const archCtx = document.getElementById('architectureChart').getContext('2d');
+    const architectureChart = new Chart(archCtx, {
+        type: 'bar',
+        data: {
+            labels: ['客户端层', 'API网关层', '服务层', '插件层', '数据层'],
+            datasets: [{
+                label: '组件数量',
+                data: [3, 3, 5, 3, 3],
+                backgroundColor: [
+                    'rgba(22, 93, 255, 0.8)',
+                    'rgba(22, 93, 255, 0.7)',
+                    'rgba(22, 93, 255, 0.6)',
+                    'rgba(22, 93, 255, 0.5)',
+                    'rgba(22, 93, 255, 0.4)'
+                ],
+                borderColor: [
+                    'rgba(22, 93, 255, 1)',
+                    'rgba(22, 93, 255, 1)',
+                    'rgba(22, 93, 255, 1)',
+                    'rgba(22, 93, 255, 1)',
+                    'rgba(22, 93, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '组件数量'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const labels = [
+                                'Web UI、CLI工具、多语言SDK',
+                                'API Gateway、Auth Middleware、Rate Limiter',
+                                '编排引擎、认证引擎、授权引擎、身份管理、联邦服务',
+                                '身份提供商、MFA提供商、自定义连接器',
+                                'PostgreSQL、Redis、Elasticsearch'
+                            ];
+                            return labels[context.dataIndex];
+                        }
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // 文档结构图表
+    const docsCtx = document.getElementById('docsStructureChart').getContext('2d');
+    const docsStructureChart = new Chart(docsCtx, {
+        type: 'radar',
+        data: {
+            labels: [
+                '入门指南',
+                '架构设计',
+                'API参考',
+                '部署运维',
+                '插件开发',
+                '最佳实践'
+            ],
+            datasets: [{
+                label: '文档覆盖度',
+                data: [95, 90, 85, 80, 75, 85],
+                fill: true,
+                backgroundColor: 'rgba(22, 93, 255, 0.2)',
+                borderColor: 'rgba(22, 93, 255, 1)',
+                pointBackgroundColor: 'rgba(22, 93, 255, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(22, 93, 255, 1)'
+            }, {
+                label: '更新频率',
+                data: [90, 60, 80, 70, 65, 75],
+                fill: true,
+                backgroundColor: 'rgba(54, 207, 251, 0.2)',
+                borderColor: 'rgba(54, 207, 251, 1)',
+                pointBackgroundColor: 'rgba(54, 207, 251, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(54, 207, 251, 1)'
+            }]
+        },
+        options: {
+            elements: {
+                line: {
+                    borderWidth: 3
+                }
+            },
+            scales: {
+                r: {
+                    angleLines: {
+                        display: true
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }
+            }
+        }
+    });
+
+    // 数字动画效果
+    const animateNumbers = () => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const target = entry.target;
+                    const value = parseInt(target.style.getPropertyValue('--target'));
+                    let current = 0;
+                    const duration = 2000; // 2秒
+                    const step = value / (duration / 16);
+
+                    const updateNumber = () => {
+                        current += step;
+                        if (current < value) {
+                            target.textContent = Math.floor(current);
+                            requestAnimationFrame(updateNumber);
+                        } else {
+                            target.textContent = value;
+                        }
+                    };
+
+                    updateNumber();
+                    observer.unobserve(target);
+                }
+            });
+        });
+
+        document.querySelectorAll('.number-animate').forEach(el => {
+            observer.observe(el);
+        });
+    };
+
+    // 页面加载完成后执行
+    window.addEventListener('load', () => {
+        animateNumbers();
+    });
+</script>
+</body>
+</html>
