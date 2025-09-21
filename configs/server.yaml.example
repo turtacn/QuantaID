@@ -1,0 +1,92 @@
+# -----------------------------------------------------------------------------
+# QuantaID Server Configuration Example
+# -----------------------------------------------------------------------------
+# This is an example configuration file. Copy it to 'server.yaml' and edit it
+# for your environment. You can also override these values with environment
+# variables (e.g., SERVER_ADDRESS=... QID_SERVER_ADDRESS=...).
+# -----------------------------------------------------------------------------
+
+# Server configuration for the main HTTP/gRPC listeners
+server:
+  # The address the server will listen on.
+  address: ":8080"
+  # Maximum duration for reading the entire request, including the body.
+  readTimeout: "15s"
+  # Maximum duration before timing out writes of the response.
+  writeTimeout: "15s"
+  # TLS configuration (uncomment and configure for HTTPS)
+  # tls:
+  #   enabled: true
+  #   certFile: "/path/to/cert.pem"
+  #   keyFile: "/path/to/key.pem"
+
+# Logging configuration
+logger:
+  # Log level: debug, info, warn, error
+  level: "info"
+  # Log format: console, json
+  format: "json"
+  # Console logging configuration
+  console:
+    enabled: true
+  # File logging configuration
+  file:
+    enabled: false
+    path: "/var/log/quantid/server.log"
+    # MaxSizeMB is the maximum size in megabytes of the log file before it gets rotated.
+    maxSizeMB: 100
+    # MaxBackups is the maximum number of old log files to retain.
+    maxBackups: 3
+    # MaxAgeDays is the maximum number of days to retain old log files.
+    maxAgeDays: 7
+    # Compress determines if the rotated log files should be compressed.
+    compress: true
+
+# Security related configuration
+security:
+  # A strong, secret key used for signing JWTs.
+  # IMPORTANT: In production, generate a random secret and load it from a secure source (e.g., env var, vault).
+  jwtSecret: "change-this-to-a-very-long-and-random-secret-key"
+  # Default duration for access tokens.
+  accessTokenDuration: "15m"
+  # Default duration for refresh tokens.
+  refreshTokenDuration: "168h" # 7 days
+  # Default duration for user sessions.
+  sessionDuration: "1h"
+
+# Database configuration (for PostgreSQL)
+database:
+  # Data Source Name (DSN) for connecting to the PostgreSQL database.
+  url: "postgres://user:password@localhost:5432/quantid?sslmode=disable"
+  # Connection pool settings
+  # maxOpenConns: 25
+  # maxIdleConns: 10
+  # connMaxLifetime: "5m"
+
+# Cache configuration (for Redis)
+cache:
+  # URL for connecting to the Redis server.
+  url: "redis://localhost:6379/0"
+
+# Plugin configuration
+plugins:
+  # Directory where dynamic plugins (.so files) are stored.
+  directory: "./plugins"
+  # List of plugins to load and their specific configurations.
+  # This section would be unmarshaled into a slice of PluginConfig structs.
+  # providers:
+  #   - name: "local-ldap"
+  #     enabled: true
+  #     settings:
+  #       host: "ldap.example.com"
+  #       port: 636
+  #       useTLS: true
+  #       bindDN: "cn=admin,dc=example,dc=com"
+  #       bindPassword: "secure_password"
+  #       baseDN: "ou=users,dc=example,dc=com"
+  #   - name: "totp_provider"
+  #     enabled: true
+  #     settings:
+  #       issuer: "QuantaID"
+
+#Personal.AI order the ending
