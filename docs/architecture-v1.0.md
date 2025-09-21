@@ -185,7 +185,7 @@ graph LR
         K --> N[删除标记]
     end
     
-    style "Security Group" stroke:#ff0000,stroke-width:3px
+    %% style "Security Group" stroke:#ff0000,stroke-width:3px
 ```
 
 **用户组类型对比：**
@@ -540,9 +540,9 @@ graph TD
     A <-->|Streaming Replication| B
     B <-->|Streaming Replication| C
     
-    A -.->|Watch key="/leader"| D
-    C -.->|Watch key="/leader"| D
-    B -->|Update key="/leader"| D
+    A -.->|Watch key=/leader| D
+    C -.->|Watch key=/leader| D
+    B -->|Update key=/leader| D
     
     D[acquireTime: 2022-07-25T08:46:11.987736+00:00<br/>leader: cluster-1<br/>opTime: 5117056208<br/>renewTime: 2022-08-01T12:26:04.031027+00:00<br/>transitions: 1<br/>ttl: 30]
 ```
@@ -568,9 +568,9 @@ graph TD
     B -.->|Patroni-Agent| E
     D -.->|Patroni-Agent| E
     
-    B -->|Update key="/leader"| E
-    C -.->|Watch key="/leader"| E
-    D -.->|Watch key="/leader"| E
+    B -->|Update key=/leader| E
+    C -.->|Watch key=/leader| E
+    D -.->|Watch key=/leader| E
     
     style A stroke:#ff0000,stroke-dasharray: 5 5
 ```
@@ -592,9 +592,9 @@ graph TD
     B -.->|Patroni-Agent| D  
     C -.->|Patroni-Agent| D
     
-    B -->|Update key="/leader"| D
-    A -.->|Watch key="/leader"| D
-    C -.->|Watch key="/leader"| D
+    B -->|Update key=/leader| D
+    A -.->|Watch key=/leader| D
+    C -.->|Watch key=/leader| D
     
     D[acquireTime: 2022-07-25T08:46:11.987736+00:00<br/>leader: cluster-1<br/>opTime: 5117056208<br/>renewTime: 2022-08-01T12:26:04.031027+00:00<br/>transitions: 1<br/>ttl: 30]
     
@@ -691,7 +691,7 @@ graph TB
     G <--> I
     H <--> I
     
-    style "IAM Service Layer" stroke:#ff0000,stroke-width:2px,fill:#ffe6e6
+    %% stroke:#ff0000,stroke-width:2px,fill:#ffe6e6
 ```
 
 ### 8.4 故障模式分析
