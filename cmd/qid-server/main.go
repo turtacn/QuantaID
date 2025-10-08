@@ -2,17 +2,25 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"fmt"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
+	"github.com/turtacn/QuantaID/internal/protocols/saml"
 	"github.com/turtacn/QuantaID/internal/server/http"
+	applicationservice "github.com/turtacn/QuantaID/internal/services/application"
 	authservice "github.com/turtacn/QuantaID/internal/services/auth"
 	authorizationservice "github.com/turtacn/QuantaID/internal/services/authorization"
 	identityservice "github.com/turtacn/QuantaID/internal/services/identity"
 	"github.com/turtacn/QuantaID/internal/storage/postgresql"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
 	"github.com/turtacn/QuantaID/pkg/utils"
+	"go.uber.org/zap"
+	"math/big"
 	"os"
 	"os/signal"
 	"syscall"
@@ -49,6 +57,7 @@ func main() {
 	identityRepo := postgresql.NewInMemoryIdentityRepository()
 	authDbRepo := postgresql.NewInMemoryAuthRepository()
 	policyRepo := postgresql.NewInMemoryPolicyRepository()
+	appRepo := postgresql.NewInMemoryApplicationRepository() // New application repo
 	sessionRepo := redis.NewInMemorySessionRepository()
 	tokenRepo := redis.NewInMemoryTokenRepository()
 
@@ -58,9 +67,29 @@ func main() {
 	authDomainSvc := auth.NewService(identityDomainSvc, sessionRepo, tokenRepo, authDbRepo, cryptoManager, logger)
 	policyDomainSvc := policy.NewService(policyRepo, logger)
 
+	// --- SAML Service Setup ---
+	// In a real application, these would be loaded from a secure config/store.
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	certTmpl := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{CommonName: "quantid.dev"},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
+		KeyUsage:     x509.KeyUsageCertSign,
+	}
+	certBytes, _ := x509.CreateCertificate(rand.Reader, &certTmpl, &certTmpl, &key.PublicKey, key)
+	idpCert, _ := x509.ParseCertificate(certBytes)
+
+	samlSvc, err := saml.NewService(logger, appRepo, identityDomainSvc, cryptoManager, key, idpCert, "http://localhost:8080/saml/metadata")
+	if err != nil {
+		logger.Error(context.Background(), "Failed to initialize SAML service", zap.Error(err))
+		os.Exit(1)
+	}
+
 	// --- Application Services Setup ---
 	// These services act as a facade over the domain layer for the transport layer.
 	identityAppSvc := identityservice.NewApplicationService(identityDomainSvc, logger)
+	appAppSvc := applicationservice.NewApplicationService(appRepo, logger, cryptoManager)
 	authAppSvc := authservice.NewApplicationService(authDomainSvc, logger, authservice.Config{
 		AccessTokenDuration:  15 * time.Minute,
 		RefreshTokenDuration: 7 * 24 * time.Hour,
@@ -78,6 +107,8 @@ func main() {
 		AuthService:     authAppSvc,
 		IdentityService: identityAppSvc,
 		AuthzService:    authzAppSvc,
+		AppService:      appAppSvc,  // New application service
+		SamlService:     samlSvc,    // New SAML service
 		CryptoManager:   cryptoManager,
 	}
 	httpServer := http.NewServer(serverConfig, logger, services)

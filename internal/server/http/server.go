@@ -3,6 +3,8 @@ package http
 import (
 	"context"
 	"github.com/gorilla/mux"
+	"github.com/turtacn/QuantaID/internal/protocols/saml"
+	"github.com/turtacn/QuantaID/internal/services/application"
 	"github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/internal/services/authorization"
 	"github.com/turtacn/QuantaID/internal/services/identity"
@@ -40,6 +42,8 @@ type Services struct {
 	AuthService     *auth.ApplicationService
 	IdentityService *identity.ApplicationService
 	AuthzService    *authorization.ApplicationService
+	AppService      *application.ApplicationService
+	SamlService     *saml.Service
 	CryptoManager   *utils.CryptoManager
 }
 
@@ -77,6 +81,8 @@ func NewServer(config Config, logger utils.Logger, services Services) *Server {
 func (s *Server) registerRoutes(services Services) {
 	authHandlers := handlers.NewAuthHandlers(services.AuthService, s.logger)
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
+	appHandlers := handlers.NewApplicationHandlers(services.AppService, s.logger)
+	samlHandlers := handlers.NewSAMLHandlers(services.SamlService, s.logger)
 
 	loggingMiddleware := middleware.NewLoggingMiddleware(s.logger)
 	authMiddleware := middleware.NewAuthMiddleware(services.AuthzService, services.CryptoManager, s.logger)
@@ -91,6 +97,11 @@ func (s *Server) registerRoutes(services Services) {
 	protected.Use(authMiddleware.Execute)
 	protected.HandleFunc("/users", identityHandlers.CreateUser).Methods("POST")
 	protected.HandleFunc("/users/{id}", identityHandlers.GetUser).Methods("GET")
+	protected.HandleFunc("/applications", appHandlers.CreateApplication).Methods("POST")
+
+	// SAML protocol endpoints are not versioned under /api/v1
+	s.Router.HandleFunc("/saml/sso", samlHandlers.HandleSSO).Methods("POST", "GET")
+	s.Router.HandleFunc("/saml/metadata", samlHandlers.HandleMetadata).Methods("GET")
 
 	s.Router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
