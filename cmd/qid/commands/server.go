@@ -7,7 +7,8 @@ import (
 	"os/exec"
 )
 
-// NewServerCmd creates the `server` command
+// NewServerCmd creates the root `server` command and its subcommands.
+// This command acts as a namespace for all server process management operations.
 func NewServerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "server",
@@ -20,6 +21,9 @@ func NewServerCmd() *cobra.Command {
 	return cmd
 }
 
+// newServerStartCmd creates the `server start` subcommand.
+// This command is responsible for locating and launching the `qid-server` daemon process.
+// It runs the server in the foreground, streaming its stdout and stderr, and waits for it to exit.
 func newServerStartCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
@@ -58,4 +62,3 @@ func newServerStartCmd() *cobra.Command {
 	return cmd
 }
 
-//Personal.AI order the ending

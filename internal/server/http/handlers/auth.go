@@ -9,12 +9,20 @@ import (
 )
 
 // AuthHandlers provides HTTP handlers for authentication-related endpoints.
+// It translates HTTP requests into calls to the authentication application service.
 type AuthHandlers struct {
 	authService *auth.ApplicationService
 	logger      utils.Logger
 }
 
-// NewAuthHandlers creates a new set of auth handlers.
+// NewAuthHandlers creates a new set of authentication handlers.
+//
+// Parameters:
+//   - authService: The application service that contains the core authentication logic.
+//   - logger: The logger for handler-specific messages.
+//
+// Returns:
+//   A new AuthHandlers instance.
 func NewAuthHandlers(authService *auth.ApplicationService, logger utils.Logger) *AuthHandlers {
 	return &AuthHandlers{
 		authService: authService,
@@ -23,6 +31,8 @@ func NewAuthHandlers(authService *auth.ApplicationService, logger utils.Logger) 
 }
 
 // Login is the HTTP handler for the user login endpoint.
+// It decodes the login request, calls the authentication service,
+// and writes the JSON response or error.
 func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 	var req auth.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -40,6 +50,8 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Logout is the HTTP handler for the user logout endpoint.
+// It decodes the logout request, calls the authentication service to invalidate the session/token,
+// and returns a successful status.
 func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 	var req auth.LogoutRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -54,5 +66,3 @@ func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
-
-//Personal.AI order the ending

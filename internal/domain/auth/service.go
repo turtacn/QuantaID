@@ -9,7 +9,8 @@ import (
 	"time"
 )
 
-// Service encapsulates the business logic for authentication.
+// Service encapsulates the core business logic for authentication,
+// including user login, logout, session management, and token handling.
 type Service struct {
 	identityService identity.IService
 	sessionRepo     SessionRepository
@@ -19,14 +20,29 @@ type Service struct {
 	logger          utils.Logger
 }
 
-// Config holds configuration for the auth service.
+// Config holds configuration for the auth service, specifically token and session lifetimes.
 type Config struct {
-	AccessTokenDuration  time.Duration
+	// AccessTokenDuration specifies the validity period for access tokens.
+	AccessTokenDuration time.Duration
+	// RefreshTokenDuration specifies the validity period for refresh tokens.
 	RefreshTokenDuration time.Duration
-	SessionDuration      time.Duration
+	// SessionDuration specifies the validity period for user sessions.
+	SessionDuration time.Duration
 }
 
-// NewService creates a new authentication service.
+// NewService creates a new authentication service instance.
+// It brings together all the necessary dependencies to handle authentication logic.
+//
+// Parameters:
+//   - identityService: The service for interacting with user identity data.
+//   - sessionRepo: The repository for managing user sessions.
+//   - tokenRepo: The repository for managing tokens and deny lists.
+//   - auditRepo: The repository for recording audit logs.
+//   - crypto: The utility for cryptographic operations.
+//   - logger: The logger for logging service-level messages.
+//
+// Returns:
+//   A new authentication service instance.
 func NewService(
 	identityService identity.IService,
 	sessionRepo SessionRepository,
@@ -45,7 +61,18 @@ func NewService(
 	}
 }
 
-// LoginWithPassword handles the password-based login flow.
+// LoginWithPassword handles the traditional username and password authentication flow.
+// It validates the user's credentials, checks their account status, and if successful,
+// creates a new session and issues access and refresh tokens.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - username: The user's username.
+//   - password: The user's plain-text password.
+//   - serviceConfig: The configuration containing token and session durations.
+//
+// Returns:
+//   An AuthResponse containing tokens and user info, or an error if login fails.
 func (s *Service) LoginWithPassword(ctx context.Context, username, password string, serviceConfig Config) (*types.AuthResponse, error) {
 	user, err := s.identityService.GetUserByUsername(ctx, username)
 	if err != nil {
@@ -65,6 +92,8 @@ func (s *Service) LoginWithPassword(ctx context.Context, username, password stri
 	return s.createSessionAndTokens(ctx, user, serviceConfig)
 }
 
+// createSessionAndTokens is a helper function that generates JWTs, creates a user session,
+// and constructs the final authentication response.
 func (s *Service) createSessionAndTokens(ctx context.Context, user *types.User, serviceConfig Config) (*types.AuthResponse, error) {
 	accessToken, err := s.crypto.GenerateJWT(user.ID, serviceConfig.AccessTokenDuration, nil)
 	if err != nil {
@@ -103,6 +132,17 @@ func (s *Service) createSessionAndTokens(ctx context.Context, user *types.User, 
 	}, nil
 }
 
+// Logout handles the user logout process.
+// It deletes the user's session and adds the provided access token to a deny list
+// to prevent its reuse until it expires.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - sessionID: The ID of the session to be terminated.
+//   - accessToken: The access token to be invalidated.
+//
+// Returns:
+//   An error if the process fails, otherwise nil.
 func (s *Service) Logout(ctx context.Context, sessionID, accessToken string) error {
 	if err := s.sessionRepo.DeleteSession(ctx, sessionID); err != nil {
 		s.logger.Warn(ctx, "Failed to delete session on logout", zap.Error(err), zap.String("sessionID", sessionID))
@@ -123,16 +163,43 @@ func (s *Service) Logout(ctx context.Context, sessionID, accessToken string) err
 	return nil
 }
 
+// logAuthSuccess records a successful authentication event to the audit log.
+// It runs in a separate goroutine to avoid blocking the main authentication flow.
 func (s *Service) logAuthSuccess(ctx context.Context, userID, method string) {
 	go func() {
-		_ = s.auditRepo.CreateLogEntry(context.Background(), &types.AuditLog{})
+		logEntry := &types.AuditLog{
+			ID:        s.crypto.GenerateUUID(),
+			ActorID:   userID,
+			Action:    string(types.EventUserLoginSuccess),
+			Resource:  "user:" + userID,
+			Status:    "success",
+			Context:   map[string]interface{}{"method": method},
+			Timestamp: time.Now().UTC(),
+		}
+		if err := s.auditRepo.CreateLogEntry(context.Background(), logEntry); err != nil {
+			s.logger.Error(context.Background(), "Failed to create audit log for successful auth", zap.Error(err))
+		}
 	}()
 }
 
+// logAuthFailure records a failed authentication attempt to the audit log.
+// It runs in a separate goroutine.
 func (s *Service) logAuthFailure(ctx context.Context, userID, method, reason string) {
 	go func() {
-		_ = s.auditRepo.CreateLogEntry(context.Background(), &types.AuditLog{})
+		logEntry := &types.AuditLog{
+			ID:        s.crypto.GenerateUUID(),
+			ActorID:   userID,
+			Action:    string(types.EventUserLoginFailure),
+			Resource:  "user:" + userID,
+			Status:    "failure",
+			Context: map[string]interface{}{
+				"method": method,
+				"reason": reason,
+			},
+			Timestamp: time.Now().UTC(),
+		}
+		if err := s.auditRepo.CreateLogEntry(context.Background(), logEntry); err != nil {
+			s.logger.Error(context.Background(), "Failed to create audit log for failed auth", zap.Error(err))
+		}
 	}()
 }
-
-//Personal.AI order the ending

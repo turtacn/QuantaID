@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+// rootCmd represents the base command when called without any subcommands.
+// It's the entry point for the entire CLI application, configured using the Cobra library.
 var (
 	rootCmd = &cobra.Command{
 		Use:   "qid",
@@ -16,6 +18,9 @@ users, policies, and configurations from the command line.`,
 	}
 )
 
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+// If the command execution fails, it prints the error to stderr and exits.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Whoops. There was an error while executing your command '%s'", err)
@@ -32,4 +37,3 @@ func main() {
 	Execute()
 }
 
-//Personal.AI order the ending

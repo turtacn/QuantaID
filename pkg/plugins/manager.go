@@ -8,7 +8,8 @@ import (
 	"sync"
 )
 
-// Manager handles the lifecycle of all plugins.
+// Manager handles the lifecycle of all plugins. It is responsible for loading,
+// initializing, starting, and stopping plugins based on the application's configuration.
 type Manager struct {
 	mu             sync.RWMutex
 	registry       *Registry
@@ -18,6 +19,14 @@ type Manager struct {
 }
 
 // NewManager creates a new plugin manager.
+//
+// Parameters:
+//   - registry: The plugin registry containing available plugin factories.
+//   - logger: The logger for the manager to use.
+//   - config: The application's configuration manager for retrieving plugin settings.
+//
+// Returns:
+//   A new plugin manager.
 func NewManager(registry *Registry, logger utils.Logger, config *utils.ConfigManager) *Manager {
 	return &Manager{
 		registry:      registry,
@@ -28,6 +37,13 @@ func NewManager(registry *Registry, logger utils.Logger, config *utils.ConfigMan
 }
 
 // LoadAndStartPlugins loads all plugins specified in the configuration and starts them.
+// It iterates through the plugin configurations, initializes, and starts each enabled plugin.
+//
+// Parameters:
+//   - ctx: The context for the plugin loading and starting process.
+//
+// Returns:
+//   An error if any plugin fails to load or start, otherwise nil.
 func (m *Manager) LoadAndStartPlugins(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -75,6 +91,10 @@ func (m *Manager) LoadAndStartPlugins(ctx context.Context) error {
 }
 
 // StopAllPlugins gracefully stops all running plugins.
+// It iterates through all active plugins and calls their Stop method.
+//
+// Parameters:
+//   - ctx: The context for the plugin stopping process.
 func (m *Manager) StopAllPlugins(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -88,6 +108,13 @@ func (m *Manager) StopAllPlugins(ctx context.Context) {
 }
 
 // GetPlugin retrieves a running plugin by its name.
+// It provides a thread-safe way to access active plugins.
+//
+// Parameters:
+//   - name: The name of the plugin to retrieve.
+//
+// Returns:
+//   The plugin instance if found, otherwise an error.
 func (m *Manager) GetPlugin(name string) (IPlugin, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -100,11 +127,13 @@ func (m *Manager) GetPlugin(name string) (IPlugin, error) {
 	return plugin, nil
 }
 
-// PluginConfig represents the configuration for a single plugin instance.
+// PluginConfig represents the configuration for a single plugin instance
+// as defined in the application's configuration files.
 type PluginConfig struct {
-	Name     string                 `yaml:"name"`
-	Enabled  bool                   `yaml:"enabled"`
+	// Name is the unique identifier for the plugin instance.
+	Name string `yaml:"name"`
+	// Enabled determines whether this plugin instance should be loaded.
+	Enabled bool `yaml:"enabled"`
+	// Settings contains the specific configuration key-value pairs for the plugin.
 	Settings map[string]interface{} `yaml:"settings"`
 }
-
-//Personal.AI order the ending

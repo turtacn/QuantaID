@@ -50,4 +50,3 @@ func (a *SAMLAdapter) buildSAMLAssertion(user *types.User) string {
 	return "<saml:Assertion>...</saml:Assertion>"
 }
 
-//Personal.AI order the ending

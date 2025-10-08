@@ -88,4 +88,3 @@ func TestAuthApplicationService_Login(t *testing.T) {
 	})
 }
 
-//Personal.AI order the ending

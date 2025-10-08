@@ -67,4 +67,3 @@ func (a *OIDCAdapter) GetUserInfo(ctx context.Context, accessToken string) (map[
 	return nil, types.ErrInternal.WithDetails(map[string]string{"status": "not implemented"})
 }
 
-//Personal.AI order the ending

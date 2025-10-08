@@ -47,4 +47,3 @@ EXPOSE 8080
 # The command to run when the container starts
 ENTRYPOINT ["qid-server"]
 
-#Personal.AI order the ending

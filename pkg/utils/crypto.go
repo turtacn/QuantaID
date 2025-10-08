@@ -8,17 +8,31 @@ import (
 	"time"
 )
 
-// CryptoManager provides cryptographic functions.
+// CryptoManager provides cryptographic utility functions, such as password hashing,
+// JWT generation/validation, and UUID creation.
 type CryptoManager struct {
 	jwtSecret []byte
 }
 
-// NewCryptoManager creates a new CryptoManager.
+// NewCryptoManager creates a new CryptoManager with the given JWT secret.
+// The secret is used for signing and verifying JWTs.
+//
+// Parameters:
+//   - jwtSecret: The secret key for JWT operations.
+//
+// Returns:
+//   A new CryptoManager instance.
 func NewCryptoManager(jwtSecret string) *CryptoManager {
 	return &CryptoManager{jwtSecret: []byte(jwtSecret)}
 }
 
-// HashPassword generates a bcrypt hash of the password.
+// HashPassword generates a bcrypt hash of a given password.
+//
+// Parameters:
+//   - password: The plain-text password to hash.
+//
+// Returns:
+//   The hashed password as a string, or an error if hashing fails.
 func (cm *CryptoManager) HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -27,13 +41,29 @@ func (cm *CryptoManager) HashPassword(password string) (string, error) {
 	return string(bytes), nil
 }
 
-// CheckPasswordHash compares a password with a hash.
+// CheckPasswordHash compares a plain-text password with a bcrypt hash to see if they match.
+//
+// Parameters:
+//   - password: The plain-text password.
+//   - hash: The bcrypt hash to compare against.
+//
+// Returns:
+//   True if the password matches the hash, false otherwise.
 func (cm *CryptoManager) CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
-// GenerateJWT generates a new JWT for a given user ID and custom claims.
+// GenerateJWT creates and signs a new JSON Web Token (JWT).
+// It includes standard claims (sub, iss, iat, exp, jti) and any custom claims provided.
+//
+// Parameters:
+//   - userID: The subject of the token.
+//   - duration: The token's validity period.
+//   - claims: A map of custom claims to include in the token.
+//
+// Returns:
+//   The signed JWT as a string, or an error if signing fails.
 func (cm *CryptoManager) GenerateJWT(userID string, duration time.Duration, claims jwt.MapClaims) (string, error) {
 	if claims == nil {
 		claims = jwt.MapClaims{}
@@ -53,7 +83,14 @@ func (cm *CryptoManager) GenerateJWT(userID string, duration time.Duration, clai
 	return signedToken, nil
 }
 
-// ValidateJWT validates a JWT and returns the claims.
+// ValidateJWT parses and validates a JWT string.
+// It checks the signature and standard claims (like expiration).
+//
+// Parameters:
+//   - tokenString: The JWT string to validate.
+//
+// Returns:
+//   The claims from the token as a map if the token is valid, or an error otherwise.
 func (cm *CryptoManager) ValidateJWT(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -73,9 +110,10 @@ func (cm *CryptoManager) ValidateJWT(tokenString string) (jwt.MapClaims, error) 
 	return nil, fmt.Errorf("invalid token")
 }
 
-// GenerateUUID generates a new UUID string.
+// GenerateUUID generates a new version 4 UUID as a string.
+//
+// Returns:
+//   A new UUID string.
 func (cm *CryptoManager) GenerateUUID() string {
 	return uuid.New().String()
 }
-
-//Personal.AI order the ending

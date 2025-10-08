@@ -9,12 +9,23 @@ import (
 	"strings"
 )
 
-// ConfigManager handles application configuration.
+// ConfigManager is a wrapper around the Viper library that handles loading,
+// accessing, and watching application configuration.
 type ConfigManager struct {
 	v *viper.Viper
 }
 
-// NewConfigManager creates a new ConfigManager instance.
+// NewConfigManager creates a new ConfigManager instance by reading from a configuration file.
+// It sets up default values, reads from environment variables, and watches the config file for changes.
+//
+// Parameters:
+//   - configPath: The directory where the configuration file is located.
+//   - configName: The name of the configuration file (without extension).
+//   - configType: The type of the configuration file (e.g., "yaml", "json").
+//   - logger: A logger instance for logging messages.
+//
+// Returns:
+//   A new ConfigManager instance or an error if the configuration file cannot be read.
 func NewConfigManager(configPath, configName, configType string, logger Logger) (*ConfigManager, error) {
 	v := viper.New()
 	v.AddConfigPath(configPath)
@@ -40,12 +51,18 @@ func NewConfigManager(configPath, configName, configType string, logger Logger) 
 	return cm, nil
 }
 
+// Get retrieves a generic configuration value by key.
 func (cm *ConfigManager) Get(key string) interface{} { return cm.v.Get(key) }
+// GetString retrieves a string configuration value by key.
 func (cm *ConfigManager) GetString(key string) string { return cm.v.GetString(key) }
+// GetInt retrieves an integer configuration value by key.
 func (cm *ConfigManager) GetInt(key string) int { return cm.v.GetInt(key) }
+// GetBool retrieves a boolean configuration value by key.
 func (cm *ConfigManager) GetBool(key string) bool { return cm.v.GetBool(key) }
+// Unmarshal decodes the entire configuration into a struct.
 func (cm *ConfigManager) Unmarshal(rawVal interface{}) error { return cm.v.Unmarshal(rawVal) }
 
+// watchConfig sets up a file watcher that reloads the configuration when the file changes.
 func (cm *ConfigManager) watchConfig(logger Logger) {
 	cm.v.OnConfigChange(func(e fsnotify.Event) {
 		logger.Info(nil, "Configuration file changed, reloading.", zap.String("file", e.Name))
@@ -53,6 +70,8 @@ func (cm *ConfigManager) watchConfig(logger Logger) {
 	cm.v.WatchConfig()
 }
 
+// setDefaults establishes default values for essential configuration keys.
+// This ensures that the application can run with a minimal configuration.
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.address", ":8080")
 	v.SetDefault("server.readTimeout", "15s")
@@ -71,6 +90,15 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("plugins.directory", "./plugins")
 }
 
+// LoadConfigFromBytes creates a new ConfigManager by reading configuration data from a byte slice.
+// This is particularly useful for tests or for loading configuration from non-file sources.
+//
+// Parameters:
+//   - configData: The byte slice containing the configuration data.
+//   - configType: The format of the configuration data (e.g., "yaml").
+//
+// Returns:
+//   A new ConfigManager instance or an error if the data cannot be parsed.
 func LoadConfigFromBytes(configData []byte, configType string) (*ConfigManager, error) {
 	v := viper.New()
 	v.SetConfigType(configType)
@@ -80,5 +108,3 @@ func LoadConfigFromBytes(configData []byte, configType string) (*ConfigManager, 
 	}
 	return &ConfigManager{v: v}, nil
 }
-
-//Personal.AI order the ending

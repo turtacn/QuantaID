@@ -9,7 +9,9 @@ import (
 	"go.uber.org/zap"
 )
 
-// ApplicationService provides application-level use cases for authorization.
+// ApplicationService provides application-level use cases for authorization. It acts as
+// a facade over the policy and identity domain services to determine if a user
+// has permission to perform a specific action on a resource.
 type ApplicationService struct {
 	policyDomain   *policy.Service
 	identityDomain identity.IService
@@ -17,6 +19,14 @@ type ApplicationService struct {
 }
 
 // NewApplicationService creates a new authorization application service.
+//
+// Parameters:
+//   - policyDomain: The domain service for policy evaluation.
+//   - identityDomain: The domain service for retrieving user and group information.
+//   - logger: The logger for service-level messages.
+//
+// Returns:
+//   A new instance of ApplicationService.
 func NewApplicationService(policyDomain *policy.Service, identityDomain identity.IService, logger utils.Logger) *ApplicationService {
 	return &ApplicationService{
 		policyDomain:   policyDomain,
@@ -25,7 +35,7 @@ func NewApplicationService(policyDomain *policy.Service, identityDomain identity
 	}
 }
 
-// CheckPermissionRequest defines the DTO for an authorization check.
+// CheckPermissionRequest defines the Data Transfer Object (DTO) for an authorization check.
 type CheckPermissionRequest struct {
 	UserID     string                 `json:"userId"`
 	Action     string                 `json:"action"`
@@ -34,6 +44,15 @@ type CheckPermissionRequest struct {
 }
 
 // CheckPermission is the main method for checking if a user has permission to perform an action.
+// It constructs a policy evaluation context by fetching user and group information and then
+// calls the policy domain service to evaluate the request against the configured policies.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - req: The DTO containing the details of the permission check.
+//
+// Returns:
+//   A boolean indicating if permission is granted, and an application error if the check fails.
 func (s *ApplicationService) CheckPermission(ctx context.Context, req CheckPermissionRequest) (bool, *types.Error) {
 	user, err := s.identityDomain.GetUser(ctx, req.UserID)
 	if err != nil {
@@ -82,4 +101,3 @@ func (s *ApplicationService) CheckPermission(ctx context.Context, req CheckPermi
 	return true, nil
 }
 
-//Personal.AI order the ending

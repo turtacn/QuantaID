@@ -8,43 +8,55 @@ import (
 )
 
 // Error represents a standardized error in the QuantaID system.
+// It provides a consistent structure for errors across different layers (e.g., HTTP, gRPC)
+// and includes a machine-readable code, a human-readable message, and optional details.
 type Error struct {
-	Code       string            `json:"code"`
-	Message    string            `json:"message"`
-	Details    map[string]string `json:"details,omitempty"`
-	HttpStatus int               `json:"-"`
-	GrpcStatus codes.Code        `json:"-"`
-	cause      error
+	// Code is a machine-readable string identifying the error type (e.g., "invalid_credentials").
+	Code string `json:"code"`
+	// Message is a human-readable description of the error.
+	Message string `json:"message"`
+	// Details provides additional key-value information about the error.
+	Details map[string]string `json:"details,omitempty"`
+	// HttpStatus is the corresponding HTTP status code for this error.
+	HttpStatus int `json:"-"`
+	// GrpcStatus is the corresponding gRPC status code for this error.
+	GrpcStatus codes.Code `json:"-"`
+	// cause is the underlying error that triggered this error, for internal debugging.
+	cause error
 }
 
-// Error returns the string representation of the error.
+// Error returns the string representation of the error, satisfying the standard error interface.
 func (e *Error) Error() string {
 	return fmt.Sprintf("code: %s, message: %s", e.Code, e.Message)
 }
 
-// Unwrap returns the wrapped cause of the error.
+// Unwrap returns the wrapped cause of the error, allowing for error chaining.
 func (e *Error) Unwrap() error {
 	return e.cause
 }
 
-// WithCause wraps an existing error.
+// WithCause wraps an existing error, allowing for the preservation of the original error context.
+// This is useful for chaining errors without losing the root cause.
 func (e *Error) WithCause(cause error) *Error {
 	e.cause = cause
 	return e
 }
 
-// WithDetails adds contextual details to the error.
+// WithDetails adds contextual details to the error, providing more specific information
+// about the error condition.
 func (e *Error) WithDetails(details map[string]string) *Error {
 	e.Details = details
 	return e
 }
 
-// ToGRPCStatus converts the error to a gRPC status.
+// ToGRPCStatus converts the application-specific error to a gRPC status,
+// which can be sent over a gRPC connection.
 func (e *Error) ToGRPCStatus() *status.Status {
 	return status.New(e.GrpcStatus, e.Message)
 }
 
 // NewError creates a new standardized error.
+// This function is used to define the standard error types used throughout the application.
 func NewError(code, message string, httpStatus int, grpcStatus codes.Code) *Error {
 	return &Error{
 		Code:       code,
@@ -54,6 +66,7 @@ func NewError(code, message string, httpStatus int, grpcStatus codes.Code) *Erro
 	}
 }
 
+// Pre-defined error types for common scenarios.
 var (
 	ErrInternal              = NewError("internal_error", "An unexpected internal error occurred", http.StatusInternalServerError, codes.Internal)
 	ErrNotFound              = NewError("not_found", "The requested resource was not found", http.StatusNotFound, codes.NotFound)
@@ -75,5 +88,3 @@ var (
 	ErrPluginNotFound        = NewError("plugin_not_found", "The requested plugin was not found", http.StatusNotFound, codes.NotFound)
 	ErrPluginInitFailed      = NewError("plugin_init_failed", "Failed to initialize plugin", http.StatusInternalServerError, codes.Internal)
 )
-
-//Personal.AI order the ending

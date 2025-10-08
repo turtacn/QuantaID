@@ -56,4 +56,3 @@ func TestAddTraceID_NoSpan(t *testing.T) {
 	assert.Empty(t, fields, "No fields should be added when there is no span in context")
 }
 
-//Personal.AI order the ending

@@ -103,4 +103,3 @@ func (m *Manager) getPluginNameForMethod(method types.AuthMethod) string {
 	}
 }
 
-//Personal.AI order the ending

@@ -8,16 +8,20 @@ import (
 	"sync"
 )
 
-// InMemoryIdentityRepository is an in-memory implementation of the identity repositories.
+// InMemoryIdentityRepository provides an in-memory implementation of the identity-related repositories,
+// specifically the UserRepository and GroupRepository.
+// NOTE: Despite the package name 'postgresql', this is an IN-MEMORY implementation,
+// likely used for testing or simple, non-persistent deployments. It uses maps and slices
+// with a mutex for thread-safe operations.
 type InMemoryIdentityRepository struct {
 	mu     sync.RWMutex
 	users  map[string]*types.User
 	groups map[string]*types.UserGroup
-	// In-memory representation of the many-to-many relationship
+	// groupMemberships is an in-memory representation of the many-to-many relationship.
 	groupMemberships map[string][]string // groupID -> []userID
 }
 
-// NewInMemoryIdentityRepository creates a new in-memory identity repository.
+// NewInMemoryIdentityRepository creates a new, empty in-memory identity repository.
 func NewInMemoryIdentityRepository() *InMemoryIdentityRepository {
 	return &InMemoryIdentityRepository{
 		users:            make(map[string]*types.User),
@@ -28,6 +32,7 @@ func NewInMemoryIdentityRepository() *InMemoryIdentityRepository {
 
 // --- UserRepository Implementation ---
 
+// CreateUser adds a new user to the in-memory store.
 func (r *InMemoryIdentityRepository) CreateUser(ctx context.Context, user *types.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -38,6 +43,7 @@ func (r *InMemoryIdentityRepository) CreateUser(ctx context.Context, user *types
 	return nil
 }
 
+// GetUserByID retrieves a user by their ID from the in-memory store.
 func (r *InMemoryIdentityRepository) GetUserByID(ctx context.Context, id string) (*types.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -48,6 +54,7 @@ func (r *InMemoryIdentityRepository) GetUserByID(ctx context.Context, id string)
 	return user, nil
 }
 
+// GetUserByUsername searches for a user by their username in the in-memory store.
 func (r *InMemoryIdentityRepository) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -59,6 +66,7 @@ func (r *InMemoryIdentityRepository) GetUserByUsername(ctx context.Context, user
 	return nil, types.ErrNotFound.WithDetails(map[string]string{"username": username})
 }
 
+// GetUserByEmail searches for a user by their email in the in-memory store.
 func (r *InMemoryIdentityRepository) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -70,6 +78,7 @@ func (r *InMemoryIdentityRepository) GetUserByEmail(ctx context.Context, email s
 	return nil, types.ErrNotFound.WithDetails(map[string]string{"email": email})
 }
 
+// UpdateUser updates an existing user in the in-memory store.
 func (r *InMemoryIdentityRepository) UpdateUser(ctx context.Context, user *types.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -80,6 +89,7 @@ func (r *InMemoryIdentityRepository) UpdateUser(ctx context.Context, user *types
 	return nil
 }
 
+// DeleteUser removes a user from the in-memory store.
 func (r *InMemoryIdentityRepository) DeleteUser(ctx context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -90,6 +100,7 @@ func (r *InMemoryIdentityRepository) DeleteUser(ctx context.Context, id string) 
 	return nil
 }
 
+// ListUsers returns a paginated list of all users from the in-memory store.
 func (r *InMemoryIdentityRepository) ListUsers(ctx context.Context, pq identity.PaginationQuery) ([]*types.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -103,6 +114,7 @@ func (r *InMemoryIdentityRepository) ListUsers(ctx context.Context, pq identity.
 	return users[start:end], nil
 }
 
+// FindUsersByAttribute searches for users with a matching attribute value in the in-memory store.
 func (r *InMemoryIdentityRepository) FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -117,6 +129,7 @@ func (r *InMemoryIdentityRepository) FindUsersByAttribute(ctx context.Context, a
 
 // --- GroupRepository Implementation ---
 
+// CreateGroup adds a new group to the in-memory store.
 func (r *InMemoryIdentityRepository) CreateGroup(ctx context.Context, group *types.UserGroup) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -125,6 +138,7 @@ func (r *InMemoryIdentityRepository) CreateGroup(ctx context.Context, group *typ
 	return nil
 }
 
+// GetGroupByID retrieves a group by its ID from the in-memory store.
 func (r *InMemoryIdentityRepository) GetGroupByID(ctx context.Context, id string) (*types.UserGroup, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -133,6 +147,7 @@ func (r *InMemoryIdentityRepository) GetGroupByID(ctx context.Context, id string
 	return group, nil
 }
 
+// GetGroupByName searches for a group by its name in the in-memory store.
 func (r *InMemoryIdentityRepository) GetGroupByName(ctx context.Context, name string) (*types.UserGroup, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -144,6 +159,7 @@ func (r *InMemoryIdentityRepository) GetGroupByName(ctx context.Context, name st
 	return nil, types.ErrNotFound
 }
 
+// UpdateGroup updates an existing group in the in-memory store.
 func (r *InMemoryIdentityRepository) UpdateGroup(ctx context.Context, group *types.UserGroup) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -152,6 +168,7 @@ func (r *InMemoryIdentityRepository) UpdateGroup(ctx context.Context, group *typ
 	return nil
 }
 
+// DeleteGroup removes a group and its memberships from the in-memory store.
 func (r *InMemoryIdentityRepository) DeleteGroup(ctx context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -161,6 +178,7 @@ func (r *InMemoryIdentityRepository) DeleteGroup(ctx context.Context, id string)
 	return nil
 }
 
+// ListGroups returns a paginated list of all groups from the in-memory store.
 func (r *InMemoryIdentityRepository) ListGroups(ctx context.Context, pq identity.PaginationQuery) ([]*types.UserGroup, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -174,6 +192,7 @@ func (r *InMemoryIdentityRepository) ListGroups(ctx context.Context, pq identity
 	return groups[start:end], nil
 }
 
+// AddUserToGroup creates a membership link between a user and a group in the in-memory store.
 func (r *InMemoryIdentityRepository) AddUserToGroup(ctx context.Context, userID, groupID string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -188,6 +207,7 @@ func (r *InMemoryIdentityRepository) AddUserToGroup(ctx context.Context, userID,
 	return nil
 }
 
+// RemoveUserFromGroup removes a membership link between a user and a group in the in-memory store.
 func (r *InMemoryIdentityRepository) RemoveUserFromGroup(ctx context.Context, userID, groupID string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -204,6 +224,7 @@ func (r *InMemoryIdentityRepository) RemoveUserFromGroup(ctx context.Context, us
 	return nil
 }
 
+// GetUserGroups retrieves all groups a user is a member of from the in-memory store.
 func (r *InMemoryIdentityRepository) GetUserGroups(ctx context.Context, userID string) ([]*types.UserGroup, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -219,5 +240,3 @@ func (r *InMemoryIdentityRepository) GetUserGroups(ctx context.Context, userID s
 	}
 	return userGroups, nil
 }
-
-//Personal.AI order the ending

@@ -18,10 +18,10 @@
 
 <p align="center">
   <a href="README-zh.md">简体中文</a> |
-  <a href="#installation">Installation</a> |
-  <a href="docs/architecture.md">Architecture</a> |
-  <a href="docs/apis.md">API Reference</a> |
-  <a href="#contributing">Contributing</a>
+  <a href="#-getting-started-5-minute-tutorial">Getting Started</a> |
+  <a href="#-development-setup">Development Setup</a> |
+  <a href="#-architecture-overview">Architecture</a> |
+  <a href="#-contributing">Contributing</a>
 </p>
 
 ---
@@ -30,51 +30,126 @@
 
 QuantaID revolutionizes enterprise identity management by providing a **lightweight**, **plugin-based**, and **standards-compliant** unified authentication platform. It addresses the critical pain points of fragmented identity systems, high customization costs, and complex integration challenges across diverse enterprise environments.
 
-## 🌟 Why QuantaID?
+## ✨ Getting Started: 5-Minute Tutorial
 
-In today's complex enterprise landscape, organizations struggle with:
+Get a feel for QuantaID by running the server and interacting with the API.
 
-- **High Customization Costs**: Each identity integration requires weeks of custom development
-- **Limited Component Reusability**: Authentication components cannot be easily shared across products
-- **Fragmented User Experience**: Users manage multiple credentials across different systems
-- **Compliance Challenges**: Inconsistent security baselines across global deployments
-- **Technical Debt Accumulation**: Legacy authentication systems become maintenance nightmares
+### 1. Run the Server
 
-**QuantaID transforms these challenges into competitive advantages:**
+First, clone the repository and install the dependencies:
+```bash
+git clone https://github.com/turtacn/QuantaID.git
+cd QuantaID
+go mod download
+```
 
-| Challenge | QuantaID Solution | Business Impact |
-|-----------|-------------------|-----------------|
-| 🔧 Custom Development | Configuration-Driven Architecture | 60% reduction in delivery time |
-| 🔄 Limited Reusability | Plugin Ecosystem & SDKs | 90% code reuse across products |
-| 🌍 Global Deployment | Multi-form Factor Delivery | Simplified international expansion |
-| 🔒 Security Baseline | Standards-Compliant Core | Unified compliance posture |
-| 🏗️ Technical Debt | API-First Design | Future-proof architecture |
+Now, run the server. No database or other dependencies are needed; it will start with an in-memory store by default.
+```bash
+go run ./cmd/qid-server/
+```
+You should see a log message indicating the server has started on port `8080`.
 
-## 🚀 Key Features
+### 2. Create a User
+Open a new terminal. We'll use `curl` to interact with the API. Let's create a new user:
 
-### 🔐 **Universal Authentication Engine**
-- **Multi-Protocol Support**: OAuth 2.1, OIDC, SAML 2.0, LDAP/LDAPS, RADIUS
-- **Passwordless Authentication**: WebAuthn/FIDO2 support
-- **Adaptive MFA**: Risk-based multi-factor authentication
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
+-H "Content-Type: application/json" \
+-d '{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "password123"
+}'
+```
+You should receive a JSON response with the details of the created user.
 
-### 🔌 **Plugin-First Architecture**
-- **Extensible Connectors**: Custom identity source integrations
-- **Visual Flow Orchestration**: Drag-and-drop authentication workflows
-- **Multi-Language SDKs**: Go, Java, Node.js, Python, C++
+### 3. Log In
+Now, log in with the user you just created to get an access token:
 
-### 🏢 **Enterprise-Grade Features**
-- **Identity Lifecycle Management**: Automated user provisioning/deprovisioning
-- **Fine-Grained Authorization**: RBAC/ABAC/ReBAC support
-- **Comprehensive Auditing**: Structured logging and compliance reporting
-- **High Availability**: Cluster deployment with automatic failover
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+-H "Content-Type: application/json" \
+-d '{
+  "username": "testuser",
+  "password": "password123"
+}'
+```
+The response will contain an `accessToken`. Copy it for the next step.
 
-### 📦 **Flexible Deployment Models**
-- **Standalone Binary**: Zero-dependency deployment
-- **Container-First**: Kubernetes-native with Helm charts
-- **SDK/Library**: Deep integration for performance-critical scenarios
-- **Cloud & On-Premise**: Support for hybrid environments
+### 4. Access a Protected Route
+Finally, use the access token to access a protected endpoint, like retrieving the user's own details. Replace `YOUR_TOKEN_HERE` with the token you copied.
+
+```bash
+# First, get the user ID from the login response. Let's assume it's "user-123" for this example.
+# Then, make the authenticated request:
+USER_ID="user-123" # Replace with the actual ID from the previous step
+TOKEN="YOUR_TOKEN_HERE"
+
+curl http://localhost:8080/api/v1/users/$USER_ID \
+-H "Authorization: Bearer $TOKEN"
+```
+
+You've successfully started the server, created a user, logged in, and used a token for an authenticated API call.
+
+## 🛠️ Development Setup
+
+QuantaID is designed to be easy to set up for development.
+
+### Prerequisites
+* Go 1.21 or higher
+* Docker (optional, for containerized deployment)
+* PostgreSQL 12+ (optional, for production-like deployment)
+
+### Running for Development
+The server is configured to use an in-memory database by default, so you can run it without any external dependencies.
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/turtacn/QuantaID.git
+    cd QuantaID
+    ```
+2.  **Install dependencies:**
+    ```bash
+    go mod download
+    ```
+3.  **Run the server:**
+    ```bash
+    go run ./cmd/qid-server/
+    ```
+    The server will start on `http://localhost:8080`.
+
+4.  **Run tests:**
+    ```bash
+    go test ./...
+    ```
+
+## 🏗️ Project Structure
+
+The project follows the standard Go project layout. All custom source code is in the `cmd`, `internal`, and `pkg` directories.
+
+```
+QuantaID/
+├── cmd/               # Command-line applications
+│   ├── qid/           # Main CLI tool for managing the server.
+│   └── qid-server/    # The server daemon itself.
+├── pkg/               # Public Go packages, intended for use by external applications.
+│   ├── client/        # A Go client SDK for interacting with the QuantaID API.
+│   ├── types/         # Core type definitions (structs, constants) used across the project.
+│   ├── auth/          # The core authentication engine logic.
+│   └── plugins/       # The plugin framework, including interfaces and base implementations.
+├── internal/          # Private application code, not intended for external use.
+│   ├── domain/        # Core business logic and entities, decoupled from frameworks.
+│   ├── orchestrator/  # A workflow engine for multi-step processes like authentication flows.
+│   ├── server/        # HTTP server setup, handlers, and middleware.
+│   ├── services/      # Application services that act as a facade over the domain layer.
+│   └── storage/       # Data persistence implementations (e.g., PostgreSQL, Redis, in-memory).
+├── deployments/       # Deployment configurations (e.g., Docker, Kubernetes).
+└── docs/              # Project documentation.
+```
 
 ## 📊 Architecture Overview
+
+QuantaID is built on a clean, layered architecture that separates concerns and promotes modularity.
 
 ```mermaid
 graph TB
@@ -118,211 +193,19 @@ graph TB
 
 Detailed architecture documentation available at [docs/architecture.md](docs/architecture.md).
 
-## 🛠️ Installation
-
-### Prerequisites
-
-* Go 1.21 or higher
-* Docker (optional, for containerized deployment)
-* PostgreSQL 12+ (for production deployment)
-
-### Quick Start
-
-```bash
-# Install QuantaID CLI
-go install github.com/turtacn/QuantaID/cmd/qid@latest
-
-# Initialize a new deployment
-qid init --config-dir ./qid-config
-
-# Start QuantaID server
-qid server start --config ./qid-config/server.yaml
-```
-
-### Using Docker
-
-```bash
-# Pull the latest image
-docker pull quantaid/quantaid:latest
-
-# Run with docker-compose
-curl -O https://raw.githubusercontent.com/turtacn/QuantaID/main/deployments/docker-compose.yml
-docker-compose up -d
-```
-
-### Kubernetes Deployment
-
-```bash
-# Add QuantaID Helm repository
-helm repo add quantaid https://helm.quantaid.dev
-helm repo update
-
-# Install QuantaID
-helm install quantaid quantaid/quantaid \
-  --set postgresql.enabled=true \
-  --set redis.enabled=true
-```
-
-## 📖 Usage Examples
-
-### Basic Authentication Setup
-
-```go
-package main
-
-import (
-    "context"
-    "log"
-    "github.com/turtacn/QuantaID/pkg/client"
-    "github.com/turtacn/QuantaID/pkg/types"
-)
-
-func main() {
-    // Initialize QuantaID client
-    qid, err := client.New(client.Config{
-        Endpoint: "https://your-quantaid-instance.com",
-        APIKey:   "your-api-key",
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    // Configure OIDC provider
-    provider := &types.IdentityProvider{
-        Name:     "corporate-sso",
-        Type:     "oidc",
-        Enabled:  true,
-        Config: map[string]interface{}{
-            "issuer_url":     "https://your-corp-sso.com",
-            "client_id":      "quantaid-client",
-            "client_secret":  "your-secret",
-            "scopes":         []string{"openid", "profile", "email"},
-        },
-    }
-    
-    ctx := context.Background()
-    if err := qid.IdentityProviders.Create(ctx, provider); err != nil {
-        log.Fatal(err)
-    }
-    
-    // Start authentication flow
-    authURL, err := qid.Auth.GetAuthorizationURL(ctx, &types.AuthRequest{
-        Provider:    "corporate-sso",
-        RedirectURI: "https://your-app.com/callback",
-        State:       "random-state-string",
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    log.Printf("Redirect user to: %s", authURL)
-}
-```
-
-### CLI Usage Examples
-
-```bash
-# Configure LDAP identity source
-qid identity-sources add ldap \
-  --name "corporate-ad" \
-  --host "ldap.corp.com" \
-  --port 636 \
-  --use-tls \
-  --bind-dn "cn=service,ou=apps,dc=corp,dc=com" \
-  --bind-password "secret"
-
-# Set up SAML application
-qid applications create saml \
-  --name "aws-sso" \
-  --acs-url "https://signin.aws.amazon.com/saml" \
-  --entity-id "https://signin.aws.amazon.com/saml" \
-  --attribute-mapping "email:urn:oid:1.2.840.113549.1.9.1"
-
-# Configure adaptive MFA policy
-qid policies create \
-  --name "high-risk-mfa" \
-  --condition "risk_score > 0.7 OR location.country != 'trusted'" \
-  --action "require_mfa:totp,webauthn"
-
-# Monitor authentication metrics
-qid metrics auth --since "24h" --group-by provider
-```
-
-### Command Line Demo Effects
-
-Generate these demo GIFs using the following prompts:
-
-1. **Basic Setup Demo**: Record `qid-demo setup --interactive` showing configuration wizard
-2. **Identity Source Integration**: Record `qid-demo connect ldap --wizard` with step-by-step LDAP setup
-3. **Policy Configuration**: Record `qid-demo policy create --visual` showing drag-and-drop policy builder
-4. **Real-time Monitoring**: Record `qid-demo monitor --dashboard` displaying live authentication metrics
-
-## 🏗️ Project Structure
-
-```
-QuantaID/
-├── cmd/                    # Command-line applications
-│   ├── qid/               # Main CLI tool
-│   └── qid-server/        # Server daemon
-├── pkg/                   # Public Go packages
-│   ├── client/            # Go client SDK
-│   ├── types/             # Core type definitions
-│   ├── auth/              # Authentication engine
-│   └── plugins/           # Plugin framework
-├── internal/              # Private application code
-│   ├── server/            # HTTP/gRPC server
-│   ├── orchestrator/      # Workflow orchestration
-│   └── storage/           # Data persistence
-├── web/                   # Web UI components
-├── deployments/           # Deployment configurations
-├── docs/                  # Documentation
-└── scripts/               # Build and utility scripts
-```
 
 ## 🤝 Contributing
 
 We welcome contributions from the community! Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
 
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/turtacn/QuantaID.git
-cd QuantaID
-
-# Install dependencies
-go mod download
-
-# Run tests
-make test
-
-# Start development server
-make dev
-```
-
 ### Contribution Areas
 
-* 🔌 **Plugin Development**: Create connectors for new identity providers
-* 🌐 **Internationalization**: Add support for new languages
-* 📚 **Documentation**: Improve guides and API documentation
-* 🐛 **Bug Reports**: Help us identify and fix issues
-* ✨ **Feature Requests**: Propose new capabilities
+* 🔌 **Plugin Development**: Create connectors for new identity providers.
+* 🌐 **Internationalization**: Add support for new languages.
+* 📚 **Documentation**: Improve guides and API documentation.
+* 🐛 **Bug Reports**: Help us identify and fix issues.
+* ✨ **Feature Requests**: Propose new capabilities.
 
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Links
-
-* 📖 [Documentation](https://docs.quantaid.dev)
-* 🏗️ [Architecture Guide](docs/architecture.md)
-* 🔧 [API Reference](docs/apis.md)
-* 💬 [Community Forum](https://community.quantaid.dev)
-* 🐛 [Issue Tracker](https://github.com/turtacn/QuantaID/issues)
-* 📈 [Roadmap](https://github.com/turtacn/QuantaID/projects)
-
----
-
-<p align="center">
-  Built with ❤️ by the QuantaID Community
-</p>

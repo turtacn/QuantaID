@@ -74,4 +74,3 @@ func (s *ApplicationService) AddUserToGroup(ctx context.Context, req AddUserToGr
 	return nil
 }
 
-//Personal.AI order the ending

@@ -10,13 +10,22 @@ import (
 	"time"
 )
 
-// ApplicationService provides application-level use cases for auditing.
+// ApplicationService provides application-level use cases for auditing. It acts as an
+// intermediary between the transport layer (e.g., HTTP handlers) and the domain
+// layer (repositories), encapsulating the logic for recording and retrieving audit events.
 type ApplicationService struct {
 	auditRepo auth.AuditLogRepository
 	logger    utils.Logger
 }
 
 // NewApplicationService creates a new audit application service.
+//
+// Parameters:
+//   - auditRepo: The repository for persisting audit log entries.
+//   - logger: The logger for service-level messages.
+//
+// Returns:
+//   A new instance of ApplicationService.
 func NewApplicationService(auditRepo auth.AuditLogRepository, logger utils.Logger) *ApplicationService {
 	return &ApplicationService{
 		auditRepo: auditRepo,
@@ -24,7 +33,16 @@ func NewApplicationService(auditRepo auth.AuditLogRepository, logger utils.Logge
 	}
 }
 
-// RecordEvent records a new audit event.
+// RecordEvent asynchronously records a new audit event. It constructs an AuditLog
+// entry and saves it to the repository in a separate goroutine to avoid blocking the caller.
+//
+// Parameters:
+//   - ctx: The context of the request that triggered the event.
+//   - actorID: The ID of the user or system that performed the action.
+//   - action: A string describing the action (e.g., "user.login").
+//   - resource: The resource that was affected (e.g., "user:123").
+//   - status: The outcome of the action ("success" or "failure").
+//   - eventContext: Additional contextual data about the event.
 func (s *ApplicationService) RecordEvent(ctx context.Context, actorID, action, resource, status string, eventContext map[string]interface{}) {
 	logEntry := &types.AuditLog{
 		ID:        uuid.New().String(),
@@ -44,7 +62,17 @@ func (s *ApplicationService) RecordEvent(ctx context.Context, actorID, action, r
 	}()
 }
 
-// GetUserHistory retrieves the audit history for a specific user.
+// GetUserHistory retrieves a paginated list of audit events for a specific user.
+// It handles input validation for pagination parameters.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - userID: The ID of the user whose history is being requested.
+//   - page: The page number to retrieve.
+//   - pageSize: The number of items per page.
+//
+// Returns:
+//   A slice of audit log entries and an application error if one occurs.
 func (s *ApplicationService) GetUserHistory(ctx context.Context, userID string, page, pageSize int) ([]*types.AuditLog, *types.Error) {
 	if page < 1 {
 		page = 1
@@ -69,4 +97,3 @@ func (s *ApplicationService) GetUserHistory(ctx context.Context, userID string, 
 	return logs, nil
 }
 
-//Personal.AI order the ending

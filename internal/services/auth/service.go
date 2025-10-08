@@ -8,21 +8,32 @@ import (
 	"time"
 )
 
-// ApplicationService provides application-level use cases for authentication.
+// ApplicationService provides application-level use cases for authentication. It acts as
+// a facade over the authentication domain service, handling data transfer objects (DTOs)
+// and coordinating with the domain layer.
 type ApplicationService struct {
 	authDomain *auth.Service
 	logger     utils.Logger
 	config     Config
 }
 
-// Config holds the application-level configuration for the auth service.
+// Config holds the application-level configuration for the auth service,
+// primarily related to token and session lifetimes.
 type Config struct {
 	AccessTokenDuration  time.Duration `yaml:"accessTokenDuration"`
 	RefreshTokenDuration time.Duration `yaml:"refreshTokenDuration"`
 	SessionDuration      time.Duration `yaml:"sessionDuration"`
 }
 
-// NewApplicationService creates a new auth application service.
+// NewApplicationService creates a new authentication application service.
+//
+// Parameters:
+//   - authDomain: The domain service containing the core authentication logic.
+//   - logger: The logger for service-level messages.
+//   - config: The configuration for token and session durations.
+//
+// Returns:
+//   A new instance of ApplicationService.
 func NewApplicationService(authDomain *auth.Service, logger utils.Logger, config Config) *ApplicationService {
 	return &ApplicationService{
 		authDomain: authDomain,
@@ -31,13 +42,14 @@ func NewApplicationService(authDomain *auth.Service, logger utils.Logger, config
 	}
 }
 
-// LoginRequest defines the DTO for a login request.
+// LoginRequest defines the Data Transfer Object (DTO) for a login request.
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 // LoginResponse defines the DTO for a successful login response.
+// It contains the necessary tokens and user information for the client.
 type LoginResponse struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
@@ -46,14 +58,24 @@ type LoginResponse struct {
 	User         *UserDTO `json:"user"`
 }
 
-// UserDTO is a safe representation of a user for API responses.
+// UserDTO is a safe representation of a user, suitable for exposing in API responses.
+// It omits sensitive information like password hashes.
 type UserDTO struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
 
-// Login handles the primary authentication use case.
+// Login handles the primary authentication use case. It takes a login request DTO,
+// passes the credentials to the domain service, and maps the domain response
+// back to a response DTO.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - req: The login request DTO containing user credentials.
+//
+// Returns:
+//   A LoginResponse DTO on success, or an application error on failure.
 func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*LoginResponse, *types.Error) {
 	domainConfig := auth.Config{
 		AccessTokenDuration:  s.config.AccessTokenDuration,
@@ -89,6 +111,13 @@ type LogoutRequest struct {
 }
 
 // Logout handles the session and token invalidation use case.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - req: The logout request DTO containing the session and token to invalidate.
+//
+// Returns:
+//   An application error if the logout process fails.
 func (s *ApplicationService) Logout(ctx context.Context, req LogoutRequest) *types.Error {
 	err := s.authDomain.Logout(ctx, req.SessionID, req.AccessToken)
 	if err != nil {
@@ -99,5 +128,3 @@ func (s *ApplicationService) Logout(ctx context.Context, req LogoutRequest) *typ
 	}
 	return nil
 }
-
-//Personal.AI order the ending

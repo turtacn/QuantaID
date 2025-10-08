@@ -8,6 +8,7 @@ import (
 )
 
 // service implements the IService interface.
+// It provides the core business logic for managing user identities and groups.
 type service struct {
 	userRepo  UserRepository
 	groupRepo GroupRepository
@@ -15,7 +16,18 @@ type service struct {
 	logger    utils.Logger
 }
 
-// NewService creates a new identity service.
+// NewService creates a new identity service instance.
+// It combines the user and group repositories with crypto and logging utilities
+// to provide a complete service for identity management.
+//
+// Parameters:
+//   - userRepo: The repository for user data access.
+//   - groupRepo: The repository for group data access.
+//   - crypto: The utility for cryptographic operations like password hashing.
+//   - logger: The logger for logging service-level messages.
+//
+// Returns:
+//   A new instance of the identity service that implements the IService interface.
 func NewService(userRepo UserRepository, groupRepo GroupRepository, crypto *utils.CryptoManager, logger utils.Logger) IService {
 	return &service{
 		userRepo:  userRepo,
@@ -25,6 +37,18 @@ func NewService(userRepo UserRepository, groupRepo GroupRepository, crypto *util
 	}
 }
 
+// CreateUser handles the business logic for creating a new user.
+// It validates input, checks for existing users with the same username or email,
+// hashes the password, and persists the new user to the repository.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - username: The desired username for the new user.
+//   - email: The desired email for the new user.
+//   - password: The plain-text password for the new user.
+//
+// Returns:
+//   The newly created user object, or an error if the creation fails.
 func (s *service) CreateUser(ctx context.Context, username, email, password string) (*types.User, error) {
 	if username == "" || email == "" || password == "" {
 		return nil, types.ErrValidation.WithDetails(map[string]string{"field": "username/email/password", "error": "cannot be empty"})
@@ -60,6 +84,14 @@ func (s *service) CreateUser(ctx context.Context, username, email, password stri
 	return user, nil
 }
 
+// GetUser retrieves a user by their unique ID.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - userID: The ID of the user to retrieve.
+//
+// Returns:
+//   The user object if found, or an error.
 func (s *service) GetUser(ctx context.Context, userID string) (*types.User, error) {
 	user, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
@@ -68,6 +100,14 @@ func (s *service) GetUser(ctx context.Context, userID string) (*types.User, erro
 	return user, nil
 }
 
+// GetUserByUsername retrieves a user by their unique username.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - username: The username of the user to retrieve.
+//
+// Returns:
+//   The user object if found, or an error.
 func (s *service) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
 	user, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
@@ -76,6 +116,14 @@ func (s *service) GetUserByUsername(ctx context.Context, username string) (*type
 	return user, nil
 }
 
+// GetUserGroups retrieves all groups a user is a member of.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - userID: The ID of the user whose groups are to be retrieved.
+//
+// Returns:
+//   A slice of user groups, or an error.
 func (s *service) GetUserGroups(ctx context.Context, userID string) ([]*types.UserGroup, error) {
 	groups, err := s.groupRepo.GetUserGroups(ctx, userID)
 	if err != nil {
@@ -85,6 +133,16 @@ func (s *service) GetUserGroups(ctx context.Context, userID string) ([]*types.Us
 	return groups, nil
 }
 
+// AddUserToGroup creates a membership link between a user and a group.
+// It first validates that both the user and the group exist before creating the link.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - userID: The ID of the user to add to the group.
+//   - groupID: The ID of the group to which the user will be added.
+//
+// Returns:
+//   An error if the user or group is not found, or if the operation fails.
 func (s *service) AddUserToGroup(ctx context.Context, userID, groupID string) error {
 	_, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
@@ -105,6 +163,15 @@ func (s *service) AddUserToGroup(ctx context.Context, userID, groupID string) er
 	return nil
 }
 
+// ChangeUserStatus updates the status of a user's account.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - userID: The ID of the user whose status is to be changed.
+//   - newStatus: The new status for the user account.
+//
+// Returns:
+//   An error if the user is not found or if the update fails.
 func (s *service) ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error {
 	user, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
@@ -121,4 +188,3 @@ func (s *service) ChangeUserStatus(ctx context.Context, userID string, newStatus
 	return nil
 }
 
-//Personal.AI order the ending

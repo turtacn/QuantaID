@@ -11,28 +11,50 @@ import (
 	"time"
 )
 
-// Client is the main client for interacting with the QuantaID API.
+// Client provides a client for interacting with the QuantaID API.
+// It handles making HTTP requests, authentication, and error handling.
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
 	token      string
+
+	// Services for different API categories
+	Auth     *AuthService
+	Identity *IdentityService
 }
 
 // NewClient creates a new QuantaID API client.
+//
+// Parameters:
+//   - baseURL: The base URL of the QuantaID API server.
+//   - timeout: The timeout for HTTP requests.
+//
+// Returns:
+//   A new QuantaID API client.
 func NewClient(baseURL string, timeout time.Duration) *Client {
-	return &Client{
+	c := &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
 	}
+	c.Auth = &AuthService{client: c}
+	c.Identity = &IdentityService{client: c}
+	return c
 }
 
 // SetAuthToken sets the authentication token to be used for subsequent requests.
+// The token will be included in the Authorization header of all API requests.
+//
+// Parameters:
+//   - token: The authentication token.
 func (c *Client) SetAuthToken(token string) {
 	c.token = token
 }
 
+// newRequest is a helper function to create a new HTTP request.
+// It sets up the URL, method, and body, and adds the necessary headers
+// like Content-Type, Accept, and the Authorization token if available.
 func (c *Client) newRequest(ctx context.Context, method, path string, body interface{}) (*http.Request, error) {
 	url := c.baseURL + path
 
@@ -59,6 +81,10 @@ func (c *Client) newRequest(ctx context.Context, method, path string, body inter
 	return req, nil
 }
 
+// do is a helper function that sends an HTTP request and handles the response.
+// It executes the request, checks for non-successful status codes, and decodes
+// the JSON response body into the provided interface `v`. It also handles
+// standardized API error responses.
 func (c *Client) do(req *http.Request, v interface{}) error {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -85,4 +111,3 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 	return nil
 }
 
-//Personal.AI order the ending

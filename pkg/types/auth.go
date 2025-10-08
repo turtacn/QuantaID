@@ -5,66 +5,95 @@ import (
 	"time"
 )
 
-// AuthRequest represents a generic authentication request.
+// AuthRequest represents a generic authentication request, abstracting over different protocols.
 type AuthRequest struct {
-	Protocol    ProtocolType           `json:"protocol"`
-	Credentials map[string]string      `json:"credentials"`
-	Context     map[string]interface{} `json:"context"`
+	// Protocol specifies the authentication protocol to be used (e.g., OAuth, SAML).
+	Protocol ProtocolType `json:"protocol"`
+	// Credentials holds the user's credentials, such as username/password.
+	Credentials map[string]string `json:"credentials"`
+	// Context provides additional information about the request, like IP address or user agent.
+	Context map[string]interface{} `json:"context"`
 }
 
 // AuthResponse represents a generic authentication response.
 type AuthResponse struct {
-	Success bool          `json:"success"`
-	Token   *Token        `json:"token,omitempty"`
-	User    *User         `json:"user,omitempty"`
-	Error   *Error        `json:"error,omitempty"`
-	Next    *MFAChallenge `json:"next,omitempty"` // For multi-step auth
+	// Success indicates whether the authentication was successful.
+	Success bool `json:"success"`
+	// Token contains the access and refresh tokens if authentication is successful.
+	Token *Token `json:"token,omitempty"`
+	// User holds the profile of the authenticated user.
+	User *User `json:"user,omitempty"`
+	// Error provides details if the authentication failed.
+	Error *Error `json:"error,omitempty"`
+	// Next indicates that a multi-factor authentication step is required.
+	Next *MFAChallenge `json:"next,omitempty"`
 }
 
-// Token represents an access token and related data.
+// Token represents an access token and related data, typically issued upon successful authentication.
 type Token struct {
-	AccessToken  string `json:"accessToken"`
+	// AccessToken is the token used to access protected resources.
+	AccessToken string `json:"accessToken"`
+	// RefreshToken is used to obtain a new access token.
 	RefreshToken string `json:"refreshToken,omitempty"`
-	TokenType    string `json:"tokenType"`
-	ExpiresIn    int64  `json:"expiresIn"` // in seconds
-	IDToken      string `json:"idToken,omitempty"` // For OIDC
+	// TokenType indicates the type of token, usually "Bearer".
+	TokenType string `json:"tokenType"`
+	// ExpiresIn is the lifetime of the access token in seconds.
+	ExpiresIn int64 `json:"expiresIn"`
+	// IDToken is a JWT that contains identity information, used in OIDC.
+	IDToken string `json:"idToken,omitempty"`
 }
 
-// Claims represents the standard claims in a JWT.
+// Claims represents the standard claims in a JWT, with custom claims for QuantaID.
 type Claims struct {
 	jwt.RegisteredClaims
+	// Scope defines the permissions granted by the token.
 	Scope string `json:"scope,omitempty"`
 }
 
 // MFAChallenge represents a challenge for multi-factor authentication.
+// It is returned when an MFA step is required to complete authentication.
 type MFAChallenge struct {
-	MFAProvider AuthMethod               `json:"mfaProvider"`
-	ChallengeID string                   `json:"challengeId"`
-	Options     map[string]interface{} `json:"options,omitempty"`
-}
-
-// MFAVerificationRequest is used to submit an MFA response.
-type MFAVerificationRequest struct {
+	// MFAProvider specifies the MFA method to be used (e.g., TOTP, SMS).
+	MFAProvider AuthMethod `json:"mfaProvider"`
+	// ChallengeID is a unique identifier for this specific MFA attempt.
 	ChallengeID string `json:"challengeId"`
-	Code        string `json:"code"`
+	// Options contains additional information needed for the challenge (e.g., a phone number mask).
+	Options map[string]interface{} `json:"options,omitempty"`
 }
 
-// IdentityProvider represents an external identity source.
+// MFAVerificationRequest is used to submit a response to an MFA challenge.
+type MFAVerificationRequest struct {
+	// ChallengeID is the ID of the challenge being responded to.
+	ChallengeID string `json:"challengeId"`
+	// Code is the verification code provided by the user (e.g., from an authenticator app).
+	Code string `json:"code"`
+}
+
+// IdentityProvider represents a configured external identity source, such as a social login provider or an enterprise directory.
 type IdentityProvider struct {
-	ID            string                 `json:"id" gorm:"primaryKey"`
-	Name          string                 `json:"name" gorm:"uniqueIndex;not null"`
-	Type          ProtocolType           `json:"type" gorm:"not null"`
-	Enabled       bool                   `json:"enabled" gorm:"not null;default:true"`
+	// ID is the unique identifier for the identity provider.
+	ID string `json:"id" gorm:"primaryKey"`
+	// Name is a user-friendly name for the identity provider.
+	Name string `json:"name" gorm:"uniqueIndex;not null"`
+	// Type specifies the protocol used by the provider (e.g., OIDC, SAML).
+	Type ProtocolType `json:"type" gorm:"not null"`
+	// Enabled indicates whether this provider is active.
+	Enabled bool `json:"enabled" gorm:"not null;default:true"`
+	// Configuration stores the settings required to connect to the provider (e.g., client ID, secret).
 	Configuration map[string]interface{} `json:"configuration" gorm:"type:jsonb"`
-	CreatedAt     time.Time              `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt     time.Time              `json:"updatedAt" gorm:"autoUpdateTime"`
+	// CreatedAt is the timestamp when the provider was created.
+	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
+	// UpdatedAt is the timestamp of the last update.
+	UpdatedAt time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
 }
 
 // ConnectorConfig holds the configuration for a specific connector instance.
+// This is passed to a plugin during its initialization.
 type ConnectorConfig struct {
-	InstanceID string                 `json:"instanceId"`
-	ProviderID string                 `json:"providerId"`
-	Config     map[string]interface{} `json:"config"`
+	// InstanceID is a unique ID for this specific instance of the connector.
+	InstanceID string `json:"instanceId"`
+	// ProviderID is the ID of the identity provider this connector is associated with.
+	ProviderID string `json:"providerId"`
+	// Config contains the key-value settings for the connector.
+	Config map[string]interface{} `json:"config"`
 }
-
-//Personal.AI order the ending

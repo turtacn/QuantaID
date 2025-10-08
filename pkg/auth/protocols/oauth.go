@@ -67,4 +67,3 @@ func (a *OAuthAdapter) handleClientCredentials(ctx context.Context, request *typ
 	return nil, types.ErrInternal.WithDetails(map[string]string{"status": "not implemented"})
 }
 
-//Personal.AI order the ending

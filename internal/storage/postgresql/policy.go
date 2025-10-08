@@ -7,19 +7,23 @@ import (
 	"sync"
 )
 
-// InMemoryPolicyRepository is an in-memory implementation of the policy repository.
+// InMemoryPolicyRepository provides an in-memory implementation of the policy repository.
+// NOTE: Despite the package name 'postgresql', this is an IN-MEMORY implementation,
+// likely used for testing or simple, non-persistent deployments. It uses a map
+// with a mutex for thread-safe operations.
 type InMemoryPolicyRepository struct {
 	mu       sync.RWMutex
 	policies map[string]*types.Policy
 }
 
-// NewInMemoryPolicyRepository creates a new in-memory policy repository.
+// NewInMemoryPolicyRepository creates a new, empty in-memory policy repository.
 func NewInMemoryPolicyRepository() *InMemoryPolicyRepository {
 	return &InMemoryPolicyRepository{
 		policies: make(map[string]*types.Policy),
 	}
 }
 
+// CreatePolicy adds a new policy to the in-memory store.
 func (r *InMemoryPolicyRepository) CreatePolicy(ctx context.Context, policy *types.Policy) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -30,6 +34,7 @@ func (r *InMemoryPolicyRepository) CreatePolicy(ctx context.Context, policy *typ
 	return nil
 }
 
+// GetPolicyByID retrieves a policy by its ID from the in-memory store.
 func (r *InMemoryPolicyRepository) GetPolicyByID(ctx context.Context, id string) (*types.Policy, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -40,6 +45,7 @@ func (r *InMemoryPolicyRepository) GetPolicyByID(ctx context.Context, id string)
 	return policy, nil
 }
 
+// UpdatePolicy updates an existing policy in the in-memory store.
 func (r *InMemoryPolicyRepository) UpdatePolicy(ctx context.Context, policy *types.Policy) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -50,6 +56,7 @@ func (r *InMemoryPolicyRepository) UpdatePolicy(ctx context.Context, policy *typ
 	return nil
 }
 
+// DeletePolicy removes a policy from the in-memory store by its ID.
 func (r *InMemoryPolicyRepository) DeletePolicy(ctx context.Context, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -60,6 +67,7 @@ func (r *InMemoryPolicyRepository) DeletePolicy(ctx context.Context, id string) 
 	return nil
 }
 
+// ListPolicies returns a paginated list of all policies from the in-memory store.
 func (r *InMemoryPolicyRepository) ListPolicies(ctx context.Context, pq types.PaginationQuery) ([]*types.Policy, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -73,6 +81,8 @@ func (r *InMemoryPolicyRepository) ListPolicies(ctx context.Context, pq types.Pa
 	return policies[start:end], nil
 }
 
+// FindPoliciesForSubject searches the in-memory store for all policies that apply to a given subject.
+// It supports wildcards for the subject field.
 func (r *InMemoryPolicyRepository) FindPoliciesForSubject(ctx context.Context, subject string) ([]*types.Policy, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -85,6 +95,8 @@ func (r *InMemoryPolicyRepository) FindPoliciesForSubject(ctx context.Context, s
 	return foundPolicies, nil
 }
 
+// FindPoliciesForResource searches the in-memory store for all policies that apply to a given resource.
+// It supports wildcards for the resource field.
 func (r *InMemoryPolicyRepository) FindPoliciesForResource(ctx context.Context, resource string) ([]*types.Policy, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -97,6 +109,8 @@ func (r *InMemoryPolicyRepository) FindPoliciesForResource(ctx context.Context, 
 	return foundPolicies, nil
 }
 
+// FindPoliciesForAction searches the in-memory store for all policies that apply to a given action.
+// It supports wildcards for the action field.
 func (r *InMemoryPolicyRepository) FindPoliciesForAction(ctx context.Context, action string) ([]*types.Policy, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -108,5 +122,3 @@ func (r *InMemoryPolicyRepository) FindPoliciesForAction(ctx context.Context, ac
 	}
 	return foundPolicies, nil
 }
-
-//Personal.AI order the ending

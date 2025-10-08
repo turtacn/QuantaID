@@ -106,4 +106,3 @@ func TestAuthFlow_FailedLogin(t *testing.T) {
 	assert.Equal(t, types.ErrInvalidCredentials.Code, errorResp.Error.Code)
 }
 
-//Personal.AI order the ending

@@ -9,13 +9,21 @@ import (
 	"net/http"
 )
 
-// IdentityHandlers provides HTTP handlers for identity-related endpoints.
+// IdentityHandlers provides HTTP handlers for identity-related endpoints,
+// such as user and group management.
 type IdentityHandlers struct {
 	identityService *identity.ApplicationService
 	logger          utils.Logger
 }
 
-// NewIdentityHandlers creates a new set of identity handlers.
+// NewIdentityHandlers creates a new set of identity-related handlers.
+//
+// Parameters:
+//   - identityService: The application service for identity management logic.
+//   - logger: The logger for handler-specific messages.
+//
+// Returns:
+//   A new IdentityHandlers instance.
 func NewIdentityHandlers(identityService *identity.ApplicationService, logger utils.Logger) *IdentityHandlers {
 	return &IdentityHandlers{
 		identityService: identityService,
@@ -24,6 +32,8 @@ func NewIdentityHandlers(identityService *identity.ApplicationService, logger ut
 }
 
 // CreateUser is the HTTP handler for creating a new user.
+// It decodes the request body, calls the identity service, and writes the
+// newly created user object or an error as a JSON response.
 func (h *IdentityHandlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req identity.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -40,7 +50,9 @@ func (h *IdentityHandlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusCreated, user)
 }
 
-// GetUser is the HTTP handler for retrieving a user by their ID.
+// GetUser is the HTTP handler for retrieving a user by their ID from the URL path.
+// It extracts the user ID, calls the identity service, and writes the
+// user object or an error as a JSON response.
 func (h *IdentityHandlers) GetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, ok := vars["id"]
@@ -57,5 +69,3 @@ func (h *IdentityHandlers) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	WriteJSON(w, http.StatusOK, user)
 }
-
-//Personal.AI order the ending

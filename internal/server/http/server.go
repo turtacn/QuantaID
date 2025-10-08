@@ -14,21 +14,28 @@ import (
 	"time"
 )
 
-// Server is the HTTP server for the QuantaID API.
+// Server encapsulates the HTTP server for the QuantaID API.
+// It manages the server's lifecycle, routing, and dependencies.
 type Server struct {
 	httpServer *http.Server
-	Router     *mux.Router // Changed to be public
-	logger     utils.Logger
+	// Router is the main router for the HTTP server. It is public to allow for extension,
+	// for example, in tests or other specialized configurations.
+	Router *mux.Router
+	logger utils.Logger
 }
 
-// Config holds the configuration for the HTTP server.
+// Config holds the configuration required for the HTTP server.
 type Config struct {
-	Address      string
-	ReadTimeout  time.Duration
+	// Address is the TCP address for the server to listen on (e.g., ":8080").
+	Address string
+	// ReadTimeout is the maximum duration for reading the entire request, including the body.
+	ReadTimeout time.Duration
+	// WriteTimeout is the maximum duration before timing out writes of the response.
 	WriteTimeout time.Duration
 }
 
-// Services holds the application services that the server will depend on.
+// Services is a container for all the application services that the server's handlers will depend on.
+// This struct is used to inject dependencies into the server and its handlers.
 type Services struct {
 	AuthService     *auth.ApplicationService
 	IdentityService *identity.ApplicationService
@@ -36,7 +43,17 @@ type Services struct {
 	CryptoManager   *utils.CryptoManager
 }
 
-// NewServer creates a new HTTP server.
+// NewServer creates and configures a new HTTP server instance.
+// It initializes the router, sets up the server with the given configuration,
+// and registers all the API routes and their corresponding handlers.
+//
+// Parameters:
+//   - config: The configuration for the server (address, timeouts).
+//   - logger: The logger for server-level messages.
+//   - services: A container for all the application services required by the handlers.
+//
+// Returns:
+//   A new, configured but not yet started, Server instance.
 func NewServer(config Config, logger utils.Logger, services Services) *Server {
 	router := mux.NewRouter()
 
@@ -55,7 +72,8 @@ func NewServer(config Config, logger utils.Logger, services Services) *Server {
 	return server
 }
 
-// registerRoutes sets up the API routes and their handlers.
+// registerRoutes sets up the API routes, their handlers, and associated middleware.
+// It defines the structure of the API, including versioning and protected routes.
 func (s *Server) registerRoutes(services Services) {
 	authHandlers := handlers.NewAuthHandlers(services.AuthService, s.logger)
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
@@ -80,7 +98,8 @@ func (s *Server) registerRoutes(services Services) {
 	}).Methods("GET")
 }
 
-// Start runs the HTTP server.
+// Start begins listening for and serving HTTP requests.
+// This is a blocking call. It will only return on a server error (other than ErrServerClosed).
 func (s *Server) Start() {
 	s.logger.Info(context.Background(), "Starting HTTP server", zap.String("address", s.httpServer.Addr))
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -88,12 +107,14 @@ func (s *Server) Start() {
 	}
 }
 
-// Stop gracefully shuts down the HTTP server.
+// Stop gracefully shuts down the HTTP server without interrupting any active connections.
+// It waits for a given context to be done before forcing a shutdown.
+//
+// Parameters:
+//   - ctx: A context to control the shutdown duration.
 func (s *Server) Stop(ctx context.Context) {
 	s.logger.Info(ctx, "Shutting down HTTP server")
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		s.logger.Error(ctx, "HTTP server graceful shutdown failed", zap.Error(err))
 	}
 }
-
-//Personal.AI order the ending

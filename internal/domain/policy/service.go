@@ -8,13 +8,21 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Service encapsulates the business logic for policy evaluation.
+// Service encapsulates the business logic for managing and evaluating authorization policies.
+// It provides the core functionality for making access control decisions.
 type Service struct {
 	repo   Repository
 	logger utils.Logger
 }
 
-// NewService creates a new policy service.
+// NewService creates a new policy service instance.
+//
+// Parameters:
+//   - repo: The repository for accessing policy data.
+//   - logger: The logger for service-level messages.
+//
+// Returns:
+//   A new policy service instance.
 func NewService(repo Repository, logger utils.Logger) *Service {
 	return &Service{
 		repo:   repo,
@@ -22,7 +30,16 @@ func NewService(repo Repository, logger utils.Logger) *Service {
 	}
 }
 
-// Evaluate determines if a subject has permission to perform an action on a resource.
+// Evaluate determines if a subject has permission to perform an action on a resource
+// based on the configured policies. It follows a "deny overrides" model.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - evalCtx: The context containing the subject, action, resource, and environmental data for evaluation.
+//
+// Returns:
+//   A PolicyDecision object indicating whether the action is allowed, along with the reasoning.
+//   Returns an error if policy retrieval fails.
 func (s *Service) Evaluate(ctx context.Context, evalCtx *types.PolicyEvaluationContext) (*types.PolicyDecision, error) {
 	subjects := s.getSubjectsFromContext(evalCtx)
 
@@ -65,6 +82,9 @@ func (s *Service) Evaluate(ctx context.Context, evalCtx *types.PolicyEvaluationC
 	return decision, nil
 }
 
+// policyMatches checks if a given policy applies to the evaluation context.
+// Currently, it checks for matching actions and resources.
+// TODO: Implement condition evaluation for full ABAC support.
 func (s *Service) policyMatches(policy *types.Policy, evalCtx *types.PolicyEvaluationContext) bool {
 	if !s.matchesAction(policy.Actions, evalCtx.Action) {
 		return false
@@ -75,14 +95,20 @@ func (s *Service) policyMatches(policy *types.Policy, evalCtx *types.PolicyEvalu
 	return true
 }
 
+// matchesAction checks if the requested action is covered by the policy's actions.
+// It supports wildcards ('*').
 func (s *Service) matchesAction(policyActions []string, requestAction string) bool {
 	return slices.Contains(policyActions, requestAction) || slices.Contains(policyActions, "*")
 }
 
+// matchesResource checks if the requested resource is covered by the policy's resources.
+// It supports wildcards ('*').
 func (s *Service) matchesResource(policyResources []string, requestResource string) bool {
 	return slices.Contains(policyResources, requestResource) || slices.Contains(policyResources, "*")
 }
 
+// getSubjectsFromContext extracts all relevant subject identifiers from the evaluation context.
+// This includes the user's ID and the IDs of all groups they belong to.
 func (s *Service) getSubjectsFromContext(evalCtx *types.PolicyEvaluationContext) []string {
 	var subjects []string
 	if userID, ok := evalCtx.Subject["id"].(string); ok {
@@ -96,8 +122,14 @@ func (s *Service) getSubjectsFromContext(evalCtx *types.PolicyEvaluationContext)
 	return subjects
 }
 
+// CreatePolicy provides a straightforward way to add a new policy via the service layer.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - policy: The policy object to be created.
+//
+// Returns:
+//   An error if the creation fails.
 func (s *Service) CreatePolicy(ctx context.Context, policy *types.Policy) error {
 	return s.repo.CreatePolicy(ctx, policy)
 }
-
-//Personal.AI order the ending

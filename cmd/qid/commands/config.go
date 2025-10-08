@@ -6,7 +6,8 @@ import (
 	"github.com/turtacn/QuantaID/pkg/utils"
 )
 
-// NewConfigCmd creates the `config` command
+// NewConfigCmd creates the root `config` command and its subcommands.
+// This command acts as a namespace for all configuration-related operations.
 func NewConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
@@ -19,6 +20,9 @@ func NewConfigCmd() *cobra.Command {
 	return cmd
 }
 
+// newConfigValidateCmd creates the `config validate` subcommand.
+// This command is used to parse and validate the server's configuration file
+// without starting the server.
 func newConfigValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
@@ -27,6 +31,7 @@ func newConfigValidateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configPath, _ := cmd.Flags().GetString("config")
 
+			// A dummy logger is used here since we only care about the config parsing result, not logging output.
 			dummyLogger, _ := utils.NewZapLogger(&utils.LoggerConfig{
 				Level:   "error",
 				Console: utils.ConsoleConfig{Enabled: true},
@@ -47,4 +52,3 @@ func newConfigValidateCmd() *cobra.Command {
 	return cmd
 }
 
-//Personal.AI order the ending
