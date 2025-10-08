@@ -1,6 +1,11 @@
 package types
 
-import "time"
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
+	"time"
+)
 
 // AuditLog represents a single audit trail event, capturing a record of an action performed within the system.
 type AuditLog struct {
@@ -27,4 +32,32 @@ type PaginationQuery struct {
 	PageSize int
 	// Offset is the number of items to skip before starting to collect the result set.
 	Offset int
+}
+
+// JSONB represents a JSONB database type, which can be used for flexible data storage.
+type JSONB map[string]interface{}
+
+// Value implements the driver.Valuer interface, allowing the JSONB type to be written to the database.
+func (j JSONB) Value() (driver.Value, error) {
+	if j == nil {
+		return nil, nil
+	}
+	return json.Marshal(j)
+}
+
+// Scan implements the sql.Scanner interface, allowing the JSONB type to be read from the database.
+func (j *JSONB) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("scan source is not []byte, but %T", value)
+	}
+	if len(bytes) == 0 {
+		*j = nil
+		return nil
+	}
+	return json.Unmarshal(bytes, j)
 }
