@@ -9,6 +9,19 @@ import (
 	"strings"
 )
 
+// PostgresConfig holds all configuration for the PostgreSQL database connection.
+type PostgresConfig struct {
+	DSN             string `mapstructure:"dsn"`
+	MaxIdleConns    int    `mapstructure:"maxIdleConns"`
+	MaxOpenConns    int    `mapstructure:"maxOpenConns"`
+	ConnMaxLifetime string `mapstructure:"connMaxLifetime"`
+}
+
+// Config holds all configuration for the application.
+type Config struct {
+	Postgres PostgresConfig `mapstructure:"postgres"`
+}
+
 // ConfigManager is a wrapper around the Viper library that handles loading,
 // accessing, and watching application configuration.
 type ConfigManager struct {
@@ -85,7 +98,10 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("logger.file.maxBackups", 3)
 	v.SetDefault("logger.file.maxAgeDays", 7)
 	v.SetDefault("logger.file.compress", false)
-	v.SetDefault("database.url", "postgres://user:password@localhost:5432/quantid?sslmode=disable")
+	v.SetDefault("postgres.dsn", "postgres://user:password@localhost:5432/quantid?sslmode=disable")
+	v.SetDefault("postgres.maxIdleConns", 10)
+	v.SetDefault("postgres.maxOpenConns", 100)
+	v.SetDefault("postgres.connMaxLifetime", "1h")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
 	v.SetDefault("plugins.directory", "./plugins")
 }

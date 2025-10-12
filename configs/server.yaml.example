@@ -54,14 +54,17 @@ security:
   # Default duration for user sessions.
   sessionDuration: "1h"
 
-# Database configuration (for PostgreSQL)
-database:
+# PostgreSQL database configuration
+postgres:
   # Data Source Name (DSN) for connecting to the PostgreSQL database.
-  url: "postgres://user:password@localhost:5432/quantid?sslmode=disable"
-  # Connection pool settings
-  # maxOpenConns: 25
-  # maxIdleConns: 10
-  # connMaxLifetime: "5m"
+  # Example: "host=localhost user=quantid password=secret dbname=quantid port=5432 sslmode=disable"
+  dsn: "postgres://user:password@localhost:5432/quantid?sslmode=disable"
+  # Maximum number of open connections to the database.
+  maxOpenConns: 100
+  # Maximum number of connections in the idle connection pool.
+  maxIdleConns: 10
+  # Maximum amount of time a connection may be reused.
+  connMaxLifetime: "1h"
 
 # Cache configuration (for Redis)
 cache:

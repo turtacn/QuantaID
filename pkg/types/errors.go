@@ -87,4 +87,5 @@ var (
 	ErrPluginLoadFailed      = NewError("plugin_load_failed", "Failed to load plugin", http.StatusInternalServerError, codes.Internal)
 	ErrPluginNotFound        = NewError("plugin_not_found", "The requested plugin was not found", http.StatusNotFound, codes.NotFound)
 	ErrPluginInitFailed      = NewError("plugin_init_failed", "Failed to initialize plugin", http.StatusInternalServerError, codes.Internal)
+	ErrNotImplemented        = NewError("not_implemented", "This feature is not implemented", http.StatusNotImplemented, codes.Unimplemented)
 )

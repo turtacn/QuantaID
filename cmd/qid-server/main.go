@@ -54,17 +54,40 @@ func main() {
 	// --- Persistence Layer Setup ---
 	// For this example, we are using in-memory repositories.
 	// In a production environment, these would be replaced with actual database-backed implementations.
-	identityRepo := postgresql.NewInMemoryIdentityRepository()
-	authDbRepo := postgresql.NewInMemoryAuthRepository()
-	policyRepo := postgresql.NewInMemoryPolicyRepository()
-	appRepo := postgresql.NewInMemoryApplicationRepository() // New application repo
+	cfgManager, err := utils.NewConfigManager("./configs", "server", "yaml", logger)
+	if err != nil {
+		logger.Error(context.Background(), "Failed to load configuration", zap.Error(err))
+		os.Exit(1)
+	}
+
+	var cfg utils.Config
+	if err := cfgManager.Unmarshal(&cfg); err != nil {
+		logger.Error(context.Background(), "Failed to unmarshal configuration", zap.Error(err))
+		os.Exit(1)
+	}
+
+	db, err := postgresql.NewConnection(cfg.Postgres)
+	if err != nil {
+		logger.Error(context.Background(), "Failed to connect to database", zap.Error(err))
+		os.Exit(1)
+	}
+
+	if err := postgresql.AutoMigrate(db); err != nil {
+		logger.Error(context.Background(), "Failed to auto-migrate database", zap.Error(err))
+		os.Exit(1)
+	}
+
+	identityRepo := postgresql.NewPostgresIdentityRepository(db)
+	policyRepo := postgresql.NewPostgresPolicyRepository(db)
+	appRepo := postgresql.NewPostgresApplicationRepository(db)
+	auditRepo := postgresql.NewPostgresAuditLogRepository(db)
 	sessionRepo := redis.NewInMemorySessionRepository()
 	tokenRepo := redis.NewInMemoryTokenRepository()
 
 	// --- Domain Services Setup ---
 	// These services contain the core business logic.
 	identityDomainSvc := identity.NewService(identityRepo, identityRepo, cryptoManager, logger)
-	authDomainSvc := auth.NewService(identityDomainSvc, sessionRepo, tokenRepo, authDbRepo, cryptoManager, logger)
+	authDomainSvc := auth.NewService(identityDomainSvc, sessionRepo, tokenRepo, auditRepo, cryptoManager, logger)
 	policyDomainSvc := policy.NewService(policyRepo, logger)
 
 	// --- SAML Service Setup ---
