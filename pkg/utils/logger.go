@@ -87,7 +87,8 @@ func getEncoder(format string) zapcore.Encoder {
 func addTraceID(ctx context.Context, fields []zap.Field) []zap.Field {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
-		return append(fields, zap.String("traceID", span.SpanContext().TraceID().String()))
+		fields = append(fields, zap.String("traceID", span.SpanContext().TraceID().String()))
+		fields = append(fields, zap.String("spanID", span.SpanContext().SpanID().String()))
 	}
 	return fields
 }

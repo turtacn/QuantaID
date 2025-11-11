@@ -11,10 +11,15 @@ import (
 // ApplicationService provides application-level use cases for authentication. It acts as
 // a facade over the authentication domain service, handling data transfer objects (DTOs)
 // and coordinating with the domain layer.
+import (
+	"go.opentelemetry.io/otel/trace"
+)
+
 type ApplicationService struct {
 	authDomain *auth.Service
 	logger     utils.Logger
 	config     Config
+	tracer     trace.Tracer
 }
 
 // Config holds the application-level configuration for the auth service,
@@ -34,11 +39,12 @@ type Config struct {
 //
 // Returns:
 //   A new instance of ApplicationService.
-func NewApplicationService(authDomain *auth.Service, logger utils.Logger, config Config) *ApplicationService {
+func NewApplicationService(authDomain *auth.Service, logger utils.Logger, config Config, tracer trace.Tracer) *ApplicationService {
 	return &ApplicationService{
 		authDomain: authDomain,
 		logger:     logger,
 		config:     config,
+		tracer:     tracer,
 	}
 }
 
@@ -77,6 +83,9 @@ type UserDTO struct {
 // Returns:
 //   A LoginResponse DTO on success, or an application error on failure.
 func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*LoginResponse, *types.Error) {
+	ctx, span := s.tracer.Start(ctx, "ApplicationService.Login")
+	defer span.End()
+
 	domainConfig := auth.Config{
 		AccessTokenDuration:  s.config.AccessTokenDuration,
 		RefreshTokenDuration: s.config.RefreshTokenDuration,
@@ -85,6 +94,7 @@ func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*Logi
 
 	authResp, err := s.authDomain.LoginWithPassword(ctx, req.Username, req.Password, domainConfig)
 	if err != nil {
+		span.RecordError(err)
 		if appErr, ok := err.(*types.Error); ok {
 			return nil, appErr
 		}

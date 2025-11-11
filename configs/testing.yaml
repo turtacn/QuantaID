@@ -1,0 +1,14 @@
+# Configuration for testing environment
+logger:
+  level: "debug"
+  format: "console"
+  console:
+    enabled: true
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 1
+  pool_size: 5
+  dial_timeout: 2

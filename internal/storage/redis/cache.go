@@ -2,107 +2,62 @@ package redis
 
 import (
 	"context"
-	"github.com/turtacn/QuantaID/pkg/types"
-	"sync"
+	"fmt"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/turtacn/QuantaID/pkg/types"
 )
 
-// tokenWithValue stores the user ID and expiration for a refresh token.
-type tokenWithValue struct {
-	userID    string
-	expiresAt time.Time
+// RedisTokenRepository provides a Redis-backed implementation of the auth.TokenRepository interface.
+type RedisTokenRepository struct {
+	client *redis.Client
 }
 
-// denyListEntry stores the expiration time for a denied JWT ID (jti).
-type denyListEntry struct {
-	expiresAt time.Time
-}
-
-// InMemoryTokenRepository provides an in-memory implementation of the auth.TokenRepository interface.
-// NOTE: Despite the package name 'redis', this is an IN-MEMORY implementation,
-// likely used for testing or simple, non-persistent deployments. It uses maps
-// with a mutex for thread-safe operations.
-type InMemoryTokenRepository struct {
-	mu            sync.RWMutex
-	refreshTokens map[string]tokenWithValue
-	denyList      map[string]denyListEntry
-}
-
-// NewInMemoryTokenRepository creates a new, empty in-memory token repository.
-func NewInMemoryTokenRepository() *InMemoryTokenRepository {
-	return &InMemoryTokenRepository{
-		refreshTokens: make(map[string]tokenWithValue),
-		denyList:      make(map[string]denyListEntry),
+// NewRedisTokenRepository creates a new Redis token repository.
+func NewRedisTokenRepository(client *redis.Client) *RedisTokenRepository {
+	return &RedisTokenRepository{
+		client: client,
 	}
 }
 
-// StoreRefreshToken saves a refresh token to the in-memory store with a specified duration.
-func (r *InMemoryTokenRepository) StoreRefreshToken(ctx context.Context, token string, userID string, duration time.Duration) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.refreshTokens[token] = tokenWithValue{
-		userID:    userID,
-		expiresAt: time.Now().Add(duration),
-	}
-	return nil
+// StoreRefreshToken saves a refresh token to Redis with a specified duration.
+func (r *RedisTokenRepository) StoreRefreshToken(ctx context.Context, token string, userID string, duration time.Duration) error {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	return r.client.SetEx(ctx, key, userID, duration).Err()
 }
 
-// GetRefreshTokenUserID retrieves the user ID associated with a refresh token from the in-memory store.
-// It returns an error if the token is not found or has expired.
-func (r *InMemoryTokenRepository) GetRefreshTokenUserID(ctx context.Context, token string) (string, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	val, exists := r.refreshTokens[token]
-	if !exists {
-		return "", types.ErrNotFound.WithDetails(map[string]string{"reason": "token not found"})
+// GetRefreshTokenUserID retrieves the user ID associated with a refresh token from Redis.
+func (r *RedisTokenRepository) GetRefreshTokenUserID(ctx context.Context, token string) (string, error) {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	userID, err := r.client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", types.ErrNotFound
 	}
-	if time.Now().After(val.expiresAt) {
-		// Clean up expired token
-		go func() {
-			r.mu.Lock()
-			defer r.mu.Unlock()
-			delete(r.refreshTokens, token)
-		}()
-		return "", types.ErrNotFound.WithDetails(map[string]string{"reason": "token expired"})
+	if err != nil {
+		return "", fmt.Errorf("redis get: %w", err)
 	}
-	return val.userID, nil
+	return userID, nil
 }
 
-// DeleteRefreshToken removes a refresh token from the in-memory store.
-func (r *InMemoryTokenRepository) DeleteRefreshToken(ctx context.Context, token string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	delete(r.refreshTokens, token)
-	return nil
+// DeleteRefreshToken removes a refresh token from Redis.
+func (r *RedisTokenRepository) DeleteRefreshToken(ctx context.Context, token string) error {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	return r.client.Del(ctx, key).Err()
 }
 
-// AddToDenyList adds a JWT ID (jti) to the in-memory deny list with a specified duration.
-// This is used to prevent the reuse of logged-out tokens.
-func (r *InMemoryTokenRepository) AddToDenyList(ctx context.Context, jti string, duration time.Duration) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.denyList[jti] = denyListEntry{
-		expiresAt: time.Now().Add(duration),
-	}
-	return nil
+// AddToDenyList adds a JWT ID (jti) to the deny list in Redis with a specified duration.
+func (r *RedisTokenRepository) AddToDenyList(ctx context.Context, jti string, duration time.Duration) error {
+	key := fmt.Sprintf("deny_list:%s", jti)
+	return r.client.SetEx(ctx, key, "", duration).Err()
 }
 
-// IsInDenyList checks if a JWT ID (jti) exists in the in-memory deny list and has not expired.
-func (r *InMemoryTokenRepository) IsInDenyList(ctx context.Context, jti string) (bool, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	entry, exists := r.denyList[jti]
-	if !exists {
-		return false, nil
+// IsInDenyList checks if a JWT ID (jti) exists in the deny list in Redis.
+func (r *RedisTokenRepository) IsInDenyList(ctx context.Context, jti string) (bool, error) {
+	key := fmt.Sprintf("deny_list:%s", jti)
+	val, err := r.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, fmt.Errorf("redis exists: %w", err)
 	}
-	if time.Now().After(entry.expiresAt) {
-		// Clean up expired entry
-		go func() {
-			r.mu.Lock()
-			defer r.mu.Unlock()
-			delete(r.denyList, jti)
-		}()
-		return false, nil
-	}
-	return true, nil
+	return val == 1, nil
 }
