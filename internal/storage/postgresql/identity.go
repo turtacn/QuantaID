@@ -3,7 +3,6 @@ package postgresql
 import (
 	"context"
 	"fmt"
-	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"sync"
 )
@@ -63,7 +62,7 @@ func (r *InMemoryIdentityRepository) GetUserByUsername(ctx context.Context, user
 			return user, nil
 		}
 	}
-	return nil, types.ErrNotFound.WithDetails(map[string]string{"username": username})
+	return nil, types.ErrUserNotFound
 }
 
 // GetUserByEmail searches for a user by their email in the in-memory store.
@@ -100,18 +99,15 @@ func (r *InMemoryIdentityRepository) DeleteUser(ctx context.Context, id string) 
 	return nil
 }
 
-// ListUsers returns a paginated list of all users from the in-memory store.
-func (r *InMemoryIdentityRepository) ListUsers(ctx context.Context, pq identity.PaginationQuery) ([]*types.User, error) {
+// ListUsers returns a list of all users from the in-memory store.
+func (r *InMemoryIdentityRepository) ListUsers(ctx context.Context) ([]*types.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	users := make([]*types.User, 0, len(r.users))
 	for _, user := range r.users {
 		users = append(users, user)
 	}
-	start, end := pq.Offset, pq.Offset+pq.PageSize
-	if start > len(users) { return []*types.User{}, nil }
-	if end > len(users) { end = len(users) }
-	return users[start:end], nil
+	return users, nil
 }
 
 // FindUsersByAttribute searches for users with a matching attribute value in the in-memory store.
@@ -179,17 +175,14 @@ func (r *InMemoryIdentityRepository) DeleteGroup(ctx context.Context, id string)
 }
 
 // ListGroups returns a paginated list of all groups from the in-memory store.
-func (r *InMemoryIdentityRepository) ListGroups(ctx context.Context, pq identity.PaginationQuery) ([]*types.UserGroup, error) {
+func (r *InMemoryIdentityRepository) ListGroups(ctx context.Context) ([]*types.UserGroup, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	groups := make([]*types.UserGroup, 0, len(r.groups))
 	for _, group := range r.groups {
 		groups = append(groups, group)
 	}
-	start, end := pq.Offset, pq.Offset+pq.PageSize
-	if start > len(groups) { return []*types.UserGroup{}, nil }
-	if end > len(groups) { end = len(groups) }
-	return groups[start:end], nil
+	return groups, nil
 }
 
 // AddUserToGroup creates a membership link between a user and a group in the in-memory store.
@@ -224,7 +217,7 @@ func (r *InMemoryIdentityRepository) RemoveUserFromGroup(ctx context.Context, us
 	return nil
 }
 
-// GetUserGroups retrieves all groups a user is a member of from the in-memory store.
+// GetUserGroups retrieves all groups a user is a member of from the in--memory store.
 func (r *InMemoryIdentityRepository) GetUserGroups(ctx context.Context, userID string) ([]*types.UserGroup, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
