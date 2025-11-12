@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/server/http/handlers"
+	"github.com/turtacn/QuantaID/internal/storage/postgresql"
 	"github.com/turtacn/QuantaID/pkg/plugins/mfa/totp"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
@@ -26,8 +28,20 @@ func main() {
 	// Initialize router
 	router := http.NewServeMux()
 
+	// Initialize repositories
+	db, err := postgresql.NewConnection(utils.PostgresConfig{
+		DSN: "postgres://user:password@localhost:5432/quantid?sslmode=disable",
+	})
+	if err != nil {
+		logger.Error(context.Background(), "Failed to connect to database", zap.Error(err))
+		return
+	}
+	userRepo := postgresql.NewPostgresIdentityRepository(db)
+	auditRepo := postgresql.NewPostgresAuditLogRepository(db)
+
 	// Register handlers
 	RegisterOAuthHandlers(router, logger)
+	handlers.RegisterAdminHandlers(router, userRepo, auditRepo)
 
 	// Initialize CryptoManager
 	cryptoManager := utils.NewCryptoManager("your-jwt-secret")

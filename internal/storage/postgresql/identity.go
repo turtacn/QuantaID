@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"fmt"
+	"strings"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"sync"
 )
@@ -99,15 +100,31 @@ func (r *InMemoryIdentityRepository) DeleteUser(ctx context.Context, id string) 
 	return nil
 }
 
-// ListUsers returns a list of all users from the in-memory store.
-func (r *InMemoryIdentityRepository) ListUsers(ctx context.Context) ([]*types.User, error) {
+
+func (r *InMemoryIdentityRepository) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int64, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	users := make([]*types.User, 0, len(r.users))
+
+	var filteredUsers []*types.User
 	for _, user := range r.users {
-		users = append(users, user)
+		if filter.Search == "" || (strings.Contains(user.Username, filter.Search) || strings.Contains(user.Email, filter.Search)) {
+			filteredUsers = append(filteredUsers, user)
+		}
 	}
-	return users, nil
+
+	total := int64(len(filteredUsers))
+
+	start := filter.Offset
+	if start > len(filteredUsers) {
+		start = len(filteredUsers)
+	}
+
+	end := start + filter.Limit
+	if end > len(filteredUsers) {
+		end = len(filteredUsers)
+	}
+
+	return filteredUsers[start:end], total, nil
 }
 
 // FindUsersByAttribute searches for users with a matching attribute value in the in-memory store.

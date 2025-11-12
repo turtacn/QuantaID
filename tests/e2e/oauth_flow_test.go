@@ -36,8 +36,20 @@ func (m *mockUserRepo) GetUserByEmail(ctx context.Context, email string) (*types
 	return &types.User{Email: email}, nil
 }
 
+func (m *mockUserRepo) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	return &types.User{ID: "test_user", Username: username, Status: types.UserStatusActive, Attributes: map[string]interface{}{"name": "test"}, Email: "test@test.com"}, nil
+}
+
 func (m *mockUserRepo) CreateUser(ctx context.Context, user *types.User) error {
 	return nil
+}
+
+func (m *mockUserRepo) UpdateUser(ctx context.Context, user *types.User) error {
+	return nil
+}
+
+func (m *mockUserRepo) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int64, error) {
+	return []*types.User{}, 0, nil
 }
 
 type mockAppRepo struct{}
@@ -143,7 +155,6 @@ func TestOAuthAuthorizationCodeFlow(t *testing.T) {
 			return http.ErrUseLastResponse
 		},
 	}
-	req.URL.Query().Add("user_id", "test_user")
 	resp, _ := client.Do(req)
 
 	if resp.StatusCode != http.StatusFound {

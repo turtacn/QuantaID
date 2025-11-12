@@ -32,7 +32,7 @@ func (s *LDAPSyncService) FullSync(ctx context.Context) error {
 		ldapUserMap[user.Username] = user
 	}
 
-	localUsers, err := s.userRepo.ListUsers(ctx)
+	localUsers, _, err := s.userRepo.ListUsers(ctx, types.UserFilter{})
 	if err != nil {
 		return err
 	}

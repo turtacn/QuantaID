@@ -100,6 +100,16 @@ const (
 	UserTypeFederated UserType = "federated"
 )
 
+// HasRole checks if the user has a specific role.
+func (u *User) HasRole(roleName string) bool {
+	for _, group := range u.Groups {
+		if group.Name == roleName {
+			return true
+		}
+	}
+	return false
+}
+
 // UserRepository defines the interface for user persistence.
 type UserRepository interface {
 	GetUserByID(ctx context.Context, id string) (*User, error)
@@ -107,5 +117,11 @@ type UserRepository interface {
 	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	CreateUser(ctx context.Context, user *User) error
 	UpdateUser(ctx context.Context, user *User) error
-	ListUsers(ctx context.Context) ([]*User, error)
+	ListUsers(ctx context.Context, filter UserFilter) ([]*User, int64, error)
+}
+
+type UserFilter struct {
+	Search string
+	Offset int
+	Limit  int
 }
