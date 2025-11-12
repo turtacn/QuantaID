@@ -44,10 +44,11 @@ func TestAddTraceID(t *testing.T) {
 
 	fields := addTraceID(ctx, []zap.Field{})
 
-	require.Len(t, fields, 1, "One field should have been added")
-	field := fields[0]
-	assert.Equal(t, "traceID", field.Key, "Field key should be 'traceID'")
-	assert.Equal(t, traceID.String(), field.String, "Field value should match the trace ID")
+	require.Len(t, fields, 2, "Two fields should have been added")
+	assert.Equal(t, "traceID", fields[0].Key, "Field key should be 'traceID'")
+	assert.Equal(t, traceID.String(), fields[0].String, "Field value should match the trace ID")
+	assert.Equal(t, "spanID", fields[1].Key, "Field key should be 'spanID'")
+	assert.Equal(t, spanID.String(), fields[1].String, "Field value should match the span ID")
 }
 
 func TestAddTraceID_NoSpan(t *testing.T) {
@@ -55,4 +56,3 @@ func TestAddTraceID_NoSpan(t *testing.T) {
 	fields := addTraceID(ctx, []zap.Field{})
 	assert.Empty(t, fields, "No fields should be added when there is no span in context")
 }
-

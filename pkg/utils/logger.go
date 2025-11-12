@@ -152,3 +152,13 @@ type FileConfig struct {
 	// Compress determines if the rotated log files should be compressed.
 	Compress bool `yaml:"compress"`
 }
+
+// NewNoopLogger creates a logger that discards all logs.
+func NewNoopLogger() Logger {
+	return &zapLogger{logger: zap.NewNop()}
+}
+
+// NewZapLoggerWrapper wraps a zap.Logger in a utils.Logger.
+func NewZapLoggerWrapper(logger *zap.Logger) Logger {
+	return &zapLogger{logger: logger}
+}

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"time"
 )
 
@@ -98,3 +99,10 @@ const (
 	UserTypeService   UserType = "service_account"
 	UserTypeFederated UserType = "federated"
 )
+
+// UserRepository defines the interface for user persistence.
+type UserRepository interface {
+	GetUserByID(ctx context.Context, id string) (*User, error)
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	CreateUser(ctx context.Context, user *User) error
+}

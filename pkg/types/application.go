@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // Application represents a client application that integrates with QuantaID
 // for authentication and authorization. This could be a web app, a mobile app,
@@ -24,6 +27,11 @@ type Application struct {
 	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
 	// UpdatedAt is the timestamp of the last update.
 	UpdatedAt time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
+}
+
+// ApplicationRepository defines the interface for application persistence.
+type ApplicationRepository interface {
+	GetApplicationByClientID(ctx context.Context, clientID string) (*Application, error)
 }
 
 // ApplicationStatus defines the possible states of an application.

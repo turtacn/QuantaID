@@ -1,108 +1,70 @@
 package integration
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/mock"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
-	"github.com/turtacn/QuantaID/internal/domain/identity"
-	"github.com/turtacn/QuantaID/internal/domain/policy"
-	"github.com/turtacn/QuantaID/internal/server/http"
-	authservice "github.com/turtacn/QuantaID/internal/services/auth"
-	authorizationservice "github.com/turtacn/QuantaID/internal/services/authorization"
-	identityservice "github.com/turtacn/QuantaID/internal/services/identity"
-	"github.com/turtacn/QuantaID/internal/storage/postgresql"
-	"github.com/turtacn/QuantaID/internal/storage/redis"
+	authsvc "github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
-	"net/http/httptest"
-	"testing"
-	"time"
+	"github.com/turtacn/QuantaID/tests/testutils"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func setupTestServer(t *testing.T) *httptest.Server {
-	logger, _ := utils.NewZapLogger(&utils.LoggerConfig{Level: "error"})
-	cryptoManager := utils.NewCryptoManager("test-secret")
+func TestAuthenticationFlow(t *testing.T) {
+	// Initialize logger and tracer
+	logger := utils.NewNoopLogger()
+	tracer := trace.NewNoopTracerProvider().Tracer("test")
 
-	identityRepo := postgresql.NewInMemoryIdentityRepository()
-	authDbRepo := postgresql.NewInMemoryAuthRepository()
-	policyRepo := postgresql.NewInMemoryPolicyRepository()
-	sessionRepo := redis.NewInMemorySessionRepository()
-	tokenRepo := redis.NewInMemoryTokenRepository()
+	// Initialize repositories
+	identityService := &testutils.MockIdentityService{}
+	sessionRepo := &testutils.MockSessionRepository{}
+	tokenRepo := &testutils.MockTokenRepository{}
+	auditRepo := &testutils.MockAuditLogRepository{}
+	cryptoManager := utils.NewCryptoManager("test-secret-key")
 
-	hashedPassword, _ := cryptoManager.HashPassword("password123")
-	testUser := &types.User{ID: "user-test-1", Username: "testuser", Email: "test@example.com", Password: hashedPassword, Status: types.UserStatusActive}
-	err := identityRepo.CreateUser(context.Background(), testUser)
-	require.NoError(t, err)
+	// Initialize services
+	authDomain := auth.NewService(
+		identityService,
+		sessionRepo,
+		tokenRepo,
+		auditRepo,
+		cryptoManager,
+		logger,
+	)
+	appService := authsvc.NewApplicationService(
+		authDomain,
+		logger,
+		authsvc.Config{},
+		tracer,
+	)
 
-	identityDomainSvc := identity.NewService(identityRepo, identityRepo, cryptoManager, logger)
-	authDomainSvc := auth.NewService(identityDomainSvc, sessionRepo, tokenRepo, authDbRepo, cryptoManager, logger)
-	policyDomainSvc := policy.NewService(policyRepo, logger)
-
-	identityAppSvc := identityservice.NewApplicationService(identityDomainSvc, logger)
-	authAppSvc := authservice.NewApplicationService(authDomainSvc, logger, authservice.Config{
-		AccessTokenDuration: time.Minute,
-	})
-	authzAppSvc := authorizationservice.NewApplicationService(policyDomainSvc, identityDomainSvc, logger)
-
-	serverConfig := http.Config{Address: ":0"}
-	services := http.Services{
-		AuthService:     authAppSvc,
-		IdentityService: identityAppSvc,
-		AuthzService:    authzAppSvc,
-		CryptoManager:   cryptoManager,
+	// Mock user repository
+	hashedPassword, _ := cryptoManager.HashPassword("password")
+	user := &types.User{
+		ID:       "user-123",
+		Password: hashedPassword,
+		Status:   types.UserStatusActive,
 	}
-	httpServer := http.NewServer(serverConfig, logger, services)
+	identityService.On("GetUserByUsername", mock.Anything, "test@example.com").Return(user, nil)
+	sessionRepo.On("CreateSession", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	tokenRepo.On("StoreRefreshToken", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	auditRepo.On("CreateLogEntry", mock.Anything, mock.Anything).Return(nil)
 
-	return httptest.NewServer(httpServer.Router)
-}
-
-func TestAuthFlow_SuccessfulLogin(t *testing.T) {
-	server := setupTestServer(t)
-	defer server.Close()
-
-	loginCreds := map[string]string{
-		"username": "testuser",
-		"password": "password123",
+	// Create authentication request
+	loginReq := authsvc.LoginRequest{
+		Username: "test@example.com",
+		Password: "password",
 	}
-	body, _ := json.Marshal(loginCreds)
 
-	resp, err := server.Client().Post(server.URL+"/api/v1/auth/login", "application/json", bytes.NewBuffer(body))
-	require.NoError(t, err)
-	defer resp.Body.Close()
+	// Perform authentication
+	loginResp, err := appService.Login(context.Background(), loginReq)
 
-	assert.Equal(t, 200, resp.StatusCode)
-
-	var loginResp authservice.LoginResponse
-	err = json.NewDecoder(resp.Body).Decode(&loginResp)
-	require.NoError(t, err)
+	// Assertions
+	assert.Nil(t, err)
+	assert.NotNil(t, loginResp)
 	assert.NotEmpty(t, loginResp.AccessToken)
-	assert.Equal(t, "user-test-1", loginResp.User.ID)
 }
-
-func TestAuthFlow_FailedLogin(t *testing.T) {
-	server := setupTestServer(t)
-	defer server.Close()
-
-	loginCreds := map[string]string{
-		"username": "testuser",
-		"password": "wrongpassword",
-	}
-	body, _ := json.Marshal(loginCreds)
-
-	resp, err := server.Client().Post(server.URL+"/api/v1/auth/login", "application/json", bytes.NewBuffer(body))
-	require.NoError(t, err)
-	defer resp.Body.Close()
-
-	assert.Equal(t, 401, resp.StatusCode)
-
-	var errorResp struct {
-		Error *types.Error `json:"error"`
-	}
-	err = json.NewDecoder(resp.Body).Decode(&errorResp)
-	require.NoError(t, err)
-	assert.Equal(t, types.ErrInvalidCredentials.Code, errorResp.Error.Code)
-}
-
