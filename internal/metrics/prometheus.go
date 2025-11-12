@@ -1,0 +1,95 @@
+package metrics
+
+import (
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+	// HTTPRequestsTotal is a counter for total HTTP requests.
+	HTTPRequestsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "quantaid_http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "path", "status"},
+	)
+
+	// HTTPRequestDuration is a histogram for HTTP request latencies.
+	HTTPRequestDuration = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "quantaid_http_request_duration_seconds",
+			Help:    "HTTP request duration in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "path"},
+	)
+
+	// DBQueriesTotal is a counter for total database queries.
+	DBQueriesTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "quantaid_db_queries_total",
+			Help: "Total number of database queries executed",
+		},
+	)
+
+	// CacheHitsTotal is a counter for total cache hits.
+	CacheHitsTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "quantaid_cache_hits_total",
+			Help: "Total number of cache hits",
+		},
+	)
+
+	// CacheMissesTotal is a counter for total cache misses.
+	CacheMissesTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "quantaid_cache_misses_total",
+			Help: "Total number of cache misses",
+		},
+	)
+
+	// OauthTokensIssuedTotal is a counter for the total number of OAuth tokens issued.
+	OauthTokensIssuedTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "quantaid_oauth_tokens_issued_total",
+			Help: "Total number of OAuth tokens issued",
+		},
+	)
+
+	// MFAVerificationsTotal is a counter for MFA verifications.
+	MFAVerificationsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "quantaid_mfa_verifications_total",
+			Help: "Total number of MFA verifications",
+		},
+		[]string{"status"}, // "success" or "failure"
+	)
+)
+
+// Middleware returns a Gin middleware for recording Prometheus metrics.
+func Middleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		duration := time.Since(start).Seconds()
+		status := strconv.Itoa(c.Writer.Status())
+		path := c.FullPath() // Use the route path template to avoid high cardinality
+
+		HTTPRequestsTotal.WithLabelValues(c.Request.Method, path, status).Inc()
+		HTTPRequestDuration.WithLabelValues(c.Request.Method, path).Observe(duration)
+	}
+}
+
+// Handler returns a Gin handler for serving Prometheus metrics.
+func Handler() gin.HandlerFunc {
+	h := promhttp.Handler()
+	return func(c *gin.Context) {
+		h.ServeHTTP(c.Writer, c.Request)
+	}
+}

@@ -1,0 +1,39 @@
+replicaCount: 3
+
+image:
+  repository: quantaid/quantaid
+  tag: "v0.7.0"
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+postgresql:
+  enabled: true
+  auth:
+    username: quantaid
+    password: <generated>
+    database: quantaid
+  primary:
+    persistence:
+      size: 20Gi
+
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: <generated>
+  master:
+    persistence:
+      size: 8Gi

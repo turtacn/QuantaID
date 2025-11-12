@@ -1,0 +1,3 @@
+- When adding new metrics, follow the naming convention `quantaid_<subsystem>_<metric>_<unit>`.
+- Use labels sparingly and with low cardinality to avoid performance issues with Prometheus.
+- For histograms, use the default buckets unless you have a specific reason to change them.

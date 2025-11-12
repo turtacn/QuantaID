@@ -17,6 +17,10 @@ func NewConnection(config utils.PostgresConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
+	if err := db.Use(&PrometheusPlugin{}); err != nil {
+		return nil, fmt.Errorf("failed to use prometheus plugin: %w", err)
+	}
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
@@ -49,5 +53,26 @@ func AutoMigrate(db *gorm.DB) error {
 	if err != nil {
 		return fmt.Errorf("gorm auto-migration failed: %w", err)
 	}
+
+	// Add custom indexes
+	// User table indexes
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC)").Error; err != nil {
+		return err
+	}
+
+	// AuditLog table indexes
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_audit_logs_user_action ON audit_logs(user_id, action, created_at DESC)").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_audit_logs_ip ON audit_logs(ip_address, created_at DESC)").Error; err != nil {
+		return err
+	}
+
 	return nil
 }

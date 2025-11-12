@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -22,7 +21,9 @@ func main() {
 		Format: "json",
 	})
 	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
+		// If logger fails to initialize, we can't use it. Fall back to standard log.
+		fmt.Fprintf(os.Stderr, "Failed to initialize logger: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Initialize router

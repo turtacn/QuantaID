@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/metrics"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"time"
@@ -101,6 +102,7 @@ func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*Logi
 		return nil, types.ErrInternal.WithCause(err)
 	}
 
+	metrics.OauthTokensIssuedTotal.Inc()
 	return &LoginResponse{
 		AccessToken:  authResp.Token.AccessToken,
 		RefreshToken: authResp.Token.RefreshToken,

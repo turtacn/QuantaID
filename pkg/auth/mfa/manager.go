@@ -3,6 +3,7 @@ package mfa
 import (
 	"context"
 	"fmt"
+	"github.com/turtacn/QuantaID/internal/metrics"
 	"github.com/turtacn/QuantaID/pkg/plugins"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
@@ -80,10 +81,12 @@ func (m *Manager) VerifyChallenge(ctx context.Context, challengeID, code string)
 	delete(m.challengeStore, challengeID)
 
 	if !isValid {
+		metrics.MFAVerificationsTotal.WithLabelValues("failure").Inc()
 		m.logger.Warn(ctx, "MFA verification failed", zap.String("challengeID", challengeID))
 		return false, nil
 	}
 
+	metrics.MFAVerificationsTotal.WithLabelValues("success").Inc()
 	m.logger.Info(ctx, "MFA verification successful", zap.String("challengeID", challengeID))
 	return true, nil
 }

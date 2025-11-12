@@ -1,0 +1,3 @@
+- When adding new caching strategies, ensure that a randomized TTL is used to prevent cache avalanches.
+- Cache keys should follow a consistent naming convention, e.g., `type:id`.
+- For cache-aside strategies, ensure that the fallback to the database is handled gracefully and that the cache is populated after a cache miss.
