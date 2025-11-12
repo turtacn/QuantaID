@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/rand"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -116,4 +117,42 @@ func (cm *CryptoManager) ValidateJWT(tokenString string) (jwt.MapClaims, error) 
 //   A new UUID string.
 func (cm *CryptoManager) GenerateUUID() string {
 	return uuid.New().String()
+}
+
+// GenerateRecoveryCodes creates a slice of 10 unique, 8-character alphanumeric recovery codes.
+//
+// Returns:
+//  A slice of recovery codes.
+func (cm *CryptoManager) GenerateRecoveryCodes() ([]string, error) {
+	codes := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		code, err := cm.generateSingleRecoveryCode()
+		if err != nil {
+			return nil, err
+		}
+		codes[i] = code
+	}
+	return codes, nil
+}
+
+// generateSingleRecoveryCode generates a single 8-character alphanumeric recovery code.
+func (cm *CryptoManager) generateSingleRecoveryCode() (string, error) {
+	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	bytes := make([]byte, 8)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	for i, b := range bytes {
+		bytes[i] = letters[b%byte(len(letters))]
+	}
+	return string(bytes), nil
+}
+
+// HashRecoveryCode generates a bcrypt hash of a recovery code.
+func (cm *CryptoManager) HashRecoveryCode(code string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash recovery code: %w", err)
+	}
+	return string(bytes), nil
 }

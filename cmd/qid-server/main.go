@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/pkg/plugins/mfa/totp"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
 )
@@ -26,6 +28,14 @@ func main() {
 
 	// Register handlers
 	RegisterOAuthHandlers(router, logger)
+
+	// Initialize CryptoManager
+	cryptoManager := utils.NewCryptoManager("your-jwt-secret")
+
+	// In a real application, you would initialize the MFA policy with its dependencies.
+	totpProvider := &totp.TOTPProvider{}
+	mfaPolicy := auth.NewMFAPolicy(nil, nil, totpProvider)
+	RegisterMFAHandlers(router, mfaPolicy, logger, cryptoManager)
 
 	// Start server
 	port := os.Getenv("PORT")

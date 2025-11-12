@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/turtacn/QuantaID/pkg/types"
 )
@@ -136,4 +137,39 @@ func (m *MockAuditLogRepository) GetLogsByAction(ctx context.Context, action str
 func (m *MockAuditLogRepository) GetLogsForUser(ctx context.Context, userID string, pq types.PaginationQuery) ([]*types.AuditLog, error) {
 	args := m.Called(ctx, userID, pq)
 	return args.Get(0).([]*types.AuditLog), args.Error(1)
+}
+
+// MockMFARepository is a mock implementation of the MFARepository interface
+type MockMFARepository struct {
+	mock.Mock
+}
+
+func (m *MockMFARepository) CreateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
+	args := m.Called(ctx, config)
+	return args.Error(0)
+}
+
+func (m *MockMFARepository) GetUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) (*types.UserMFAConfig, error) {
+	args := m.Called(ctx, userID, method)
+	return args.Get(0).(*types.UserMFAConfig), args.Error(1)
+}
+
+func (m *MockMFARepository) GetUserMFAConfigs(ctx context.Context, userID uuid.UUID) ([]*types.UserMFAConfig, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]*types.UserMFAConfig), args.Error(1)
+}
+
+func (m *MockMFARepository) UpdateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
+	args := m.Called(ctx, config)
+	return args.Error(0)
+}
+
+func (m *MockMFARepository) DeleteUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) error {
+	args := m.Called(ctx, userID, method)
+	return args.Error(0)
+}
+
+func (m *MockMFARepository) CreateMFAVerificationLog(ctx context.Context, log *types.MFAVerificationLog) error {
+	args := m.Called(ctx, log)
+	return args.Error(0)
 }
