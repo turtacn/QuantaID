@@ -1,0 +1,1258 @@
+import_graph:
+  application:
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/internal/domain/application
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  audit:
+  - github.com/google/uuid
+  - github.com/turtacn/QuantaID/internal/domain/auth
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - time
+  auth:
+  - github.com/turtacn/QuantaID/internal/domain/identity
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - time
+  - github.com/turtacn/QuantaID/pkg/types
+  - time
+  - github.com/turtacn/QuantaID/internal/domain/auth
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - time
+  - github.com/turtacn/QuantaID/pkg/plugins
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  authorization:
+  - github.com/turtacn/QuantaID/internal/domain/identity
+  - github.com/turtacn/QuantaID/internal/domain/policy
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  client:
+  - github.com/turtacn/QuantaID/internal/services/auth
+  - bytes
+  - encoding/json
+  - github.com/turtacn/QuantaID/pkg/types
+  - time
+  - github.com/turtacn/QuantaID/internal/services/identity
+  - github.com/turtacn/QuantaID/pkg/types
+  commands:
+  - github.com/spf13/cobra
+  - github.com/turtacn/QuantaID/pkg/utils
+  - github.com/spf13/cobra
+  handlers:
+  - encoding/json
+  - github.com/turtacn/QuantaID/internal/services/auth
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - github.com/turtacn/QuantaID/internal/protocols/saml
+  - github.com/turtacn/QuantaID/pkg/utils
+  - encoding/json
+  - github.com/turtacn/QuantaID/internal/services/application
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - encoding/json
+  - github.com/gorilla/mux
+  - github.com/turtacn/QuantaID/internal/services/identity
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - encoding/json
+  - github.com/turtacn/QuantaID/pkg/types
+  http:
+  - github.com/gorilla/mux
+  - github.com/turtacn/QuantaID/internal/protocols/saml
+  - github.com/turtacn/QuantaID/internal/server/http/handlers
+  - github.com/turtacn/QuantaID/internal/server/middleware
+  - github.com/turtacn/QuantaID/internal/services/application
+  - github.com/turtacn/QuantaID/internal/services/auth
+  - github.com/turtacn/QuantaID/internal/services/authorization
+  - github.com/turtacn/QuantaID/internal/services/identity
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - time
+  identity:
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/internal/domain/identity
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  main:
+  - github.com/spf13/cobra
+  - github.com/turtacn/QuantaID/cmd/qid/commands
+  - crypto/rand
+  - crypto/rsa
+  - crypto/x509
+  - crypto/x509/pkix
+  - github.com/turtacn/QuantaID/internal/domain/auth
+  - github.com/turtacn/QuantaID/internal/domain/identity
+  - github.com/turtacn/QuantaID/internal/domain/policy
+  - github.com/turtacn/QuantaID/internal/protocols/saml
+  - github.com/turtacn/QuantaID/internal/server/http
+  - github.com/turtacn/QuantaID/internal/services/application
+  - github.com/turtacn/QuantaID/internal/services/auth
+  - github.com/turtacn/QuantaID/internal/services/authorization
+  - github.com/turtacn/QuantaID/internal/services/identity
+  - github.com/turtacn/QuantaID/internal/storage/postgresql
+  - github.com/turtacn/QuantaID/internal/storage/redis
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - math/big
+  - syscall
+  - time
+  mfa:
+  - github.com/turtacn/QuantaID/pkg/plugins
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  middleware:
+  - encoding/json
+  - github.com/turtacn/QuantaID/internal/services/authorization
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - time
+  orchestrator:
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  plugins:
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - sync
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - sync
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  policy:
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - golang.org/x/exp/slices
+  - github.com/turtacn/QuantaID/pkg/types
+  postgresql:
+  - github.com/turtacn/QuantaID/pkg/types
+  - gorm.io/gorm
+  - github.com/turtacn/QuantaID/pkg/types
+  - gorm.io/gorm
+  - github.com/turtacn/QuantaID/pkg/types
+  - gorm.io/gorm
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - gorm.io/driver/postgres
+  - gorm.io/gorm
+  - time
+  - github.com/turtacn/QuantaID/pkg/types
+  - sync
+  - github.com/turtacn/QuantaID/internal/domain/identity
+  - github.com/turtacn/QuantaID/pkg/types
+  - gorm.io/gorm
+  - github.com/turtacn/QuantaID/pkg/types
+  - golang.org/x/exp/slices
+  - sync
+  - github.com/turtacn/QuantaID/pkg/types
+  - gorm.io/gorm
+  - github.com/turtacn/QuantaID/pkg/types
+  - sync
+  - github.com/turtacn/QuantaID/internal/domain/identity
+  - github.com/turtacn/QuantaID/pkg/types
+  - sync
+  protocols:
+  - github.com/turtacn/QuantaID/pkg/plugins
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  - github.com/turtacn/QuantaID/pkg/plugins
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - github.com/turtacn/QuantaID/pkg/plugins
+  - github.com/turtacn/QuantaID/pkg/types
+  - github.com/turtacn/QuantaID/pkg/utils
+  - go.uber.org/zap
+  redis:
+  - github.com/turtacn/QuantaID/pkg/types
+  - sync
+  - time
+  - github.com/turtacn/QuantaID/pkg/types
+  - sync
+  - time
+  saml:
+  - crypto/rsa
+  - crypto/x509
+  - github.com/crewjam/saml
+  - github.com/turtacn/QuantaID/internal/domain/application
+  - github.com/turtacn/QuantaID/internal/domain/identity
+  - github.com/turtacn/QuantaID/pkg/utils
+  types:
+  - time
+  - github.com/golang-jwt/jwt/v4
+  - time
+  - time
+  - database/sql/driver
+  - encoding/json
+  - time
+  - time
+  - google.golang.org/grpc/codes
+  - google.golang.org/grpc/status
+  utils:
+  - bytes
+  - github.com/fsnotify/fsnotify
+  - github.com/spf13/viper
+  - go.uber.org/zap
+  - go.opentelemetry.io/otel/trace
+  - go.uber.org/zap
+  - go.uber.org/zap/zapcore
+  - gopkg.in/natefinch/lumberjack.v2
+  - github.com/golang-jwt/jwt/v4
+  - github.com/google/uuid
+  - golang.org/x/crypto/bcrypt
+  - time
+  workflows:
+  - github.com/turtacn/QuantaID/internal/orchestrator
+  - github.com/turtacn/QuantaID/internal/services/auth
+  - github.com/turtacn/QuantaID/pkg/types
+packages:
+  application:
+    comments:
+    - ApplicationService provides application-level use cases for managing applications.
+    - CreateApplicationRequest defines the DTO for a request to create a new application.
+    - GetApplicationByID retrieves an application by its ID.
+    - It acts as a facade over the application domain repository.
+    - It outlines the CRUD and query operations for Application entities.
+    - NewApplicationService creates a new application service.
+    - Repository defines the persistence interface for application-related data.
+    files:
+    - internal/domain/application/repository.go
+    - internal/services/application/service.go
+    functions:
+    - CreateApplication
+    - GetApplicationByID
+    - NewApplicationService
+    imports:
+    - context
+    - github.com/turtacn/QuantaID/internal/domain/application
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    interfaces:
+    - Repository
+    structs:
+    - ApplicationService
+    - CreateApplicationRequest
+    summary: ApplicationService provides application-level use cases for managing
+      applications. CreateApplicationRequest defines the DTO for a request to create
+      a new application.
+  audit:
+    comments:
+    - '// Parameters:'
+    - ApplicationService provides application-level use cases for auditing. It acts
+      as an
+    - NewApplicationService creates a new audit application service.
+    - intermediary between the transport layer (e.g., HTTP handlers) and the domain
+    - layer (repositories), encapsulating the logic for recording and retrieving audit
+      events.
+    files:
+    - internal/services/audit/service.go
+    functions:
+    - GetUserHistory
+    - NewApplicationService
+    - RecordEvent
+    imports:
+    - context
+    - github.com/google/uuid
+    - github.com/turtacn/QuantaID/internal/domain/auth
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - time
+    interfaces: []
+    structs:
+    - ApplicationService
+    summary: '// Parameters: ApplicationService provides application-level use cases
+      for auditing. It acts as an'
+  auth:
+    comments:
+    - '- pluginManager: The plugin manager to use for retrieving authentication plugins.'
+    - '// Parameters:'
+    - ApplicationService provides application-level use cases for authentication.
+      It acts as
+    - Config holds configuration for the auth service, specifically token and session
+      lifetimes.
+    - Config holds the application-level configuration for the auth service,
+    - Engine is the central component for orchestrating authentication and authorization
+      flows.
+    - IdentityProviderRepository defines the CRUD interface for managing identity
+      provider configurations in the database.
+    - It brings together all the necessary dependencies to handle authentication logic.
+    - It uses a plugin-based architecture to support various authentication protocols
+      and identity providers.
+    - NewEngine creates a new authentication engine.
+    files:
+    - internal/domain/auth/service.go
+    - internal/domain/auth/repository.go
+    - internal/services/auth/service.go
+    - pkg/auth/engine.go
+    functions:
+    - Authenticate
+    - Login
+    - LoginWithPassword
+    - Logout
+    - NewApplicationService
+    - NewEngine
+    - createSessionAndTokens
+    - getPluginNameForProtocol
+    - logAuthFailure
+    - logAuthSuccess
+    imports:
+    - context
+    - fmt
+    - github.com/turtacn/QuantaID/internal/domain/auth
+    - github.com/turtacn/QuantaID/internal/domain/identity
+    - github.com/turtacn/QuantaID/pkg/plugins
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - time
+    interfaces:
+    - AuditLogRepository
+    - IdentityProviderRepository
+    - SessionRepository
+    - TokenRepository
+    structs:
+    - ApplicationService
+    - Config
+    - Engine
+    - LoginRequest
+    - LoginResponse
+    - LogoutRequest
+    - Service
+    - UserDTO
+    summary: '- pluginManager: The plugin manager to use for retrieving authentication
+      plugins. // Parameters:'
+  authorization:
+    comments:
+    - '// Parameters:'
+    - ApplicationService provides application-level use cases for authorization. It
+      acts as
+    - NewApplicationService creates a new authorization application service.
+    - a facade over the policy and identity domain services to determine if a user
+    - has permission to perform a specific action on a resource.
+    files:
+    - internal/services/authorization/service.go
+    functions:
+    - CheckPermission
+    - NewApplicationService
+    imports:
+    - context
+    - github.com/turtacn/QuantaID/internal/domain/identity
+    - github.com/turtacn/QuantaID/internal/domain/policy
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    interfaces: []
+    structs:
+    - ApplicationService
+    - CheckPermissionRequest
+    summary: '// Parameters: ApplicationService provides application-level use cases
+      for authorization. It acts as'
+  client:
+    comments:
+    - '- baseURL: The base URL of the QuantaID API server.'
+    - '- ctx: The context for the API request.'
+    - '- username: The user''s username.'
+    - '- username: The username for the new user.'
+    - '// Parameters:'
+    - AuthService handles authentication-related API calls.
+    - Client provides a client for interacting with the QuantaID API.
+    - CreateUser creates a new user in QuantaID.
+    - IdentityService handles identity-related API calls.
+    - It handles making HTTP requests, authentication, and error handling.
+    files:
+    - pkg/client/auth.go
+    - pkg/client/client.go
+    - pkg/client/identity.go
+    functions:
+    - CreateUser
+    - GetUserByID
+    - Login
+    - Logout
+    - NewClient
+    - SetAuthToken
+    - do
+    - newRequest
+    imports:
+    - bytes
+    - context
+    - encoding/json
+    - fmt
+    - github.com/turtacn/QuantaID/internal/services/auth
+    - github.com/turtacn/QuantaID/internal/services/identity
+    - github.com/turtacn/QuantaID/pkg/types
+    - io
+    - net/http
+    - time
+    interfaces: []
+    structs:
+    - AuthService
+    - Client
+    - IdentityService
+    summary: '- baseURL: The base URL of the QuantaID API server. - ctx: The context
+      for the API request.'
+  commands:
+    comments:
+    - It runs the server in the foreground, streaming its stdout and stderr, and waits
+      for it to exit.
+    - NewConfigCmd creates the root `config` command and its subcommands.
+    - NewServerCmd creates the root `server` command and its subcommands.
+    - This command acts as a namespace for all configuration-related operations.
+    - This command acts as a namespace for all server process management operations.
+    - This command is responsible for locating and launching the `qid-server` daemon
+      process.
+    - This command is used to parse and validate the server's configuration file
+    - newConfigValidateCmd creates the `config validate` subcommand.
+    - newServerStartCmd creates the `server start` subcommand.
+    - without starting the server.
+    files:
+    - cmd/qid/commands/config.go
+    - cmd/qid/commands/server.go
+    functions:
+    - NewConfigCmd
+    - NewServerCmd
+    - newConfigValidateCmd
+    - newServerStartCmd
+    imports:
+    - fmt
+    - github.com/spf13/cobra
+    - github.com/turtacn/QuantaID/pkg/utils
+    - os
+    - os/exec
+    interfaces: []
+    structs: []
+    summary: It runs the server in the foreground, streaming its stdout and stderr,
+      and waits for it to exit. NewConfigCmd creates the root `config` command and
+      its subcommands.
+  handlers:
+    comments:
+    - '- authService: The application service that contains the core authentication
+      logic.'
+    - '- identityService: The application service for identity management logic.'
+    - '- logger: The logger for handler-specific messages.'
+    - '- samlService: The service that contains the core SAML IdP logic.'
+    - '- w: The http.ResponseWriter to write the response to.'
+    - '// Parameters:'
+    - ApplicationHandlers provides HTTP handlers for application-related endpoints.
+    - AuthHandlers provides HTTP handlers for authentication-related endpoints.
+    - CreateApplication is the HTTP handler for creating a new application.
+    - IdentityHandlers provides HTTP handlers for identity-related endpoints,
+    files:
+    - internal/server/http/handlers/auth.go
+    - internal/server/http/handlers/saml.go
+    - internal/server/http/handlers/application.go
+    - internal/server/http/handlers/identity.go
+    - internal/server/http/handlers/helpers.go
+    functions:
+    - CreateApplication
+    - CreateUser
+    - GetUser
+    - HandleMetadata
+    - HandleSSO
+    - Login
+    - Logout
+    - NewApplicationHandlers
+    - NewAuthHandlers
+    - NewIdentityHandlers
+    - NewSAMLHandlers
+    - WriteJSON
+    - WriteJSONError
+    imports:
+    - encoding/json
+    - github.com/gorilla/mux
+    - github.com/turtacn/QuantaID/internal/protocols/saml
+    - github.com/turtacn/QuantaID/internal/services/application
+    - github.com/turtacn/QuantaID/internal/services/auth
+    - github.com/turtacn/QuantaID/internal/services/identity
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - net/http
+    interfaces: []
+    structs:
+    - ApplicationHandlers
+    - AuthHandlers
+    - IdentityHandlers
+    - SAMLHandlers
+    summary: '- authService: The application service that contains the core authentication
+      logic. - identityService: The application service for identity management logic.'
+  http:
+    comments:
+    - Config holds the configuration required for the HTTP server.
+    - It manages the server's lifecycle, routing, and dependencies.
+    - Server encapsulates the HTTP server for the QuantaID API.
+    - Services is a container for all the application services that the server's handlers
+      will depend on.
+    - This struct is used to inject dependencies into the server and its handlers.
+    files:
+    - internal/server/http/server.go
+    functions:
+    - NewServer
+    - Start
+    - Stop
+    - registerRoutes
+    imports:
+    - context
+    - github.com/gorilla/mux
+    - github.com/turtacn/QuantaID/internal/protocols/saml
+    - github.com/turtacn/QuantaID/internal/server/http/handlers
+    - github.com/turtacn/QuantaID/internal/server/middleware
+    - github.com/turtacn/QuantaID/internal/services/application
+    - github.com/turtacn/QuantaID/internal/services/auth
+    - github.com/turtacn/QuantaID/internal/services/authorization
+    - github.com/turtacn/QuantaID/internal/services/identity
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - net/http
+    - time
+    interfaces: []
+    structs:
+    - Config
+    - Server
+    - Services
+    summary: Config holds the configuration required for the HTTP server. It manages
+      the server's lifecycle, routing, and dependencies.
+  identity:
+    comments:
+    - ApplicationService provides application-level use cases for identity management.
+    - CreateUser handles the user creation use case.
+    - CreateUserRequest defines the request structure for creating a new user.
+    - GetUserByID handles the use case of retrieving a single user.
+    - GroupRepository defines the persistence interface for user group-related data.
+    - IService defines the public contract for the identity domain service.
+    - It combines the user and group repositories with crypto and logging utilities
+    - It exposes methods for managing users and their group memberships, abstracting
+    - It outlines the CRUD (Create, Read, Update, Delete) and query operations for
+      user entities.
+    - It outlines the CRUD and membership management operations for group entities.
+    files:
+    - internal/domain/identity/service.go
+    - internal/domain/identity/interface.go
+    - internal/domain/identity/repository.go
+    - internal/services/identity/service.go
+    functions:
+    - AddUserToGroup
+    - ChangeUserStatus
+    - CreateUser
+    - GetUser
+    - GetUserByID
+    - GetUserByUsername
+    - GetUserGroups
+    - NewApplicationService
+    - NewService
+    imports:
+    - context
+    - github.com/turtacn/QuantaID/internal/domain/identity
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    interfaces:
+    - GroupRepository
+    - IService
+    - TransactionalRepository
+    - UserRepository
+    structs:
+    - AddUserToGroupRequest
+    - ApplicationService
+    - CreateUserRequest
+    - PaginationQuery
+    - service
+    summary: ApplicationService provides application-level use cases for identity
+      management. CreateUser handles the user creation use case.
+  main:
+    comments:
+    - '- Initializing configuration and utilities (logger, crypto).'
+    - '- Setting up the persistence layer (in-memory repositories in this case).'
+    - Execute adds all child commands to the root command and sets flags appropriately.
+    - If the command execution fails, it prints the error to stderr and exits.
+    - It is responsible for the complete setup and teardown of the application.
+    - It's the entry point for the entire CLI application, configured using the Cobra
+      library.
+    - 'This includes:'
+    - This is called by main.main(). It only needs to happen once to the rootCmd.
+    - main is the entry point for the QuantaID server.
+    - rootCmd represents the base command when called without any subcommands.
+    files:
+    - cmd/qid/main.go
+    - cmd/qid-server/main.go
+    functions:
+    - Execute
+    - init
+    - main
+    imports:
+    - context
+    - crypto/rand
+    - crypto/rsa
+    - crypto/x509
+    - crypto/x509/pkix
+    - fmt
+    - github.com/spf13/cobra
+    - github.com/turtacn/QuantaID/cmd/qid/commands
+    - github.com/turtacn/QuantaID/internal/domain/auth
+    - github.com/turtacn/QuantaID/internal/domain/identity
+    - github.com/turtacn/QuantaID/internal/domain/policy
+    - github.com/turtacn/QuantaID/internal/protocols/saml
+    - github.com/turtacn/QuantaID/internal/server/http
+    - github.com/turtacn/QuantaID/internal/services/application
+    - github.com/turtacn/QuantaID/internal/services/auth
+    - github.com/turtacn/QuantaID/internal/services/authorization
+    - github.com/turtacn/QuantaID/internal/services/identity
+    - github.com/turtacn/QuantaID/internal/storage/postgresql
+    - github.com/turtacn/QuantaID/internal/storage/redis
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - math/big
+    - os
+    - os/signal
+    - syscall
+    - time
+    interfaces: []
+    structs: []
+    summary: 入口模块。- Initializing configuration and utilities (logger, crypto). - Setting
+      up the persistence layer (in-memory repositories in this case).
+  mfa:
+    comments:
+    - Manager orchestrates the multi-factor authentication process.
+    - NewManager creates a new MFA manager.
+    - TriggerChallenge determines the appropriate MFA method for a user and sends
+      a challenge.
+    - VerifyChallenge verifies a user's response to an MFA challenge.
+    files:
+    - pkg/auth/mfa/manager.go
+    functions:
+    - NewManager
+    - TriggerChallenge
+    - VerifyChallenge
+    - getMfaMethodForUser
+    - getPluginNameForMethod
+    imports:
+    - context
+    - fmt
+    - github.com/turtacn/QuantaID/pkg/plugins
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    interfaces: []
+    structs:
+    - Manager
+    summary: Manager orchestrates the multi-factor authentication process. NewManager
+      creates a new MFA manager.
+  middleware:
+    comments:
+    - AuthMiddleware is a middleware component that protects HTTP routes by requiring
+    - ContextKey is a custom type for context keys to prevent collisions between packages.
+    - It initializes the status code to http.StatusOK.
+    - NewAuthMiddleware creates a new instance of the authentication middleware.
+    - UserIDContextKey is the key used to store the authenticated user's ID in the
+      request context.
+    - WriteHeader captures the status code before calling the original WriteHeader
+      method.
+    - a valid JSON Web Token (JWT) in the Authorization header.
+    - newResponseWriter creates a new responseWriter, wrapping the original http.ResponseWriter.
+    - responseWriter is a wrapper around http.ResponseWriter that allows for capturing
+    - the status code of the response, which is not normally available to middleware.
+    files:
+    - internal/server/middleware/auth.go
+    - internal/server/middleware/logging.go
+    functions:
+    - Execute
+    - NewAuthMiddleware
+    - NewLoggingMiddleware
+    - WriteHeader
+    - newResponseWriter
+    - writeError
+    imports:
+    - context
+    - encoding/json
+    - github.com/turtacn/QuantaID/internal/services/authorization
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - net/http
+    - strings
+    - time
+    interfaces: []
+    structs:
+    - AuthMiddleware
+    - LoggingMiddleware
+    - responseWriter
+    summary: AuthMiddleware is a middleware component that protects HTTP routes by
+      requiring ContextKey is a custom type for context keys to prevent collisions
+      between packages.
+  orchestrator:
+    comments:
+    - Each step receives the current context and state, and can modify the state.
+    - It acts as a shared memory space for a single workflow execution.
+    - It returns an error to halt the workflow execution.
+    - State is a map used to pass data between workflow steps.
+    - StepFunc defines the function signature for a single workflow step.
+    files:
+    - internal/orchestrator/engine.go
+    functions:
+    - Execute
+    - NewEngine
+    - RegisterWorkflow
+    imports:
+    - context
+    - fmt
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    interfaces: []
+    structs:
+    - Engine
+    - Step
+    - Workflow
+    summary: Each step receives the current context and state, and can modify the
+      state. It acts as a shared memory space for a single workflow execution.
+  plugins:
+    comments:
+    - '- registry: The plugin registry containing available plugin factories.'
+    - '// Parameters:'
+    - BasePlugin provides a skeletal implementation of the IPlugin interface
+    - IIdentityConnector defines the interface for plugins that connect to external
+      identity sources,
+    - IMFAProvider defines the interface for plugins that provide multi-factor authentication
+      methods,
+    - IPlugin is the fundamental interface for all plugins in the QuantaID system.
+    - It defines the basic lifecycle and identification methods that every plugin
+      must implement.
+    - It is used by the registry to instantiate plugins on demand.
+    - It's intended to be embedded in concrete plugin implementations.
+    - Manager handles the lifecycle of all plugins. It is responsible for loading,
+    files:
+    - pkg/plugins/interfaces.go
+    - pkg/plugins/registry.go
+    - pkg/plugins/manager.go
+    - pkg/plugins/base.go
+    functions:
+    - GetPlugin
+    - GetPluginFactory
+    - HealthCheck
+    - Initialize
+    - ListPlugins
+    - ListPluginsByType
+    - LoadAndStartPlugins
+    - Name
+    - NewManager
+    - NewRegistry
+    - RegisterPlugin
+    - Start
+    - Stop
+    - StopAllPlugins
+    - Type
+    imports:
+    - context
+    - fmt
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - sync
+    interfaces:
+    - IEventHandler
+    - IIdentityConnector
+    - IMFAProvider
+    - IPlugin
+    - IProtocolAdapter
+    structs:
+    - BasePlugin
+    - Manager
+    - PluginConfig
+    - Registry
+    summary: '- registry: The plugin registry containing available plugin factories.
+      // Parameters:'
+  policy:
+    comments:
+    - '- repo: The repository for accessing policy data.'
+    - '// Parameters:'
+    - It outlines the CRUD operations and query methods needed to manage and evaluate
+      policies.
+    - It provides the core functionality for making access control decisions.
+    - NewService creates a new policy service instance.
+    - PolicyTemplateRepository defines an interface for managing reusable policy templates.
+    - Repository defines the persistence interface for authorization policies.
+    - Service encapsulates the business logic for managing and evaluating authorization
+      policies.
+    - Templates allow for the easy creation of standardized policies.
+    files:
+    - internal/domain/policy/service.go
+    - internal/domain/policy/repository.go
+    functions:
+    - CreatePolicy
+    - Evaluate
+    - NewService
+    - getSubjectsFromContext
+    - matchesAction
+    - matchesResource
+    - policyMatches
+    imports:
+    - context
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - golang.org/x/exp/slices
+    interfaces:
+    - PolicyTemplateRepository
+    - Repository
+    structs:
+    - Service
+    summary: '- repo: The repository for accessing policy data. // Parameters:'
+  postgresql:
+    comments:
+    - '--- ApplicationRepository Implementation ---'
+    - '--- AuditLogRepository Implementation ---'
+    - '--- IdentityProviderRepository Implementation ---'
+    - '--- PolicyRepository Implementation ---'
+    - '--- UserRepository Implementation ---'
+    - AutoMigrate runs the GORM auto-migration, which creates or updates the database
+      schema
+    - CreateApplication adds a new application to the database.
+    - CreateApplication adds a new application to the in-memory store.
+    - CreateLogEntry adds a new audit log entry to the database.
+    - CreatePolicy adds a new policy to the database.
+    files:
+    - internal/storage/postgresql/postgres_policy_repository.go
+    - internal/storage/postgresql/postgres_auditlog_repository.go
+    - internal/storage/postgresql/postgres_auth_repository.go
+    - internal/storage/postgresql/db.go
+    - internal/storage/postgresql/auth.go
+    - internal/storage/postgresql/postgres_repository.go
+    - internal/storage/postgresql/policy.go
+    - internal/storage/postgresql/postgres_application_repository.go
+    - internal/storage/postgresql/application.go
+    - internal/storage/postgresql/identity.go
+    functions:
+    - AddUserToGroup
+    - AutoMigrate
+    - CreateApplication
+    - CreateGroup
+    - CreateLogEntry
+    - CreatePolicy
+    - CreateProvider
+    - CreateUser
+    - DeleteApplication
+    - DeleteGroup
+    - DeletePolicy
+    - DeleteProvider
+    - DeleteUser
+    - FindPoliciesForAction
+    - FindPoliciesForResource
+    - FindPoliciesForSubject
+    - FindUsersByAttribute
+    - GetApplicationByID
+    - GetApplicationByName
+    - GetGroupByID
+    - GetGroupByName
+    - GetLogsByAction
+    - GetLogsForUser
+    - GetPolicyByID
+    - GetProviderByID
+    - GetProviderByName
+    - GetUserByEmail
+    - GetUserByID
+    - GetUserByUsername
+    - GetUserGroups
+    - ListApplications
+    - ListGroups
+    - ListPolicies
+    - ListProviders
+    - ListUsers
+    - NewConnection
+    - NewInMemoryApplicationRepository
+    - NewInMemoryAuthRepository
+    - NewInMemoryIdentityRepository
+    - NewInMemoryPolicyRepository
+    - NewPostgresApplicationRepository
+    - NewPostgresAuditLogRepository
+    - NewPostgresAuthRepository
+    - NewPostgresIdentityRepository
+    - NewPostgresPolicyRepository
+    - RemoveUserFromGroup
+    - UpdateApplication
+    - UpdateGroup
+    - UpdatePolicy
+    - UpdateProvider
+    - UpdateUser
+    imports:
+    - context
+    - fmt
+    - github.com/turtacn/QuantaID/internal/domain/identity
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - golang.org/x/exp/slices
+    - gorm.io/driver/postgres
+    - gorm.io/gorm
+    - sync
+    - time
+    interfaces: []
+    structs:
+    - InMemoryApplicationRepository
+    - InMemoryAuthRepository
+    - InMemoryIdentityRepository
+    - InMemoryPolicyRepository
+    - PostgresApplicationRepository
+    - PostgresAuditLogRepository
+    - PostgresAuthRepository
+    - PostgresIdentityRepository
+    - PostgresPolicyRepository
+    summary: '--- ApplicationRepository Implementation --- --- AuditLogRepository
+      Implementation ---'
+  protocols:
+    comments:
+    - HandleAuthRequest processes an incoming OAuth 2.1 authentication request.
+    - HandleAuthRequest processes an incoming OIDC authentication request.
+    - HandleAuthRequest processes an incoming SAML authentication request.
+    - Initialize sets up the adapter.
+    - NewOAuthAdapter is the factory function for this plugin.
+    - NewOIDCAdapter is the factory function for this plugin.
+    - NewSAMLAdapter is the factory function for this plugin.
+    - OAuthAdapter implements the IProtocolAdapter for OAuth 2.1.
+    - OIDCAdapter implements the IProtocolAdapter for OpenID Connect 1.0.
+    - SAMLAdapter implements the IProtocolAdapter for SAML 2.0.
+    files:
+    - pkg/auth/protocols/oidc.go
+    - pkg/auth/protocols/saml.go
+    - pkg/auth/protocols/oauth.go
+    functions:
+    - GetUserInfo
+    - HandleAuthRequest
+    - Initialize
+    - NewOAuthAdapter
+    - NewOIDCAdapter
+    - NewSAMLAdapter
+    - buildSAMLAssertion
+    - generateIDToken
+    - handleAuthorizationCode
+    - handleClientCredentials
+    - handleRefreshToken
+    - handleSSORequest
+    imports:
+    - context
+    - github.com/turtacn/QuantaID/pkg/plugins
+    - github.com/turtacn/QuantaID/pkg/types
+    - github.com/turtacn/QuantaID/pkg/utils
+    - go.uber.org/zap
+    - strings
+    interfaces: []
+    structs:
+    - OAuthAdapter
+    - OIDCAdapter
+    - SAMLAdapter
+    summary: HandleAuthRequest processes an incoming OAuth 2.1 authentication request.
+      HandleAuthRequest processes an incoming OIDC authentication request.
+  redis:
+    comments:
+    - InMemorySessionRepository provides an in-memory implementation of the auth.SessionRepository
+      interface.
+    - InMemoryTokenRepository provides an in-memory implementation of the auth.TokenRepository
+      interface.
+    - 'NOTE: Despite the package name ''redis'', this is an IN-MEMORY implementation,'
+    - denyListEntry stores the expiration time for a denied JWT ID (jti).
+    - likely used for testing or simple, non-persistent deployments. It uses a map
+    - likely used for testing or simple, non-persistent deployments. It uses maps
+    - sessionWithValue stores a user session along with its expiration time for in-memory
+      management.
+    - tokenWithValue stores the user ID and expiration for a refresh token.
+    - with a mutex for thread-safe operations.
+    files:
+    - internal/storage/redis/session.go
+    - internal/storage/redis/cache.go
+    functions:
+    - AddToDenyList
+    - CreateSession
+    - DeleteRefreshToken
+    - DeleteSession
+    - GetRefreshTokenUserID
+    - GetSession
+    - GetUserSessions
+    - IsInDenyList
+    - NewInMemorySessionRepository
+    - NewInMemoryTokenRepository
+    - StoreRefreshToken
+    imports:
+    - context
+    - github.com/turtacn/QuantaID/pkg/types
+    - sync
+    - time
+    interfaces: []
+    structs:
+    - InMemorySessionRepository
+    - InMemoryTokenRepository
+    - denyListEntry
+    - sessionWithValue
+    - tokenWithValue
+    summary: InMemorySessionRepository provides an in-memory implementation of the
+      auth.SessionRepository interface. InMemoryTokenRepository provides an in-memory
+      implementation of the auth.TokenRepository interface.
+  saml:
+    comments:
+    - GetServiceProvider looks up a service provider by its metadata URL (entityID).
+    - NewService creates a new SAML protocol service and configures the underlying
+      IdP.
+    - Service now acts as a wrapper around the crewjam/saml IdentityProvider
+    - This method implements the saml.ServiceProviderProvider interface.
+    - and implements the necessary provider interfaces.
+    files:
+    - internal/protocols/saml/service.go
+    functions:
+    - GetServiceProvider
+    - GetSession
+    - HandleMetadata
+    - HandleSSO
+    imports:
+    - crypto/rsa
+    - crypto/x509
+    - github.com/crewjam/saml
+    - github.com/turtacn/QuantaID/internal/domain/application
+    - github.com/turtacn/QuantaID/internal/domain/identity
+    - github.com/turtacn/QuantaID/pkg/utils
+    - net/http
+    - net/url
+    interfaces: []
+    structs:
+    - Service
+    summary: GetServiceProvider looks up a service provider by its metadata URL (entityID).
+      NewService creates a new SAML protocol service and configures the underlying
+      IdP.
+  types:
+    comments:
+    - Application represents a client application that integrates with QuantaID
+    - ApplicationStatus defines the possible states of an application.
+    - AuditLog represents a single audit trail event, capturing a record of an action
+      performed within the system.
+    - AuthMethod defines the types of authentication methods or factors.
+    - AuthRequest represents a generic authentication request, abstracting over different
+      protocols.
+    - AuthResponse represents a generic authentication response.
+    - Build-time variables, injected by the linker.
+    - Claims represents the standard claims in a JWT, with custom claims for QuantaID.
+    - Condition represents a set of complex, attribute-based conditions for a policy
+      to be evaluated.
+    - Effect defines whether a policy allows or denies an action.
+    files:
+    - pkg/types/user.go
+    - pkg/types/auth.go
+    - pkg/types/policy.go
+    - pkg/types/constants.go
+    - pkg/types/common.go
+    - pkg/types/application.go
+    - pkg/types/errors.go
+    functions:
+    - Error
+    - NewError
+    - Scan
+    - ToGRPCStatus
+    - Unwrap
+    - Value
+    - WithCause
+    - WithDetails
+    imports:
+    - database/sql/driver
+    - encoding/json
+    - fmt
+    - github.com/golang-jwt/jwt/v4
+    - google.golang.org/grpc/codes
+    - google.golang.org/grpc/status
+    - net/http
+    - time
+    interfaces: []
+    structs:
+    - Application
+    - AuditLog
+    - AuthRequest
+    - AuthResponse
+    - Claims
+    - ConnectorConfig
+    - Error
+    - IdentityProvider
+    - MFAChallenge
+    - MFAVerificationRequest
+    - PaginationQuery
+    - Policy
+    - PolicyDecision
+    - PolicyEvaluationContext
+    - Rule
+    - Token
+    - User
+    - UserGroup
+    - UserSession
+    summary: Application represents a client application that integrates with QuantaID
+      ApplicationStatus defines the possible states of an application.
+  utils:
+    comments:
+    - '// Parameters:'
+    - Config holds all configuration for the application.
+    - ConfigManager is a wrapper around the Viper library that handles loading,
+    - CryptoManager provides cryptographic utility functions, such as password hashing,
+    - It abstracts the underlying logging library (Zap) and provides methods
+    - JWT generation/validation, and UUID creation.
+    - Logger defines a standard logging interface for the QuantaID project.
+    - NewConfigManager creates a new ConfigManager instance by reading from a configuration
+      file.
+    - NewCryptoManager creates a new CryptoManager with the given JWT secret.
+    - PostgresConfig holds all configuration for the PostgreSQL database connection.
+    files:
+    - pkg/utils/config.go
+    - pkg/utils/logger.go
+    - pkg/utils/crypto.go
+    functions:
+    - CheckPasswordHash
+    - Debug
+    - Error
+    - GenerateJWT
+    - GenerateUUID
+    - Get
+    - GetBool
+    - GetInt
+    - GetString
+    - HashPassword
+    - Info
+    - LoadConfigFromBytes
+    - NewConfigManager
+    - NewCryptoManager
+    - NewZapLogger
+    - Unmarshal
+    - ValidateJWT
+    - Warn
+    - With
+    - addTraceID
+    - getEncoder
+    - setDefaults
+    - watchConfig
+    imports:
+    - bytes
+    - context
+    - fmt
+    - github.com/fsnotify/fsnotify
+    - github.com/golang-jwt/jwt/v4
+    - github.com/google/uuid
+    - github.com/spf13/viper
+    - go.opentelemetry.io/otel/trace
+    - go.uber.org/zap
+    - go.uber.org/zap/zapcore
+    - golang.org/x/crypto/bcrypt
+    - gopkg.in/natefinch/lumberjack.v2
+    - os
+    - strings
+    - time
+    interfaces:
+    - Logger
+    structs:
+    - Config
+    - ConfigManager
+    - ConsoleConfig
+    - CryptoManager
+    - FileConfig
+    - LoggerConfig
+    - PostgresConfig
+    - zapLogger
+    summary: '// Parameters: Config holds all configuration for the application.'
+  workflows:
+    comments:
+    - '// Parameters:'
+    - AuthWorkflow defines the standard authentication workflow by registering a sequence
+      of steps
+    - NewAuthWorkflow creates a new AuthWorkflow instance and registers the authentication
+    - with the orchestrator engine. This modularizes the authentication process.
+    - workflow with the provided engine.
+    files:
+    - internal/orchestrator/workflows/auth_flow.go
+    functions:
+    - NewAuthWorkflow
+    - authenticatePrimary
+    - checkMfaRequired
+    - issueTokens
+    - register
+    - validateInput
+    imports:
+    - context
+    - fmt
+    - github.com/turtacn/QuantaID/internal/orchestrator
+    - github.com/turtacn/QuantaID/internal/services/auth
+    - github.com/turtacn/QuantaID/pkg/types
+    interfaces: []
+    structs:
+    - AuthWorkflow
+    summary: '// Parameters: AuthWorkflow defines the standard authentication workflow
+      by registering a sequence of steps'
+project_root: /Users/turta/go/src/github.com/turtacn/QuantaID
+structure:
+- cmd/qid/main.go
+- cmd/qid/commands/config.go
+- cmd/qid/commands/server.go
+- cmd/qid-server/main.go
+- internal/server/middleware/auth.go
+- internal/server/middleware/logging.go
+- internal/server/http/server.go
+- internal/server/http/handlers/auth.go
+- internal/server/http/handlers/saml.go
+- internal/server/http/handlers/application.go
+- internal/server/http/handlers/identity.go
+- internal/server/http/handlers/helpers.go
+- internal/storage/postgresql/postgres_policy_repository.go
+- internal/storage/postgresql/postgres_auditlog_repository.go
+- internal/storage/postgresql/postgres_auth_repository.go
+- internal/storage/postgresql/db.go
+- internal/storage/postgresql/auth.go
+- internal/storage/postgresql/postgres_repository.go
+- internal/storage/postgresql/policy.go
+- internal/storage/postgresql/postgres_application_repository.go
+- internal/storage/postgresql/application.go
+- internal/storage/postgresql/identity.go
+- internal/storage/redis/session.go
+- internal/storage/redis/cache.go
+- internal/domain/identity/service.go
+- internal/domain/identity/interface.go
+- internal/domain/identity/repository.go
+- internal/domain/auth/service.go
+- internal/domain/auth/repository.go
+- internal/domain/application/repository.go
+- internal/domain/policy/service.go
+- internal/domain/policy/repository.go
+- internal/protocols/saml/service.go
+- internal/services/identity/service.go
+- internal/services/auth/service.go
+- internal/services/audit/service.go
+- internal/services/application/service.go
+- internal/services/authorization/service.go
+- internal/orchestrator/engine.go
+- internal/orchestrator/workflows/auth_flow.go
+- pkg/types/user.go
+- pkg/types/auth.go
+- pkg/types/policy.go
+- pkg/types/constants.go
+- pkg/types/common.go
+- pkg/types/application.go
+- pkg/types/errors.go
+- pkg/auth/engine.go
+- pkg/auth/mfa/manager.go
+- pkg/auth/protocols/oidc.go
+- pkg/auth/protocols/saml.go
+- pkg/auth/protocols/oauth.go
+- pkg/plugins/interfaces.go
+- pkg/plugins/registry.go
+- pkg/plugins/manager.go
+- pkg/plugins/base.go
+- pkg/utils/config.go
+- pkg/utils/logger.go
+- pkg/utils/crypto.go
+- pkg/client/auth.go
+- pkg/client/client.go
+- pkg/client/identity.go
