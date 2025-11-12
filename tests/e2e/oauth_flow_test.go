@@ -200,3 +200,41 @@ func TestOAuthAuthorizationCodeFlow(t *testing.T) {
 	json.NewDecoder(resp.Body).Decode(&userInfo)
 	assert.NotEmpty(t, userInfo.Subject)
 }
+
+type mockPublicAppRepo struct{}
+
+func (m *mockPublicAppRepo) GetApplicationByClientID(ctx context.Context, clientID string) (*types.Application, error) {
+	return &types.Application{
+		ClientType: types.ClientTypePublic,
+		ProtocolConfig: map[string]interface{}{
+			"client_id":     clientID,
+			"redirect_uris": []string{"http://localhost:3000/callback"},
+		},
+	}, nil
+}
+
+func TestOAuthPublicClientPKCERequired(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	oauthAdapter := protocols.NewOAuthAdapter().(*protocols.OAuthAdapter)
+	oauthAdapter.SetUserRepo(&mockUserRepo{})
+	oauthAdapter.SetAppRepo(&mockPublicAppRepo{})
+	oauthAdapter.SetRedis(&mockRedisClient{data: make(map[string]string)})
+	oauthHandler := handlers.NewOAuthHandler(oauthAdapter, utils.NewZapLoggerWrapper(logger))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		oauthHandler.Authorize(w, r)
+	}))
+	defer server.Close()
+
+	authURL := server.URL +
+		"?response_type=code" +
+		"&client_id=test_public_client_id" +
+		"&redirect_uri=http://localhost:3000/callback" +
+		"&scope=openid" +
+		"&state=test_state"
+
+	req, _ := http.NewRequest("GET", authURL, nil)
+	resp, _ := http.DefaultClient.Do(req)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}

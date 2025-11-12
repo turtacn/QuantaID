@@ -17,6 +17,8 @@ type Application struct {
 	Description string `json:"description,omitempty"`
 	// Status indicates the current state of the application.
 	Status ApplicationStatus `json:"status" gorm:"not null;default:'active'"`
+	// ClientType specifies the application's type, determining its security profile.
+	ClientType ClientType `json:"clientType" gorm:"not null;default:'confidential'"`
 	// Protocol specifies the primary authentication protocol used by the application (e.g., saml, oidc).
 	Protocol ProtocolType `json:"protocol" gorm:"not null"`
 	// ProtocolConfig stores protocol-specific settings in a flexible JSONB format.
@@ -41,4 +43,13 @@ type ApplicationStatus string
 const (
 	ApplicationStatusActive   ApplicationStatus = "active"
 	ApplicationStatusInactive ApplicationStatus = "inactive"
+)
+
+// ClientType defines the application type (e.g., confidential, public).
+type ClientType string
+
+// Possible client types.
+const (
+	ClientTypeConfidential ClientType = "confidential"
+	ClientTypePublic       ClientType = "public"
 )

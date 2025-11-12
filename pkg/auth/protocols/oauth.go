@@ -80,6 +80,12 @@ func (a *OAuthAdapter) HandleAuthRequest(ctx context.Context, request *types.Aut
 		return nil, types.ErrInvalidRequest.WithDetails(map[string]string{"error": "invalid redirect_uri"})
 	}
 
+	if app.ClientType == types.ClientTypePublic {
+		if oauthRequest["code_challenge"] == "" || oauthRequest["code_challenge_method"] == "" {
+			return nil, types.ErrInvalidRequest.WithDetails(map[string]string{"error": "public clients must use pkce"})
+		}
+	}
+
 	code := generateRandomString(32)
 	authCodeData := map[string]interface{}{
 		"user_id":          oauthRequest["user_id"],
