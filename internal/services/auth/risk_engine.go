@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"github.com/turtacn/QuantaID/internal/services/audit"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 )
 
@@ -12,7 +13,8 @@ type RiskEngine interface {
 
 // SimpleRiskEngine provides a basic, rule-based implementation of the RiskEngine.
 type SimpleRiskEngine struct {
-	cfg SimpleRiskConfig
+	cfg          SimpleRiskConfig
+	auditService *audit.Service
 }
 
 // SimpleRiskConfig holds the configuration for the SimpleRiskEngine.
@@ -25,8 +27,8 @@ type SimpleRiskConfig struct {
 }
 
 // NewSimpleRiskEngine creates a new SimpleRiskEngine.
-func NewSimpleRiskEngine(cfg SimpleRiskConfig) *SimpleRiskEngine {
-	return &SimpleRiskEngine{cfg: cfg}
+func NewSimpleRiskEngine(cfg SimpleRiskConfig, auditService *audit.Service) *SimpleRiskEngine {
+	return &SimpleRiskEngine{cfg: cfg, auditService: auditService}
 }
 
 // Assess evaluates the login context against a set of rules to determine a risk score.
@@ -55,6 +57,13 @@ func (e *SimpleRiskEngine) Assess(ctx context.Context, loginCtx auth.LoginContex
 		decision = auth.RiskDecisionDeny
 	} else if score >= e.cfg.MfaThreshold {
 		decision = auth.RiskDecisionRequireMFA
+		// TODO: Extract TraceID from context
+		traceID := "not_implemented"
+		var factorStrs []string
+		for _, f := range factors {
+			factorStrs = append(factorStrs, string(f))
+		}
+		e.auditService.RecordHighRiskLogin(ctx, loginCtx.UserID, loginCtx.CurrentIP, traceID, score, factorStrs, nil)
 	}
 
 	return &auth.RiskAssessment{

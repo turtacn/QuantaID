@@ -9,8 +9,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
+	"github.com/turtacn/QuantaID/internal/services/audit"
 	"github.com/turtacn/QuantaID/internal/services/authorization"
 	"github.com/turtacn/QuantaID/internal/server/middleware"
+	i_audit "github.com/turtacn/QuantaID/internal/audit"
+	"github.com/turtacn/QuantaID/tests/testutils"
+	"go.uber.org/zap"
 )
 
 func TestAuthorizationMiddleware(t *testing.T) {
@@ -30,7 +34,10 @@ func TestAuthorizationMiddleware(t *testing.T) {
 		},
 	}
 	evaluator := authorization.NewDefaultEvaluator(rules)
-	authzService := authorization.NewService(evaluator)
+	logger, _ := zap.NewDevelopment()
+	auditPipeline := i_audit.NewPipeline(logger, &testutils.MockSink{})
+	auditService := audit.NewService(auditPipeline)
+	authzService := authorization.NewService(evaluator, auditService)
 	authzMiddleware := middleware.NewAuthorizationMiddleware(authzService, "dashboard.read", "dashboard")
 	apiMiddleware := middleware.NewAuthorizationMiddleware(authzService, "api.read", "api")
 

@@ -1,0 +1,4 @@
+sinks:
+  - type: "file"
+    path: "./logs/audit_jules.log"
+  - type: "stdout"

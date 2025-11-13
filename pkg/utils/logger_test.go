@@ -18,7 +18,7 @@ func TestNewZapLogger_JSONFormat(t *testing.T) {
 
 	encoder := getEncoder("json")
 	core := zapcore.NewCore(encoder, writer, zapcore.DebugLevel)
-	logger := &zapLogger{logger: zap.New(core)}
+	logger := &ZapLogger{Logger: zap.New(core)}
 
 	testMessage := "this is a test"
 	logger.Info(context.Background(), testMessage, zap.String("key", "value"))

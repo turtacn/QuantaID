@@ -18,6 +18,7 @@ type Service struct {
 	auditRepo       AuditLogRepository
 	crypto          *utils.CryptoManager
 	logger          utils.Logger
+	riskEngine      RiskEngine
 }
 
 // Config holds configuration for the auth service, specifically token and session lifetimes.
@@ -50,6 +51,7 @@ func NewService(
 	auditRepo AuditLogRepository,
 	crypto *utils.CryptoManager,
 	logger utils.Logger,
+	riskEngine RiskEngine,
 ) *Service {
 	return &Service{
 		identityService: identityService,
@@ -58,6 +60,7 @@ func NewService(
 		auditRepo:       auditRepo,
 		crypto:          crypto,
 		logger:          logger,
+		riskEngine:      riskEngine,
 	}
 }
 

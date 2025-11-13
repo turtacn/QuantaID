@@ -10,9 +10,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/turtacn/QuantaID/internal/config"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
+	"github.com/turtacn/QuantaID/internal/metrics"
 	"github.com/turtacn/QuantaID/internal/protocols/saml"
 	"github.com/turtacn/QuantaID/internal/services/application"
+	audit_service "github.com/turtacn/QuantaID/internal/services/audit"
 	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/internal/services/authorization"
 	identity_service "github.com/turtacn/QuantaID/internal/services/identity"
@@ -78,7 +83,6 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	var groupRepo identity.GroupRepository
 	var sessionRepo auth.SessionRepository
 	var tokenRepo auth.TokenRepository
-	var auditRepo auth.AuditLogRepository
 
 	switch appCfg.Storage.Mode {
 	case "memory":
@@ -89,7 +93,6 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		memAuthRepo := memory.NewAuthMemoryRepository()
 		sessionRepo = memAuthRepo
 		tokenRepo = memAuthRepo
-		auditRepo = memAuthRepo
 	case "postgres":
 		logger.Info(context.Background(), "Using PostgreSQL storage backend")
 		db, err := postgresql.NewConnection(appCfg.Postgres)
@@ -113,14 +116,32 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	if err := yaml.Unmarshal(policyData, &policyCfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal policy data: %w", err)
 	}
+	// Audit Service Setup
+	auditCfg, err := config.LoadAuditConfig("configs/audit/pipeline.jules.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load audit config: %w", err)
+	}
+	zapLogger, _ := zap.NewProduction()
+	auditPipeline, err := config.NewPipelineFromConfig(auditCfg, zapLogger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create audit pipeline: %w", err)
+	}
+	auditService := audit_service.NewService(auditPipeline)
+
 	evaluator := authorization.NewDefaultEvaluator(policyCfg.Rules)
-	authzService := authorization.NewService(evaluator)
+	authzService := authorization.NewService(evaluator, auditService)
 
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
 	identityAppService := identity_service.NewApplicationService(identityDomainService, logger)
-	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, auditRepo, cryptoManager, logger)
+
+	riskEngine := auth_service.NewSimpleRiskEngine(auth_service.SimpleRiskConfig{
+		MfaThreshold: 0.5, // Example value
+	}, auditService)
+
+	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, nil, cryptoManager, logger, riskEngine)
 	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
-	authAppService := auth_service.NewApplicationService(authDomainService, logger, auth_service.Config{
+
+	authAppService := auth_service.NewApplicationService(authDomainService, auditService, logger, auth_service.Config{
 		AccessTokenDuration:  time.Hour,
 		RefreshTokenDuration: time.Hour * 24,
 		SessionDuration:      time.Hour * 24,
@@ -143,10 +164,14 @@ func (s *Server) registerRoutes(services Services) {
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
 
 	loggingMiddleware := middleware.NewLoggingMiddleware(s.logger)
+	metricsMiddleware := metrics.NewHTTPMetricsMiddleware(prometheus.DefaultRegisterer)
 	authMiddleware := middleware.NewAuthMiddleware(services.CryptoManager, s.logger, services.IdentityDomainService)
 	authzUserReadMiddleware := middleware.NewAuthorizationMiddleware(services.AuthzService, policy.Action("users.read"), "user")
 
 	s.Router.Use(loggingMiddleware.Execute)
+	s.Router.Use(metricsMiddleware.Execute)
+
+	s.Router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	apiV1 := s.Router.PathPrefix("/api/v1").Subrouter()
 	apiV1.HandleFunc("/auth/login", authHandlers.Login).Methods("POST")

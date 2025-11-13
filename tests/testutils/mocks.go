@@ -2,34 +2,78 @@ package testutils
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
+	"github.com/turtacn/QuantaID/internal/audit"
+	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/pkg/types"
 )
 
-// MockUserRepository is a mock implementation of the UserRepository interface
-type MockUserRepository struct {
+type MockRiskEngine struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) GetUserByID(ctx context.Context, id string) (*types.User, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(*types.User), args.Error(1)
+func (m *MockRiskEngine) Assess(ctx context.Context, loginCtx auth.LoginContext) (*auth.RiskAssessment, error) {
+	args := m.Called(ctx, loginCtx)
+	return args.Get(0).(*auth.RiskAssessment), args.Error(1)
 }
 
-func (m *MockUserRepository) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
-	args := m.Called(ctx, email)
-	return args.Get(0).(*types.User), args.Error(1)
+// MockSink is a simple in-memory sink for testing the pipeline.
+type MockSink struct {
+	mu     sync.Mutex
+	Events []*audit.AuditEvent
+	Err    error // Optional error to simulate sink failure
 }
 
-func (m *MockUserRepository) CreateUser(ctx context.Context, user *types.User) error {
-	args := m.Called(ctx, user)
+func (s *MockSink) Write(ctx context.Context, event *audit.AuditEvent) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.Err != nil {
+		return s.Err
+	}
+	s.Events = append(s.Events, event)
+	return nil
+}
+
+func (s *MockSink) Close() error { return nil }
+
+type MockMFARepository struct {
+	mock.Mock
+}
+
+func (m *MockMFARepository) CreateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
+	args := m.Called(ctx, config)
 	return args.Error(0)
 }
 
-// MockIdentityService is a mock implementation of the IdentityService interface
+func (m *MockMFARepository) GetUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) (*types.UserMFAConfig, error) {
+	args := m.Called(ctx, userID, method)
+	return args.Get(0).(*types.UserMFAConfig), args.Error(1)
+}
+
+func (m *MockMFARepository) GetUserMFAConfigs(ctx context.Context, userID uuid.UUID) ([]*types.UserMFAConfig, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]*types.UserMFAConfig), args.Error(1)
+}
+
+func (m *MockMFARepository) UpdateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
+	args := m.Called(ctx, config)
+	return args.Error(0)
+}
+
+func (m *MockMFARepository) DeleteUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) error {
+	args := m.Called(ctx, userID, method)
+	return args.Error(0)
+}
+
+func (m *MockMFARepository) CreateMFAVerificationLog(ctx context.Context, log *types.MFAVerificationLog) error {
+	args := m.Called(ctx, log)
+	return args.Error(0)
+}
+
 type MockIdentityService struct {
 	mock.Mock
 }
@@ -64,7 +108,6 @@ func (m *MockIdentityService) ChangeUserStatus(ctx context.Context, userID strin
 	return args.Error(0)
 }
 
-// MockSessionRepository is a mock implementation of the SessionRepository interface
 type MockSessionRepository struct {
 	mock.Mock
 }
@@ -89,17 +132,21 @@ func (m *MockSessionRepository) GetUserSessions(ctx context.Context, userID stri
 	return args.Get(0).([]*types.UserSession), args.Error(1)
 }
 
-// MockTokenRepository is a mock implementation of the TokenRepository interface
 type MockTokenRepository struct {
 	mock.Mock
 }
 
-func (m *MockTokenRepository) StoreRefreshToken(ctx context.Context, token string, userID string, duration time.Duration) error {
-	args := m.Called(ctx, token, userID, duration)
+func (m *MockTokenRepository) StoreRefreshToken(ctx context.Context, token string, userID string, ttl time.Duration) error {
+	args := m.Called(ctx, token, userID, ttl)
 	return args.Error(0)
 }
 
 func (m *MockTokenRepository) GetRefreshTokenUserID(ctx context.Context, token string) (string, error) {
+	args := m.Called(ctx, token)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockTokenRepository) ValidateRefreshToken(ctx context.Context, token string) (string, error) {
 	args := m.Called(ctx, token)
 	return args.String(0), args.Error(1)
 }
@@ -109,8 +156,8 @@ func (m *MockTokenRepository) DeleteRefreshToken(ctx context.Context, token stri
 	return args.Error(0)
 }
 
-func (m *MockTokenRepository) AddToDenyList(ctx context.Context, jti string, duration time.Duration) error {
-	args := m.Called(ctx, jti, duration)
+func (m *MockTokenRepository) AddToDenyList(ctx context.Context, jti string, ttl time.Duration) error {
+	args := m.Called(ctx, jti, ttl)
 	return args.Error(0)
 }
 
@@ -119,7 +166,6 @@ func (m *MockTokenRepository) IsInDenyList(ctx context.Context, jti string) (boo
 	return args.Bool(0), args.Error(1)
 }
 
-// MockAuditLogRepository is a mock implementation of the AuditLogRepository interface
 type MockAuditLogRepository struct {
 	mock.Mock
 }
@@ -129,47 +175,12 @@ func (m *MockAuditLogRepository) CreateLogEntry(ctx context.Context, logEntry *t
 	return args.Error(0)
 }
 
-func (m *MockAuditLogRepository) GetLogsByAction(ctx context.Context, action string, pq types.PaginationQuery) ([]*types.AuditLog, error) {
-	args := m.Called(ctx, action, pq)
+func (m *MockAuditLogRepository) GetLogsForUser(ctx context.Context, userID string, pagination types.PaginationQuery) ([]*types.AuditLog, error) {
+	args := m.Called(ctx, userID, pagination)
 	return args.Get(0).([]*types.AuditLog), args.Error(1)
 }
 
-func (m *MockAuditLogRepository) GetLogsForUser(ctx context.Context, userID string, pq types.PaginationQuery) ([]*types.AuditLog, error) {
-	args := m.Called(ctx, userID, pq)
+func (m *MockAuditLogRepository) GetLogsByAction(ctx context.Context, action string, pagination types.PaginationQuery) ([]*types.AuditLog, error) {
+	args := m.Called(ctx, action, pagination)
 	return args.Get(0).([]*types.AuditLog), args.Error(1)
-}
-
-// MockMFARepository is a mock implementation of the MFARepository interface
-type MockMFARepository struct {
-	mock.Mock
-}
-
-func (m *MockMFARepository) CreateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
-	args := m.Called(ctx, config)
-	return args.Error(0)
-}
-
-func (m *MockMFARepository) GetUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) (*types.UserMFAConfig, error) {
-	args := m.Called(ctx, userID, method)
-	return args.Get(0).(*types.UserMFAConfig), args.Error(1)
-}
-
-func (m *MockMFARepository) GetUserMFAConfigs(ctx context.Context, userID uuid.UUID) ([]*types.UserMFAConfig, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]*types.UserMFAConfig), args.Error(1)
-}
-
-func (m *MockMFARepository) UpdateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
-	args := m.Called(ctx, config)
-	return args.Error(0)
-}
-
-func (m *MockMFARepository) DeleteUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) error {
-	args := m.Called(ctx, userID, method)
-	return args.Error(0)
-}
-
-func (m *MockMFARepository) CreateMFAVerificationLog(ctx context.Context, log *types.MFAVerificationLog) error {
-	args := m.Called(ctx, log)
-	return args.Error(0)
 }

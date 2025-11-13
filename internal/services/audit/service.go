@@ -3,97 +3,115 @@ package audit
 import (
 	"context"
 	"github.com/google/uuid"
-	"github.com/turtacn/QuantaID/internal/domain/auth"
-	"github.com/turtacn/QuantaID/pkg/types"
-	"github.com/turtacn/QuantaID/pkg/utils"
-	"go.uber.org/zap"
+	"github.com/turtacn/QuantaID/internal/audit"
 	"time"
 )
 
-// ApplicationService provides application-level use cases for auditing. It acts as an
-// intermediary between the transport layer (e.g., HTTP handlers) and the domain
-// layer (repositories), encapsulating the logic for recording and retrieving audit events.
-type ApplicationService struct {
-	auditRepo auth.AuditLogRepository
-	logger    utils.Logger
+// Service provides a standardized way to record audit events.
+// It uses the audit pipeline to dispatch events to configured sinks.
+type Service struct {
+	pipeline *audit.Pipeline
 }
 
-// NewApplicationService creates a new audit application service.
-//
-// Parameters:
-//   - auditRepo: The repository for persisting audit log entries.
-//   - logger: The logger for service-level messages.
-//
-// Returns:
-//   A new instance of ApplicationService.
-func NewApplicationService(auditRepo auth.AuditLogRepository, logger utils.Logger) *ApplicationService {
-	return &ApplicationService{
-		auditRepo: auditRepo,
-		logger:    logger,
-	}
+// NewService creates a new audit service.
+func NewService(p *audit.Pipeline) *Service {
+	return &Service{pipeline: p}
 }
 
-// RecordEvent asynchronously records a new audit event. It constructs an AuditLog
-// entry and saves it to the repository in a separate goroutine to avoid blocking the caller.
-//
-// Parameters:
-//   - ctx: The context of the request that triggered the event.
-//   - actorID: The ID of the user or system that performed the action.
-//   - action: A string describing the action (e.g., "user.login").
-//   - resource: The resource that was affected (e.g., "user:123").
-//   - status: The outcome of the action ("success" or "failure").
-//   - eventContext: Additional contextual data about the event.
-func (s *ApplicationService) RecordEvent(ctx context.Context, actorID, action, resource, status string, eventContext map[string]interface{}) {
-	logEntry := &types.AuditLog{
-		ID:        uuid.New().String(),
-		ActorID:   actorID,
-		Action:    action,
-		Resource:  resource,
-		Status:    status,
-		Context:   eventContext,
+// generateAuditID creates a new unique ID for an audit event.
+func generateAuditID() string {
+	return uuid.New().String()
+}
+
+// RecordLoginSuccess records a successful user login event.
+func (s *Service) RecordLoginSuccess(ctx context.Context, userID, ip, traceID string, details map[string]any) {
+	event := &audit.AuditEvent{
+		ID:        generateAuditID(),
 		Timestamp: time.Now().UTC(),
+		Category:  "auth",
+		Action:    "login_success",
+		UserID:    userID,
+		IP:        ip,
+		Result:    "success",
+		TraceID:   traceID,
+		Details:   details,
 	}
-
-	go func() {
-		err := s.auditRepo.CreateLogEntry(context.Background(), logEntry)
-		if err != nil {
-			s.logger.Error(context.Background(), "Failed to record audit event", zap.Error(err), zap.String("actorID", actorID), zap.String("action", action))
-		}
-	}()
+	s.pipeline.Emit(ctx, event)
 }
 
-// GetUserHistory retrieves a paginated list of audit events for a specific user.
-// It handles input validation for pagination parameters.
-//
-// Parameters:
-//   - ctx: The context for the request.
-//   - userID: The ID of the user whose history is being requested.
-//   - page: The page number to retrieve.
-//   - pageSize: The number of items per page.
-//
-// Returns:
-//   A slice of audit log entries and an application error if one occurs.
-func (s *ApplicationService) GetUserHistory(ctx context.Context, userID string, page, pageSize int) ([]*types.AuditLog, *types.Error) {
-	if page < 1 {
-		page = 1
+// RecordLoginFailed records a failed user login attempt.
+func (s *Service) RecordLoginFailed(ctx context.Context, userID, ip, traceID string, reason string, details map[string]any) {
+	if details == nil {
+		details = make(map[string]any)
 	}
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 20
-	}
+	details["reason"] = reason
 
-	pagination := types.PaginationQuery{
-		PageSize: pageSize,
-		Offset:   (page - 1) * pageSize,
+	event := &audit.AuditEvent{
+		ID:        generateAuditID(),
+		Timestamp: time.Now().UTC(),
+		Category:  "auth",
+		Action:    "login_failed",
+		UserID:    userID,
+		IP:        ip,
+		Result:    "fail",
+		TraceID:   traceID,
+		Details:   details,
 	}
-
-	logs, err := s.auditRepo.GetLogsForUser(ctx, userID, pagination)
-	if err != nil {
-		if appErr, ok := err.(*types.Error); ok {
-			return nil, appErr
-		}
-		return nil, types.ErrInternal.WithCause(err)
-	}
-
-	return logs, nil
+	s.pipeline.Emit(ctx, event)
 }
 
+// RecordPolicyDecision records the outcome of a policy evaluation.
+func (s *Service) RecordPolicyDecision(ctx context.Context, userID, ip, resource, traceID string, result string, details map[string]any) {
+	event := &audit.AuditEvent{
+		ID:        generateAuditID(),
+		Timestamp: time.Now().UTC(),
+		Category:  "policy",
+		Action:    "policy_evaluated",
+		UserID:    userID,
+		IP:        ip,
+		Resource:  resource,
+		Result:    result, // "success", "fail", "deny"
+		TraceID:   traceID,
+		Details:   details,
+	}
+	s.pipeline.Emit(ctx, event)
+}
+
+// RecordAdminAction records an action performed by an administrator.
+func (s *Service) RecordAdminAction(ctx context.Context, userID, ip, resource, action, traceID string, details map[string]any) {
+	event := &audit.AuditEvent{
+		ID:        generateAuditID(),
+		Timestamp: time.Now().UTC(),
+		Category:  "admin",
+		Action:    action,
+		UserID:    userID,
+		IP:        ip,
+		Resource:  resource,
+		Result:    "success", // Assume admin actions are successful unless otherwise specified
+		TraceID:   traceID,
+		Details:   details,
+	}
+	s.pipeline.Emit(ctx, event)
+}
+
+// RecordHighRiskLogin records a login attempt that was flagged as high-risk.
+func (s *Service) RecordHighRiskLogin(ctx context.Context, userID, ip, traceID string, score float64, factors []string, details map[string]any) {
+	if details == nil {
+		details = make(map[string]any)
+	}
+	details["risk_score"] = score
+	details["risk_factors"] = factors
+
+	event := &audit.AuditEvent{
+		ID:        generateAuditID(),
+		Timestamp: time.Now().UTC(),
+		Category:  "risk",
+		Action:    "high_risk_login",
+		UserID:    userID,
+		IP:        ip,
+		Result:    "success", // The event is about flagging, not the login outcome itself
+		TraceID:   traceID,
+		Details:   details,
+	}
+	s.pipeline.Emit(ctx, event)
+}

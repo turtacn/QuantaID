@@ -1,0 +1,10 @@
+sinks:
+  - type: "kafka"
+    brokers:
+      - "kafka1:9092"
+      - "kafka2:9092"
+    topic: "audit-events"
+  - type: "syslog"
+    network: "udp"
+    addr: "syslog-server:514"
+  - type: "stdout"

@@ -1,6 +1,14 @@
 package auth
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+// RiskEngine evaluates the risk of a login attempt.
+type RiskEngine interface {
+	Assess(ctx context.Context, loginCtx LoginContext) (*RiskAssessment, error)
+}
 
 type RiskFactor string
 

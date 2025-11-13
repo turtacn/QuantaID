@@ -27,8 +27,8 @@ type Logger interface {
 }
 
 // zapLogger is the Zap implementation of our standard Logger interface.
-type zapLogger struct {
-	logger *zap.Logger
+type ZapLogger struct {
+	Logger *zap.Logger
 }
 
 // NewZapLogger creates a new logger instance based on the provided configuration.
@@ -69,7 +69,7 @@ func NewZapLogger(config *LoggerConfig) (Logger, error) {
 	core = zapcore.NewCore(encoder, combinedWriter, level)
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
-	return &zapLogger{logger: logger}, nil
+	return &ZapLogger{Logger: logger}, nil
 }
 
 func getEncoder(format string) zapcore.Encoder {
@@ -94,29 +94,29 @@ func addTraceID(ctx context.Context, fields []zap.Field) []zap.Field {
 }
 
 // Debug logs a message at the debug level, including the trace ID from the context if available.
-func (l *zapLogger) Debug(ctx context.Context, msg string, fields ...zap.Field) {
-	l.logger.Debug(msg, addTraceID(ctx, fields)...)
+func (l *ZapLogger) Debug(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Debug(msg, addTraceID(ctx, fields)...)
 }
 
 // Info logs a message at the info level, including the trace ID from the context if available.
-func (l *zapLogger) Info(ctx context.Context, msg string, fields ...zap.Field) {
-	l.logger.Info(msg, addTraceID(ctx, fields)...)
+func (l *ZapLogger) Info(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Info(msg, addTraceID(ctx, fields)...)
 }
 
 // Warn logs a message at the warning level, including the trace ID from the context if available.
-func (l *zapLogger) Warn(ctx context.Context, msg string, fields ...zap.Field) {
-	l.logger.Warn(msg, addTraceID(ctx, fields)...)
+func (l *ZapLogger) Warn(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Warn(msg, addTraceID(ctx, fields)...)
 }
 
 // Error logs a message at the error level, including the trace ID from the context if available.
-func (l *zapLogger) Error(ctx context.Context, msg string, fields ...zap.Field) {
-	l.logger.Error(msg, addTraceID(ctx, fields)...)
+func (l *ZapLogger) Error(ctx context.Context, msg string, fields ...zap.Field) {
+	l.Logger.Error(msg, addTraceID(ctx, fields)...)
 }
 
 // With returns a new logger instance with the specified fields added to its context,
 // allowing for structured logging.
-func (l *zapLogger) With(fields ...zap.Field) Logger {
-	return &zapLogger{logger: l.logger.With(fields...)}
+func (l *ZapLogger) With(fields ...zap.Field) Logger {
+	return &ZapLogger{Logger: l.Logger.With(fields...)}
 }
 
 // LoggerConfig defines the settings for creating a logger.
@@ -155,10 +155,10 @@ type FileConfig struct {
 
 // NewNoopLogger creates a logger that discards all logs.
 func NewNoopLogger() Logger {
-	return &zapLogger{logger: zap.NewNop()}
+	return &ZapLogger{Logger: zap.NewNop()}
 }
 
 // NewZapLoggerWrapper wraps a zap.Logger in a utils.Logger.
 func NewZapLoggerWrapper(logger *zap.Logger) Logger {
-	return &zapLogger{logger: logger}
+	return &ZapLogger{Logger: logger}
 }

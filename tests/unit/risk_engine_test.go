@@ -2,12 +2,18 @@ package unit
 
 import (
 	"context"
-	domain_auth "github.com/turtacn/QuantaID/internal/domain/auth"
-	services_auth "github.com/turtacn/QuantaID/internal/services/auth"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	domain_auth "github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/audit"
+	services_audit "github.com/turtacn/QuantaID/internal/services/audit"
+	services_auth "github.com/turtacn/QuantaID/internal/services/auth"
+	"github.com/turtacn/QuantaID/tests/testutils"
+	"go.uber.org/zap"
 )
+
 
 func TestSimpleRiskEngine_LowRisk(t *testing.T) {
 	cfg := services_auth.SimpleRiskConfig{
@@ -17,7 +23,10 @@ func TestSimpleRiskEngine_LowRisk(t *testing.T) {
 		MfaThreshold:     0.3,
 		BlockThreshold:   0.7,
 	}
-	engine := services_auth.NewSimpleRiskEngine(cfg)
+	logger, _ := zap.NewDevelopment()
+	auditPipeline := audit.NewPipeline(logger, &testutils.MockSink{})
+	auditService := services_audit.NewService(auditPipeline)
+	engine := services_auth.NewSimpleRiskEngine(cfg, auditService)
 
 	loginCtx := domain_auth.LoginContext{
 		CurrentIP:        "192.168.1.1",
@@ -42,7 +51,10 @@ func TestSimpleRiskEngine_MediumRisk(t *testing.T) {
 		MfaThreshold:     0.3,
 		BlockThreshold:   0.7,
 	}
-	engine := services_auth.NewSimpleRiskEngine(cfg)
+	logger, _ := zap.NewDevelopment()
+	auditPipeline := audit.NewPipeline(logger, &testutils.MockSink{})
+	auditService := services_audit.NewService(auditPipeline)
+	engine := services_auth.NewSimpleRiskEngine(cfg, auditService)
 
 	loginCtx := domain_auth.LoginContext{
 		CurrentIP:        "198.51.100.0",
@@ -68,7 +80,10 @@ func TestSimpleRiskEngine_HighRisk(t *testing.T) {
 		MfaThreshold:     0.3,
 		BlockThreshold:   0.7,
 	}
-	engine := services_auth.NewSimpleRiskEngine(cfg)
+	logger, _ := zap.NewDevelopment()
+	auditPipeline := audit.NewPipeline(logger, &testutils.MockSink{})
+	auditService := services_audit.NewService(auditPipeline)
+	engine := services_auth.NewSimpleRiskEngine(cfg, auditService)
 
 	loginCtx := domain_auth.LoginContext{
 		CurrentIP:        "203.0.113.0",

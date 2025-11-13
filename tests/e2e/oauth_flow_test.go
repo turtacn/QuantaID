@@ -19,6 +19,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/server/http/handlers"
 	"github.com/turtacn/QuantaID/pkg/auth/protocols"
 	"github.com/turtacn/QuantaID/pkg/types"
@@ -48,8 +49,16 @@ func (m *mockUserRepo) UpdateUser(ctx context.Context, user *types.User) error {
 	return nil
 }
 
-func (m *mockUserRepo) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int64, error) {
-	return []*types.User{}, 0, nil
+func (m *mockUserRepo) DeleteUser(ctx context.Context, id string) error {
+	return nil
+}
+
+func (m *mockUserRepo) ListUsers(ctx context.Context, pq identity.PaginationQuery) ([]*types.User, error) {
+	return []*types.User{}, nil
+}
+
+func (m *mockUserRepo) FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error) {
+	return []*types.User{}, nil
 }
 
 type mockAppRepo struct{}

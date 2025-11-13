@@ -7,11 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/services/audit"
 	authsvc "github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"github.com/turtacn/QuantaID/tests/testutils"
 	"go.opentelemetry.io/otel/trace"
+	i_audit "github.com/turtacn/QuantaID/internal/audit"
 )
 
 func TestAuthenticationFlow(t *testing.T) {
@@ -27,6 +29,7 @@ func TestAuthenticationFlow(t *testing.T) {
 	cryptoManager := utils.NewCryptoManager("test-secret-key")
 
 	// Initialize services
+	riskEngine := &testutils.MockRiskEngine{}
 	authDomain := auth.NewService(
 		identityService,
 		sessionRepo,
@@ -34,9 +37,13 @@ func TestAuthenticationFlow(t *testing.T) {
 		auditRepo,
 		cryptoManager,
 		logger,
+		riskEngine,
 	)
+	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger, &testutils.MockSink{})
+	auditService := audit.NewService(auditPipeline)
 	appService := authsvc.NewApplicationService(
 		authDomain,
+		auditService,
 		logger,
 		authsvc.Config{},
 		tracer,

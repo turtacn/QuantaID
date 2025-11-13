@@ -11,6 +11,8 @@ import (
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"github.com/turtacn/QuantaID/tests/testutils"
 	"go.opentelemetry.io/otel/trace"
+	"github.com/turtacn/QuantaID/internal/services/audit"
+	i_audit "github.com/turtacn/QuantaID/internal/audit"
 )
 
 func TestApplicationService_Login(t *testing.T) {
@@ -22,6 +24,7 @@ func TestApplicationService_Login(t *testing.T) {
 	logger := utils.NewNoopLogger()
 	tracer := trace.NewNoopTracerProvider().Tracer("test")
 
+	riskEngine := &testutils.MockRiskEngine{}
 	authDomain := auth.NewService(
 		identityService,
 		sessionRepo,
@@ -29,10 +32,13 @@ func TestApplicationService_Login(t *testing.T) {
 		auditRepo,
 		cryptoManager,
 		logger,
+		riskEngine,
 	)
-
+	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger, &testutils.MockSink{})
+	auditService := audit.NewService(auditPipeline)
 	appService := NewApplicationService(
 		authDomain,
+		auditService,
 		logger,
 		Config{},
 		tracer,

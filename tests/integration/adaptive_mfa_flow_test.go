@@ -2,25 +2,33 @@ package integration
 
 import (
 	"context"
-	"github.com/turtacn/QuantaID/internal/orchestrator"
-	"github.com/turtacn/QuantaID/internal/orchestrator/workflows"
-	"github.com/turtacn/QuantaID/internal/services/auth"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/turtacn/QuantaID/internal/orchestrator"
+	"github.com/turtacn/QuantaID/internal/orchestrator/workflows"
+	"github.com/turtacn/QuantaID/internal/services/audit"
+	"github.com/turtacn/QuantaID/internal/services/auth"
+	i_audit "github.com/turtacn/QuantaID/internal/audit"
+	"github.com/turtacn/QuantaID/tests/testutils"
+	"go.uber.org/zap"
 )
 
 import "github.com/turtacn/QuantaID/pkg/utils"
 
 func TestLoginFlow_NoMFA_WhenLowRisk(t *testing.T) {
 	engine := orchestrator.NewEngine(utils.NewNoopLogger())
+	logger, _ := zap.NewDevelopment()
+	auditPipeline := i_audit.NewPipeline(logger, &testutils.MockSink{})
+	auditService := audit.NewService(auditPipeline)
 	riskEngine := auth.NewSimpleRiskEngine(auth.SimpleRiskConfig{
 		NewDeviceScore:   0.3,
 		GeoVelocityScore: 0.3,
 		UnusualTimeScore: 0.2,
 		MfaThreshold:     0.3,
 		BlockThreshold:   0.7,
-	})
+	}, auditService)
 	workflows.NewAuthWorkflow(engine, nil, riskEngine)
 
 	initialState := orchestrator.State{
@@ -39,13 +47,16 @@ func TestLoginFlow_NoMFA_WhenLowRisk(t *testing.T) {
 
 func TestLoginFlow_RequireMFA_WhenMediumRisk(t *testing.T) {
 	engine := orchestrator.NewEngine(utils.NewNoopLogger())
+	logger, _ := zap.NewDevelopment()
+	auditPipeline := i_audit.NewPipeline(logger, &testutils.MockSink{})
+	auditService := audit.NewService(auditPipeline)
 	riskEngine := auth.NewSimpleRiskEngine(auth.SimpleRiskConfig{
 		NewDeviceScore:   0.3,
 		GeoVelocityScore: 0.3,
 		UnusualTimeScore: 0.2,
 		MfaThreshold:     0.3,
 		BlockThreshold:   0.7,
-	})
+	}, auditService)
 	workflows.NewAuthWorkflow(engine, nil, riskEngine)
 
 	initialState := orchestrator.State{
@@ -64,13 +75,16 @@ func TestLoginFlow_RequireMFA_WhenMediumRisk(t *testing.T) {
 
 func TestLoginFlow_Block_WhenHighRisk(t *testing.T) {
 	engine := orchestrator.NewEngine(utils.NewNoopLogger())
+	logger, _ := zap.NewDevelopment()
+	auditPipeline := i_audit.NewPipeline(logger, &testutils.MockSink{})
+	auditService := audit.NewService(auditPipeline)
 	riskEngine := auth.NewSimpleRiskEngine(auth.SimpleRiskConfig{
 		NewDeviceScore:   0.3,
 		GeoVelocityScore: 0.3,
 		UnusualTimeScore: 0.2,
 		BlockThreshold:   0.7,
 		MfaThreshold:     0.3,
-	})
+	}, auditService)
 	workflows.NewAuthWorkflow(engine, nil, riskEngine)
 
 	initialState := orchestrator.State{

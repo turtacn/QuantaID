@@ -2,25 +2,24 @@ package auth
 
 import (
 	"context"
+	"github.com/turtacn/QuantaID/internal/services/audit"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/metrics"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
+	"go.opentelemetry.io/otel/trace"
 	"time"
 )
 
 // ApplicationService provides application-level use cases for authentication. It acts as
 // a facade over the authentication domain service, handling data transfer objects (DTOs)
 // and coordinating with the domain layer.
-import (
-	"go.opentelemetry.io/otel/trace"
-)
-
 type ApplicationService struct {
-	authDomain *auth.Service
-	logger     utils.Logger
-	config     Config
-	tracer     trace.Tracer
+	authDomain   *auth.Service
+	auditService *audit.Service
+	logger       utils.Logger
+	config       Config
+	tracer       trace.Tracer
 }
 
 // Config holds the application-level configuration for the auth service,
@@ -32,20 +31,13 @@ type Config struct {
 }
 
 // NewApplicationService creates a new authentication application service.
-//
-// Parameters:
-//   - authDomain: The domain service containing the core authentication logic.
-//   - logger: The logger for service-level messages.
-//   - config: The configuration for token and session durations.
-//
-// Returns:
-//   A new instance of ApplicationService.
-func NewApplicationService(authDomain *auth.Service, logger utils.Logger, config Config, tracer trace.Tracer) *ApplicationService {
+func NewApplicationService(authDomain *auth.Service, auditService *audit.Service, logger utils.Logger, config Config, tracer trace.Tracer) *ApplicationService {
 	return &ApplicationService{
-		authDomain: authDomain,
-		logger:     logger,
-		config:     config,
-		tracer:     tracer,
+		authDomain:   authDomain,
+		auditService: auditService,
+		logger:       logger,
+		config:       config,
+		tracer:       tracer,
 	}
 }
 
@@ -87,6 +79,10 @@ func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*Logi
 	ctx, span := s.tracer.Start(ctx, "ApplicationService.Login")
 	defer span.End()
 
+	// TODO: Extract IP and TraceID from context
+	ip := "not_implemented"
+	traceID := "not_implemented"
+
 	domainConfig := auth.Config{
 		AccessTokenDuration:  s.config.AccessTokenDuration,
 		RefreshTokenDuration: s.config.RefreshTokenDuration,
@@ -96,12 +92,14 @@ func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*Logi
 	authResp, err := s.authDomain.LoginWithPassword(ctx, req.Username, req.Password, domainConfig)
 	if err != nil {
 		span.RecordError(err)
+		s.auditService.RecordLoginFailed(ctx, req.Username, ip, traceID, err.Error(), nil)
 		if appErr, ok := err.(*types.Error); ok {
 			return nil, appErr
 		}
 		return nil, types.ErrInternal.WithCause(err)
 	}
 
+	s.auditService.RecordLoginSuccess(ctx, authResp.User.ID, ip, traceID, nil)
 	metrics.OauthTokensIssuedTotal.Inc()
 	return &LoginResponse{
 		AccessToken:  authResp.Token.AccessToken,
