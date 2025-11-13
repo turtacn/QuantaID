@@ -1,0 +1,5 @@
+new_device_score: 0.3
+geo_velocity_score: 0.3
+unusual_time_score: 0.2
+block_threshold: 0.8
+mfa_threshold: 0.3
