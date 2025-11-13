@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"github.com/turtacn/QuantaID/internal/services/authorization"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
@@ -14,9 +14,9 @@ import (
 // AuthMiddleware is a middleware component that protects HTTP routes by requiring
 // a valid JSON Web Token (JWT) in the Authorization header.
 type AuthMiddleware struct {
-	logger       utils.Logger
-	crypto       *utils.CryptoManager
-	authzService *authorization.ApplicationService
+	logger         utils.Logger
+	crypto         *utils.CryptoManager
+	identityDomain identity.IService
 }
 
 // ContextKey is a custom type for context keys to prevent collisions between packages.
@@ -25,26 +25,19 @@ type ContextKey string
 // UserIDContextKey is the key used to store the authenticated user's ID in the request context.
 const UserIDContextKey ContextKey = "userID"
 
+// GroupsContextKey is the key used to store the authenticated user's groups in the request context.
+const GroupsContextKey ContextKey = "groups"
+
 // NewAuthMiddleware creates a new instance of the authentication middleware.
-//
-// Parameters:
-//   - authzService: The authorization service, which might be used for further checks (currently unused).
-//   - crypto: The cryptographic utility for validating JWTs.
-//   - logger: The logger for middleware-specific messages.
-//
-// Returns:
-//   A new AuthMiddleware instance.
-func NewAuthMiddleware(authzService *authorization.ApplicationService, crypto *utils.CryptoManager, logger utils.Logger) *AuthMiddleware {
+func NewAuthMiddleware(crypto *utils.CryptoManager, logger utils.Logger, identityDomain identity.IService) *AuthMiddleware {
 	return &AuthMiddleware{
-		logger:       logger,
-		crypto:       crypto,
-		authzService: authzService,
+		logger:         logger,
+		crypto:         crypto,
+		identityDomain: identityDomain,
 	}
 }
 
-// Execute is the main middleware handler function. It inspects the request for a
-// 'Bearer' token, validates it, and if successful, injects the user's ID into
-// the request's context before passing control to the next handler in the chain.
+// Execute is the main middleware handler function.
 func (m *AuthMiddleware) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -72,7 +65,18 @@ func (m *AuthMiddleware) Execute(next http.Handler) http.Handler {
 			return
 		}
 
+		userGroups, err := m.identityDomain.GetUserGroups(r.Context(), userID)
+		if err != nil {
+			m.logger.Warn(r.Context(), "Could not fetch user groups for auth middleware", zap.Error(err), zap.String("userID", userID))
+		}
+
+		groupIDs := make([]string, len(userGroups))
+		for i, g := range userGroups {
+			groupIDs[i] = g.ID
+		}
+
 		ctx := context.WithValue(r.Context(), UserIDContextKey, userID)
+		ctx = context.WithValue(ctx, GroupsContextKey, groupIDs)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -84,7 +88,6 @@ func (m *AuthMiddleware) writeError(w http.ResponseWriter, r *http.Request, err 
 	m.logger.Warn(r.Context(), "Authentication failed", zap.String("path", r.URL.Path), zap.String("error", err.Message))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(err.HttpStatus)
-	// Using a simple struct to ensure correct JSON formatting for the error message.
 	errorResponse := map[string]string{"error": err.Message}
 	json.NewEncoder(w).Encode(errorResponse)
 }

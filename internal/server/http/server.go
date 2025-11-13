@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/internal/domain/policy"
 	"github.com/turtacn/QuantaID/internal/protocols/saml"
 	"github.com/turtacn/QuantaID/internal/services/application"
 	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
@@ -21,6 +23,7 @@ import (
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 // Server encapsulates the HTTP server for the QuantaID API.
@@ -39,12 +42,13 @@ type Config struct {
 
 // Services is a container for all the application services.
 type Services struct {
-	AuthService     *auth_service.ApplicationService
-	IdentityService *identity_service.ApplicationService
-	AuthzService    *authorization.ApplicationService
-	AppService      *application.ApplicationService
-	SamlService     *saml.Service
-	CryptoManager   *utils.CryptoManager
+	AuthService           *auth_service.ApplicationService
+	IdentityService       *identity_service.ApplicationService
+	AuthzService          *authorization.Service
+	AppService            *application.ApplicationService
+	SamlService           *saml.Service
+	CryptoManager         *utils.CryptoManager
+	IdentityDomainService identity.IService
 }
 
 // NewServer creates a new HTTP server instance.
@@ -64,6 +68,10 @@ func NewServer(config Config, logger utils.Logger, services Services) *Server {
 	return server
 }
 
+type PolicyConfig struct {
+	Rules []authorization.Rule `yaml:"rules"`
+}
+
 // NewServerWithConfig creates a new server instance based on the provided configuration.
 func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logger, cryptoManager *utils.CryptoManager) (*Server, error) {
 	var idRepo identity.UserRepository
@@ -71,7 +79,6 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	var sessionRepo auth.SessionRepository
 	var tokenRepo auth.TokenRepository
 	var auditRepo auth.AuditLogRepository
-	// var policyRepo policy.Repository // Not used yet
 
 	switch appCfg.Storage.Mode {
 	case "memory":
@@ -79,13 +86,10 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		memIdRepo := memory.NewIdentityMemoryRepository()
 		idRepo = memIdRepo
 		groupRepo = memIdRepo
-
 		memAuthRepo := memory.NewAuthMemoryRepository()
 		sessionRepo = memAuthRepo
 		tokenRepo = memAuthRepo
 		auditRepo = memAuthRepo
-
-		// policyRepo = memory.NewPolicyMemoryRepository()
 	case "postgres":
 		logger.Info(context.Background(), "Using PostgreSQL storage backend")
 		db, err := postgresql.NewConnection(appCfg.Postgres)
@@ -100,24 +104,34 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		return nil, fmt.Errorf("invalid storage mode: %s", appCfg.Storage.Mode)
 	}
 
+	// Authorization Service Setup
+	policyData, err := os.ReadFile("configs/policy/basic.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy file: %w", err)
+	}
+	var policyCfg PolicyConfig
+	if err := yaml.Unmarshal(policyData, &policyCfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal policy data: %w", err)
+	}
+	evaluator := authorization.NewDefaultEvaluator(policyCfg.Rules)
+	authzService := authorization.NewService(evaluator)
+
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
 	identityAppService := identity_service.NewApplicationService(identityDomainService, logger)
-
 	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, auditRepo, cryptoManager, logger)
-
-	// Create a no-op tracer for now.
 	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
-
 	authAppService := auth_service.NewApplicationService(authDomainService, logger, auth_service.Config{
-		AccessTokenDuration:  time.Hour, // Placeholder values
+		AccessTokenDuration:  time.Hour,
 		RefreshTokenDuration: time.Hour * 24,
 		SessionDuration:      time.Hour * 24,
 	}, tracer)
 
 	services := Services{
-		IdentityService: identityAppService,
-		AuthService:     authAppService,
-		CryptoManager:   cryptoManager,
+		IdentityService:       identityAppService,
+		AuthService:           authAppService,
+		AuthzService:          authzService,
+		CryptoManager:         cryptoManager,
+		IdentityDomainService: identityDomainService,
 	}
 
 	return NewServer(httpCfg, logger, services), nil
@@ -129,24 +143,25 @@ func (s *Server) registerRoutes(services Services) {
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
 
 	loggingMiddleware := middleware.NewLoggingMiddleware(s.logger)
-	// Auth middleware would require AuthzService, which is not fully wired yet.
-	// authMiddleware := middleware.NewAuthMiddleware(services.AuthzService, services.CryptoManager, s.logger)
+	authMiddleware := middleware.NewAuthMiddleware(services.CryptoManager, s.logger, services.IdentityDomainService)
+	authzUserReadMiddleware := middleware.NewAuthorizationMiddleware(services.AuthzService, policy.Action("users.read"), "user")
 
 	s.Router.Use(loggingMiddleware.Execute)
 
 	apiV1 := s.Router.PathPrefix("/api/v1").Subrouter()
 	apiV1.HandleFunc("/auth/login", authHandlers.Login).Methods("POST")
-
-	// For simplicity, we are not protecting routes yet.
 	apiV1.HandleFunc("/users", identityHandlers.CreateUser).Methods("POST")
-	apiV1.HandleFunc("/users/{id}", identityHandlers.GetUser).Methods("GET")
+
+	// Protected route for getting a user
+	getUserHandler := http.HandlerFunc(identityHandlers.GetUser)
+	protectedGetUserRoute := authMiddleware.Execute(authzUserReadMiddleware.Execute(getUserHandler))
+	apiV1.Handle("/users/{id}", protectedGetUserRoute).Methods("GET")
 
 	s.Router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	}).Methods("GET")
 }
-
 
 // Start begins listening for and serving HTTP requests.
 func (s *Server) Start() {
