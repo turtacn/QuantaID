@@ -17,9 +17,15 @@ type PostgresConfig struct {
 	ConnMaxLifetime string `mapstructure:"connMaxLifetime"`
 }
 
+// StorageConfig holds the configuration for the storage layer.
+type StorageConfig struct {
+	Mode string `mapstructure:"mode"` // "postgres" / "memory"
+}
+
 // Config holds all configuration for the application.
 type Config struct {
 	Postgres PostgresConfig `mapstructure:"postgres"`
+	Storage  StorageConfig  `mapstructure:"storage"`
 }
 
 // ConfigManager is a wrapper around the Viper library that handles loading,

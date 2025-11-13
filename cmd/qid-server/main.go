@@ -3,62 +3,60 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/turtacn/QuantaID/internal/domain/auth"
-	"github.com/turtacn/QuantaID/internal/server/http/handlers"
-	"github.com/turtacn/QuantaID/internal/storage/postgresql"
-	"github.com/turtacn/QuantaID/pkg/plugins/mfa/totp"
+	"github.com/turtacn/QuantaID/internal/server/http"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
 )
 
 func main() {
 	// Initialize logger
-	logger, err := utils.NewZapLogger(&utils.LoggerConfig{
-		Level: "info",
-		Format: "json",
-	})
+	logger, err := utils.NewZapLogger(&utils.LoggerConfig{Level: "info", Format: "json"})
 	if err != nil {
-		// If logger fails to initialize, we can't use it. Fall back to standard log.
 		fmt.Fprintf(os.Stderr, "Failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Initialize router
-	router := http.NewServeMux()
-
-	// Initialize repositories
-	db, err := postgresql.NewConnection(utils.PostgresConfig{
-		DSN: "postgres://user:password@localhost:5432/quantid?sslmode=disable",
-	})
+	// Load configuration
+	configManager, err := utils.NewConfigManager("./configs", "server", "yaml", logger)
 	if err != nil {
-		logger.Error(context.Background(), "Failed to connect to database", zap.Error(err))
-		return
+		logger.Error(context.Background(), "Failed to load configuration", zap.Error(err))
+		os.Exit(1)
 	}
-	userRepo := postgresql.NewPostgresIdentityRepository(db)
-	auditRepo := postgresql.NewPostgresAuditLogRepository(db)
-
-	// Register handlers
-	RegisterOAuthHandlers(router, logger)
-	handlers.RegisterAdminHandlers(router, userRepo, auditRepo)
+	var appCfg utils.Config
+	if err := configManager.Unmarshal(&appCfg); err != nil {
+		logger.Error(context.Background(), "Failed to unmarshal configuration", zap.Error(err))
+		os.Exit(1)
+	}
 
 	// Initialize CryptoManager
-	cryptoManager := utils.NewCryptoManager("your-jwt-secret")
+	cryptoManager := utils.NewCryptoManager("your-jwt-secret") // Use a real secret from config in production
 
-	// In a real application, you would initialize the MFA policy with its dependencies.
-	totpProvider := &totp.TOTPProvider{}
-	mfaPolicy := auth.NewMFAPolicy(nil, nil, totpProvider)
-	RegisterMFAHandlers(router, mfaPolicy, logger, cryptoManager)
+	// Create server with config
+	httpCfg := http.Config{
+		Address:      ":8080", // Get from config
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
+	server, err := http.NewServerWithConfig(httpCfg, &appCfg, logger, cryptoManager)
+	if err != nil {
+		logger.Error(context.Background(), "Failed to create server", zap.Error(err))
+		os.Exit(1)
+	}
 
-	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	logger.Info(context.Background(), fmt.Sprintf("Starting server on port %s", port))
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), router); err != nil {
-		logger.Error(context.Background(), "Failed to start server", zap.Error(err))
-	}
+	// Start server in a goroutine
+	go server.Start()
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	server.Stop(ctx)
 }

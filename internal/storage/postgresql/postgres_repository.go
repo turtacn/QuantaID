@@ -58,24 +58,10 @@ func (r *PostgresIdentityRepository) DeleteUser(ctx context.Context, id string) 
 
 
 // ListUsers retrieves a paginated list of users based on a filter.
-func (r *PostgresIdentityRepository) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int64, error) {
+func (r *PostgresIdentityRepository) ListUsers(ctx context.Context, pq identity.PaginationQuery) ([]*types.User, error) {
 	var users []*types.User
-	var total int64
-
-	query := r.db.WithContext(ctx).Model(&types.User{})
-	if filter.Search != "" {
-		query = query.Where("username LIKE ? OR email LIKE ?", "%"+filter.Search+"%", "%"+filter.Search+"%")
-	}
-
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	if err := query.Offset(filter.Offset).Limit(filter.Limit).Find(&users).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return users, total, nil
+	err := r.db.WithContext(ctx).Offset(pq.Offset).Limit(pq.PageSize).Find(&users).Error
+	return users, err
 }
 
 // FindUsersByAttribute is not yet implemented for the PostgreSQL repository.

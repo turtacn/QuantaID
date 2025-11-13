@@ -2,67 +2,56 @@ package http
 
 import (
 	"context"
-	"github.com/gorilla/mux"
-	"github.com/turtacn/QuantaID/internal/protocols/saml"
-	"github.com/turtacn/QuantaID/internal/services/application"
-	"github.com/turtacn/QuantaID/internal/services/auth"
-	"github.com/turtacn/QuantaID/internal/services/authorization"
-	"github.com/turtacn/QuantaID/internal/services/identity"
-	"github.com/turtacn/QuantaID/internal/server/http/handlers"
-	"github.com/turtacn/QuantaID/internal/server/middleware"
-	"github.com/turtacn/QuantaID/pkg/utils"
-	"go.uber.org/zap"
+	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/internal/protocols/saml"
+	"github.com/turtacn/QuantaID/internal/services/application"
+	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
+	"github.com/turtacn/QuantaID/internal/services/authorization"
+	identity_service "github.com/turtacn/QuantaID/internal/services/identity"
+	"github.com/turtacn/QuantaID/internal/server/http/handlers"
+	"github.com/turtacn/QuantaID/internal/server/middleware"
+	"github.com/turtacn/QuantaID/internal/storage/memory"
+	"github.com/turtacn/QuantaID/internal/storage/postgresql"
+	"github.com/turtacn/QuantaID/pkg/utils"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
 // Server encapsulates the HTTP server for the QuantaID API.
-// It manages the server's lifecycle, routing, and dependencies.
 type Server struct {
 	httpServer *http.Server
-	// Router is the main router for the HTTP server. It is public to allow for extension,
-	// for example, in tests or other specialized configurations.
-	Router *mux.Router
-	logger utils.Logger
+	Router     *mux.Router
+	logger     utils.Logger
 }
 
 // Config holds the configuration required for the HTTP server.
 type Config struct {
-	// Address is the TCP address for the server to listen on (e.g., ":8080").
-	Address string
-	// ReadTimeout is the maximum duration for reading the entire request, including the body.
-	ReadTimeout time.Duration
-	// WriteTimeout is the maximum duration before timing out writes of the response.
+	Address      string
+	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 }
 
-// Services is a container for all the application services that the server's handlers will depend on.
-// This struct is used to inject dependencies into the server and its handlers.
+// Services is a container for all the application services.
 type Services struct {
-	AuthService     *auth.ApplicationService
-	IdentityService *identity.ApplicationService
+	AuthService     *auth_service.ApplicationService
+	IdentityService *identity_service.ApplicationService
 	AuthzService    *authorization.ApplicationService
 	AppService      *application.ApplicationService
 	SamlService     *saml.Service
 	CryptoManager   *utils.CryptoManager
 }
 
-// NewServer creates and configures a new HTTP server instance.
-// It initializes the router, sets up the server with the given configuration,
-// and registers all the API routes and their corresponding handlers.
-//
-// Parameters:
-//   - config: The configuration for the server (address, timeouts).
-//   - logger: The logger for server-level messages.
-//   - services: A container for all the application services required by the handlers.
-//
-// Returns:
-//   A new, configured but not yet started, Server instance.
+// NewServer creates a new HTTP server instance.
 func NewServer(config Config, logger utils.Logger, services Services) *Server {
 	router := mux.NewRouter()
-
 	server := &Server{
-		Router: router, // Changed to be public
+		Router: router,
 		logger: logger,
 		httpServer: &http.Server{
 			Addr:         config.Address,
@@ -71,37 +60,86 @@ func NewServer(config Config, logger utils.Logger, services Services) *Server {
 			WriteTimeout: config.WriteTimeout,
 		},
 	}
-
 	server.registerRoutes(services)
 	return server
 }
 
+// NewServerWithConfig creates a new server instance based on the provided configuration.
+func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logger, cryptoManager *utils.CryptoManager) (*Server, error) {
+	var idRepo identity.UserRepository
+	var groupRepo identity.GroupRepository
+	var sessionRepo auth.SessionRepository
+	var tokenRepo auth.TokenRepository
+	var auditRepo auth.AuditLogRepository
+	// var policyRepo policy.Repository // Not used yet
+
+	switch appCfg.Storage.Mode {
+	case "memory":
+		logger.Info(context.Background(), "Using in-memory storage backend")
+		memIdRepo := memory.NewIdentityMemoryRepository()
+		idRepo = memIdRepo
+		groupRepo = memIdRepo
+
+		memAuthRepo := memory.NewAuthMemoryRepository()
+		sessionRepo = memAuthRepo
+		tokenRepo = memAuthRepo
+		auditRepo = memAuthRepo
+
+		// policyRepo = memory.NewPolicyMemoryRepository()
+	case "postgres":
+		logger.Info(context.Background(), "Using PostgreSQL storage backend")
+		db, err := postgresql.NewConnection(appCfg.Postgres)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to postgres: %w", err)
+		}
+		pgIdRepo := postgresql.NewPostgresIdentityRepository(db)
+		idRepo = pgIdRepo
+		groupRepo = pgIdRepo
+		return nil, fmt.Errorf("postgres repositories for auth and policy are not yet implemented")
+	default:
+		return nil, fmt.Errorf("invalid storage mode: %s", appCfg.Storage.Mode)
+	}
+
+	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
+	identityAppService := identity_service.NewApplicationService(identityDomainService, logger)
+
+	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, auditRepo, cryptoManager, logger)
+
+	// Create a no-op tracer for now.
+	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
+
+	authAppService := auth_service.NewApplicationService(authDomainService, logger, auth_service.Config{
+		AccessTokenDuration:  time.Hour, // Placeholder values
+		RefreshTokenDuration: time.Hour * 24,
+		SessionDuration:      time.Hour * 24,
+	}, tracer)
+
+	services := Services{
+		IdentityService: identityAppService,
+		AuthService:     authAppService,
+		CryptoManager:   cryptoManager,
+	}
+
+	return NewServer(httpCfg, logger, services), nil
+}
+
 // registerRoutes sets up the API routes, their handlers, and associated middleware.
-// It defines the structure of the API, including versioning and protected routes.
 func (s *Server) registerRoutes(services Services) {
 	authHandlers := handlers.NewAuthHandlers(services.AuthService, s.logger)
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
-	appHandlers := handlers.NewApplicationHandlers(services.AppService, s.logger)
-	samlHandlers := handlers.NewSAMLHandlers(services.SamlService, s.logger)
 
 	loggingMiddleware := middleware.NewLoggingMiddleware(s.logger)
-	authMiddleware := middleware.NewAuthMiddleware(services.AuthzService, services.CryptoManager, s.logger)
+	// Auth middleware would require AuthzService, which is not fully wired yet.
+	// authMiddleware := middleware.NewAuthMiddleware(services.AuthzService, services.CryptoManager, s.logger)
 
 	s.Router.Use(loggingMiddleware.Execute)
 
 	apiV1 := s.Router.PathPrefix("/api/v1").Subrouter()
-
 	apiV1.HandleFunc("/auth/login", authHandlers.Login).Methods("POST")
 
-	protected := apiV1.PathPrefix("/").Subrouter()
-	protected.Use(authMiddleware.Execute)
-	protected.HandleFunc("/users", identityHandlers.CreateUser).Methods("POST")
-	protected.HandleFunc("/users/{id}", identityHandlers.GetUser).Methods("GET")
-	protected.HandleFunc("/applications", appHandlers.CreateApplication).Methods("POST")
-
-	// SAML protocol endpoints are not versioned under /api/v1
-	s.Router.HandleFunc("/saml/sso", samlHandlers.HandleSSO).Methods("POST", "GET")
-	s.Router.HandleFunc("/saml/metadata", samlHandlers.HandleMetadata).Methods("GET")
+	// For simplicity, we are not protecting routes yet.
+	apiV1.HandleFunc("/users", identityHandlers.CreateUser).Methods("POST")
+	apiV1.HandleFunc("/users/{id}", identityHandlers.GetUser).Methods("GET")
 
 	s.Router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -109,8 +147,8 @@ func (s *Server) registerRoutes(services Services) {
 	}).Methods("GET")
 }
 
+
 // Start begins listening for and serving HTTP requests.
-// This is a blocking call. It will only return on a server error (other than ErrServerClosed).
 func (s *Server) Start() {
 	s.logger.Info(context.Background(), "Starting HTTP server", zap.String("address", s.httpServer.Addr))
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -118,11 +156,7 @@ func (s *Server) Start() {
 	}
 }
 
-// Stop gracefully shuts down the HTTP server without interrupting any active connections.
-// It waits for a given context to be done before forcing a shutdown.
-//
-// Parameters:
-//   - ctx: A context to control the shutdown duration.
+// Stop gracefully shuts down the HTTP server.
 func (s *Server) Stop(ctx context.Context) {
 	s.logger.Info(ctx, "Shutting down HTTP server")
 	if err := s.httpServer.Shutdown(ctx); err != nil {

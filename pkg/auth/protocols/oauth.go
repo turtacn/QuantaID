@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
 	"github.com/turtacn/QuantaID/pkg/plugins"
 	"github.com/turtacn/QuantaID/pkg/types"
@@ -19,11 +20,11 @@ import (
 // OAuthAdapter implements the IProtocolAdapter for OAuth 2.1.
 type OAuthAdapter struct {
 	plugins.BasePlugin
-	logger    utils.Logger
-	redis     redis.RedisClientInterface
-	appRepo   types.ApplicationRepository
-	userRepo  types.UserRepository
-	jwtSecret []byte
+	logger      utils.Logger
+	redis       redis.RedisClientInterface
+	appRepo     types.ApplicationRepository
+	userRepo    identity.UserRepository
+	jwtSecret   []byte
 	oidcAdapter *OIDCAdapter
 }
 
@@ -256,7 +257,7 @@ func generateRandomString(n int) string {
 }
 
 // SetUserRepo sets the user repository for the adapter.
-func (a *OAuthAdapter) SetUserRepo(repo types.UserRepository) {
+func (a *OAuthAdapter) SetUserRepo(repo identity.UserRepository) {
 	a.userRepo = repo
 }
 

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"context"
 	"time"
 )
 
@@ -110,18 +109,3 @@ func (u *User) HasRole(roleName string) bool {
 	return false
 }
 
-// UserRepository defines the interface for user persistence.
-type UserRepository interface {
-	GetUserByID(ctx context.Context, id string) (*User, error)
-	GetUserByEmail(ctx context.Context, email string) (*User, error)
-	GetUserByUsername(ctx context.Context, username string) (*User, error)
-	CreateUser(ctx context.Context, user *User) error
-	UpdateUser(ctx context.Context, user *User) error
-	ListUsers(ctx context.Context, filter UserFilter) ([]*User, int64, error)
-}
-
-type UserFilter struct {
-	Search string
-	Offset int
-	Limit  int
-}

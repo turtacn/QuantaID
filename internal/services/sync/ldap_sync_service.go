@@ -4,17 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/plugins/connectors/ldap"
 	"github.com/turtacn/QuantaID/pkg/types"
-	"time"
 )
 
 type LDAPSyncService struct {
 	ldapConnector *ldap.LDAPConnector
-	userRepo      types.UserRepository
+	userRepo      identity.UserRepository
 }
 
-func NewLDAPSyncService(ldapConnector *ldap.LDAPConnector, userRepo types.UserRepository) *LDAPSyncService {
+func NewLDAPSyncService(ldapConnector *ldap.LDAPConnector, userRepo identity.UserRepository) *LDAPSyncService {
 	return &LDAPSyncService{
 		ldapConnector: ldapConnector,
 		userRepo:      userRepo,
@@ -32,7 +34,9 @@ func (s *LDAPSyncService) FullSync(ctx context.Context) error {
 		ldapUserMap[user.Username] = user
 	}
 
-	localUsers, _, err := s.userRepo.ListUsers(ctx, types.UserFilter{})
+	// This is not efficient for large user bases, but it's a start.
+	// A better implementation would use a streaming or paginated approach.
+	localUsers, err := s.userRepo.ListUsers(ctx, identity.PaginationQuery{PageSize: 10000, Offset: 0})
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/plugins"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
@@ -18,7 +19,7 @@ type OIDCAdapter struct {
 	oauthAdapter *OAuthAdapter
 	logger       utils.Logger
 	privateKey   *rsa.PrivateKey
-	userRepo     types.UserRepository
+	userRepo     identity.UserRepository
 	jwtSecret    []byte
 }
 
@@ -130,7 +131,7 @@ func (a *OIDCAdapter) GetJWKS() jose.JSONWebKeySet {
 }
 
 // SetUserRepo sets the user repository for the adapter.
-func (a *OIDCAdapter) SetUserRepo(repo types.UserRepository) {
+func (a *OIDCAdapter) SetUserRepo(repo identity.UserRepository) {
 	a.userRepo = repo
 }
 

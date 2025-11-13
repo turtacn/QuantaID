@@ -1,0 +1,5 @@
+storage:
+  mode: "memory"
+
+http:
+  listen: ":8080"
