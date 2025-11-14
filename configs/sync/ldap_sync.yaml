@@ -1,0 +1,18 @@
+# Configuration for the LDAP Synchronization Service
+
+# Sync intervals
+full_sync_interval: "24h"
+incremental_interval: "1h"
+
+# Conflict resolution strategy when a user exists in both LDAP and the local database.
+# Can be 'prefer_local' or 'prefer_remote'.
+conflict_strategy: "prefer_remote"
+
+# Lifecycle rules to automatically change a user's status based on LDAP attributes.
+lifecycle_rules:
+  - source_attr: "hr_status"
+    match_value: "terminated"
+    target_status: "disabled"
+  - source_attr: "account_status"
+    match_value: "inactive"
+    target_status: "disabled"
