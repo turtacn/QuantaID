@@ -1,0 +1,1772 @@
+!!python/unicode 'import_graph':
+  !!python/unicode 'application':
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/application'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  !!python/unicode 'audit':
+  - !!python/unicode 'github.com/google/uuid'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'time'
+  !!python/unicode 'auth':
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'time'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/go-redis/redis/v8'
+  - !!python/unicode 'github.com/google/uuid'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins/mfa/totp'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'crypto/sha256'
+  - !!python/unicode 'encoding/base64'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.opentelemetry.io/otel/trace'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  !!python/unicode 'authorization':
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/policy'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  !!python/unicode 'cache':
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'errors'
+  - !!python/unicode 'github.com/redis/go-redis/v9'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'math/rand'
+  - !!python/unicode 'time'
+  !!python/unicode 'client':
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+  - !!python/unicode 'bytes'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  !!python/unicode 'commands':
+  - !!python/unicode 'github.com/spf13/cobra'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'github.com/spf13/cobra'
+  !!python/unicode 'handlers':
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/auth/protocols'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'strconv'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/protocols/saml'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/application'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/auth/protocols'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/gorilla/mux'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  !!python/unicode 'http':
+  - !!python/unicode 'github.com/gorilla/mux'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/protocols/saml'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/server/http/handlers'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/server/middleware'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/application'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/authorization'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'time'
+  !!python/unicode 'identity':
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  !!python/unicode 'ldap':
+  - !!python/unicode 'crypto/tls'
+  - !!python/unicode 'github.com/cenkalti/backoff/v4'
+  - !!python/unicode 'github.com/go-ldap/ldap/v3'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/go-ldap/ldap/v3'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  !!python/unicode 'main':
+  - !!python/unicode 'github.com/spf13/cobra'
+  - !!python/unicode 'github.com/turtacn/QuantaID/cmd/qid/commands'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/google/uuid'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/server/http/handlers'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/auth/protocols'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/server/http/handlers'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/storage/postgresql'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins/mfa/totp'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  !!python/unicode 'metrics':
+  - !!python/unicode 'github.com/gin-gonic/gin'
+  - !!python/unicode 'github.com/prometheus/client_golang/prometheus'
+  - !!python/unicode 'github.com/prometheus/client_golang/prometheus/promauto'
+  - !!python/unicode 'github.com/prometheus/client_golang/prometheus/promhttp'
+  - !!python/unicode 'strconv'
+  - !!python/unicode 'time'
+  !!python/unicode 'mfa':
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  !!python/unicode 'middleware':
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/authorization'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'time'
+  !!python/unicode 'observability':
+  - !!python/unicode 'github.com/prometheus/client_golang/prometheus'
+  - !!python/unicode 'github.com/prometheus/client_golang/prometheus/promhttp'
+  - !!python/unicode 'go.opentelemetry.io/otel'
+  - !!python/unicode 'go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc'
+  - !!python/unicode 'go.opentelemetry.io/otel/exporters/stdout/stdouttrace'
+  - !!python/unicode 'go.opentelemetry.io/otel/propagation'
+  - !!python/unicode 'go.opentelemetry.io/otel/sdk/resource'
+  - !!python/unicode 'go.opentelemetry.io/otel/sdk/trace'
+  - !!python/unicode 'go.opentelemetry.io/otel/semconv/v1.4.0'
+  - !!python/unicode 'google.golang.org/grpc'
+  !!python/unicode 'orchestrator':
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  !!python/unicode 'plugins':
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'sync'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'sync'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  !!python/unicode 'policy':
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'golang.org/x/exp/slices'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  !!python/unicode 'postgresql':
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'gorm.io/driver/postgres'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'sync'
+  - !!python/unicode 'github.com/google/uuid'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'golang.org/x/exp/slices'
+  - !!python/unicode 'sync'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'gorm.io/gorm'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'sync'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'sync'
+  !!python/unicode 'protocols':
+  - !!python/unicode 'crypto/rsa'
+  - !!python/unicode 'github.com/golang-jwt/jwt/v5'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'gopkg.in/square/go-jose.v2'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'crypto/rand'
+  - !!python/unicode 'encoding/base64'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/golang-jwt/jwt/v5'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/storage/redis'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'time'
+  !!python/unicode 'redis':
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'github.com/redis/go-redis/v9'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/redis/go-redis/v9'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/redis/go-redis/v9'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/redis/go-redis/v9'
+  - !!python/unicode 'time'
+  !!python/unicode 'saml':
+  - !!python/unicode 'crypto/rsa'
+  - !!python/unicode 'crypto/x509'
+  - !!python/unicode 'github.com/crewjam/saml'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/application'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+  !!python/unicode 'sync':
+  - !!python/unicode 'errors'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins/connectors/ldap'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'time'
+  !!python/unicode 'testutils':
+  - !!python/unicode 'github.com/google/uuid'
+  - !!python/unicode 'github.com/stretchr/testify/mock'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+  - !!python/unicode 'time'
+  !!python/unicode 'totp':
+  - !!python/unicode 'github.com/pquerna/otp'
+  - !!python/unicode 'github.com/pquerna/otp/totp'
+  !!python/unicode 'types':
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/golang-jwt/jwt/v4'
+  - !!python/unicode 'time'
+  - !!python/unicode 'github.com/google/uuid'
+  - !!python/unicode 'gorm.io/datatypes'
+  - !!python/unicode 'time'
+  - !!python/unicode 'time'
+  - !!python/unicode 'database/sql/driver'
+  - !!python/unicode 'encoding/json'
+  - !!python/unicode 'time'
+  - !!python/unicode 'time'
+  - !!python/unicode 'google.golang.org/grpc/codes'
+  - !!python/unicode 'google.golang.org/grpc/status'
+  !!python/unicode 'utils':
+  - !!python/unicode 'bytes'
+  - !!python/unicode 'github.com/fsnotify/fsnotify'
+  - !!python/unicode 'github.com/spf13/viper'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'go.opentelemetry.io/otel/trace'
+  - !!python/unicode 'go.uber.org/zap'
+  - !!python/unicode 'go.uber.org/zap/zapcore'
+  - !!python/unicode 'gopkg.in/natefinch/lumberjack.v2'
+  - !!python/unicode 'crypto/rand'
+  - !!python/unicode 'github.com/golang-jwt/jwt/v4'
+  - !!python/unicode 'github.com/google/uuid'
+  - !!python/unicode 'golang.org/x/crypto/bcrypt'
+  - !!python/unicode 'time'
+  !!python/unicode 'workflows':
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/orchestrator'
+  - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+  - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+!!python/unicode 'packages':
+  !!python/unicode 'application':
+    !!python/unicode 'comments':
+    - !!python/unicode 'ApplicationService provides application-level use cases for
+      managing applications.'
+    - !!python/unicode 'CreateApplicationRequest defines the DTO for a request to
+      create a new application.'
+    - !!python/unicode 'GetApplicationByID retrieves an application by its ID.'
+    - !!python/unicode 'It acts as a facade over the application domain repository.'
+    - !!python/unicode 'It outlines the CRUD and query operations for Application
+      entities.'
+    - !!python/unicode 'NewApplicationService creates a new application service.'
+    - !!python/unicode 'Repository defines the persistence interface for application-related
+      data.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/domain/application/repository.go'
+    - !!python/unicode 'internal/services/application/service.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'CreateApplication'
+    - !!python/unicode 'GetApplicationByID'
+    - !!python/unicode 'NewApplicationService'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/application'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'Repository'
+    !!python/unicode 'structs':
+    - !!python/unicode 'ApplicationService'
+    - !!python/unicode 'CreateApplicationRequest'
+    !!python/unicode 'summary': !!python/unicode 'ApplicationService provides application-level
+      use cases for managing applications. CreateApplicationRequest defines the DTO
+      for a request to create a new application.'
+  !!python/unicode 'audit':
+    !!python/unicode 'comments':
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'ApplicationService provides application-level use cases for
+      auditing. It acts as an'
+    - !!python/unicode 'NewApplicationService creates a new audit application service.'
+    - !!python/unicode 'intermediary between the transport layer (e.g., HTTP handlers)
+      and the domain'
+    - !!python/unicode 'layer (repositories), encapsulating the logic for recording
+      and retrieving audit events.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/services/audit/service.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'GetUserHistory'
+    - !!python/unicode 'NewApplicationService'
+    - !!python/unicode 'RecordEvent'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/google/uuid'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'ApplicationService'
+    !!python/unicode 'summary': !!python/unicode '// Parameters: ApplicationService
+      provides application-level use cases for auditing. It acts as an'
+  !!python/unicode 'auth':
+    !!python/unicode 'comments':
+    - !!python/unicode '- pluginManager: The plugin manager to use for retrieving
+      authentication plugins.'
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'ApplicationService provides application-level use cases for
+      authentication. It acts as'
+    - !!python/unicode 'Config holds configuration for the auth service, specifically
+      token and session lifetimes.'
+    - !!python/unicode 'Config holds the application-level configuration for the auth
+      service,'
+    - !!python/unicode 'Engine is the central component for orchestrating authentication
+      and authorization flows.'
+    - !!python/unicode 'GetAvailableMFAMethods returns a list of available MFA methods
+      for a user.'
+    - !!python/unicode 'IdentityProviderRepository defines the CRUD interface for
+      managing identity provider configurations in the database.'
+    - !!python/unicode 'It brings together all the necessary dependencies to handle
+      authentication logic.'
+    - !!python/unicode 'It uses a plugin-based architecture to support various authentication
+      protocols and identity providers.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/domain/auth/service.go'
+    - !!python/unicode 'internal/domain/auth/mfa_policy.go'
+    - !!python/unicode 'internal/domain/auth/pkce.go'
+    - !!python/unicode 'internal/domain/auth/repository.go'
+    - !!python/unicode 'internal/services/auth/service.go'
+    - !!python/unicode 'pkg/auth/engine.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Authenticate'
+    - !!python/unicode 'GetAvailableMFAMethods'
+    - !!python/unicode 'Login'
+    - !!python/unicode 'LoginWithPassword'
+    - !!python/unicode 'Logout'
+    - !!python/unicode 'NewApplicationService'
+    - !!python/unicode 'NewEngine'
+    - !!python/unicode 'NewMFAPolicy'
+    - !!python/unicode 'ShouldEnforceMFA'
+    - !!python/unicode 'VerifyMFAChallenge'
+    - !!python/unicode 'VerifyPKCE'
+    - !!python/unicode 'VerifyTOTP'
+    - !!python/unicode 'createSessionAndTokens'
+    - !!python/unicode 'getPluginNameForProtocol'
+    - !!python/unicode 'logAuthFailure'
+    - !!python/unicode 'logAuthSuccess'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'crypto/sha256'
+    - !!python/unicode 'encoding/base64'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/go-redis/redis/v8'
+    - !!python/unicode 'github.com/google/uuid'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins/mfa/totp'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.opentelemetry.io/otel/trace'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'AuditLogRepository'
+    - !!python/unicode 'IdentityProviderRepository'
+    - !!python/unicode 'MFARepository'
+    - !!python/unicode 'SessionRepository'
+    - !!python/unicode 'TokenRepository'
+    !!python/unicode 'structs':
+    - !!python/unicode 'ApplicationService'
+    - !!python/unicode 'Config'
+    - !!python/unicode 'Engine'
+    - !!python/unicode 'LoginRequest'
+    - !!python/unicode 'LoginResponse'
+    - !!python/unicode 'LogoutRequest'
+    - !!python/unicode 'MFAPolicy'
+    - !!python/unicode 'Service'
+    - !!python/unicode 'UserDTO'
+    !!python/unicode 'summary': !!python/unicode '- pluginManager: The plugin manager
+      to use for retrieving authentication plugins. // Parameters:'
+  !!python/unicode 'authorization':
+    !!python/unicode 'comments':
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'ApplicationService provides application-level use cases for
+      authorization. It acts as'
+    - !!python/unicode 'NewApplicationService creates a new authorization application
+      service.'
+    - !!python/unicode 'a facade over the policy and identity domain services to determine
+      if a user'
+    - !!python/unicode 'has permission to perform a specific action on a resource.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/services/authorization/service.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'CheckPermission'
+    - !!python/unicode 'NewApplicationService'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/policy'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'ApplicationService'
+    - !!python/unicode 'CheckPermissionRequest'
+    !!python/unicode 'summary': !!python/unicode '// Parameters: ApplicationService
+      provides application-level use cases for authorization. It acts as'
+  !!python/unicode 'cache':
+    !!python/unicode 'comments':
+    - !!python/unicode 'ErrNotFound is returned when an item is not found in the cache.'
+    - !!python/unicode 'GetUser retrieves a user from the cache. If the user is not
+      in the cache, it falls back to the database.'
+    - !!python/unicode 'NewRedisCache creates a new RedisCache.'
+    - !!python/unicode 'RedisCache provides a cache implementation using Redis.'
+    - !!python/unicode 'UserRepository defines the interface for user data access,
+      used for cache fallbacks.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/cache/redis_cache.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'GetAccessToken'
+    - !!python/unicode 'GetSession'
+    - !!python/unicode 'GetUser'
+    - !!python/unicode 'NewRedisCache'
+    - !!python/unicode 'SetAccessToken'
+    - !!python/unicode 'SetSession'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'errors'
+    - !!python/unicode 'github.com/redis/go-redis/v9'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'math/rand'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'UserRepository'
+    !!python/unicode 'structs':
+    - !!python/unicode 'RedisCache'
+    !!python/unicode 'summary': !!python/unicode 'ErrNotFound is returned when an
+      item is not found in the cache. GetUser retrieves a user from the cache. If
+      the user is not in the cache, it falls back to the database.'
+  !!python/unicode 'client':
+    !!python/unicode 'comments':
+    - !!python/unicode '- baseURL: The base URL of the QuantaID API server.'
+    - !!python/unicode '- ctx: The context for the API request.'
+    - !!python/unicode '- username: The user''s username.'
+    - !!python/unicode '- username: The username for the new user.'
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'AuthService handles authentication-related API calls.'
+    - !!python/unicode 'Client provides a client for interacting with the QuantaID
+      API.'
+    - !!python/unicode 'CreateUser creates a new user in QuantaID.'
+    - !!python/unicode 'IdentityService handles identity-related API calls.'
+    - !!python/unicode 'It handles making HTTP requests, authentication, and error
+      handling.'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/client/auth.go'
+    - !!python/unicode 'pkg/client/client.go'
+    - !!python/unicode 'pkg/client/identity.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'CreateUser'
+    - !!python/unicode 'GetUserByID'
+    - !!python/unicode 'Login'
+    - !!python/unicode 'Logout'
+    - !!python/unicode 'NewClient'
+    - !!python/unicode 'SetAuthToken'
+    - !!python/unicode 'do'
+    - !!python/unicode 'newRequest'
+    !!python/unicode 'imports':
+    - !!python/unicode 'bytes'
+    - !!python/unicode 'context'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'io'
+    - !!python/unicode 'net/http'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'AuthService'
+    - !!python/unicode 'Client'
+    - !!python/unicode 'IdentityService'
+    !!python/unicode 'summary': !!python/unicode '- baseURL: The base URL of the QuantaID
+      API server. - ctx: The context for the API request.'
+  !!python/unicode 'commands':
+    !!python/unicode 'comments':
+    - !!python/unicode 'It runs the server in the foreground, streaming its stdout
+      and stderr, and waits for it to exit.'
+    - !!python/unicode 'NewConfigCmd creates the root `config` command and its subcommands.'
+    - !!python/unicode 'NewServerCmd creates the root `server` command and its subcommands.'
+    - !!python/unicode 'This command acts as a namespace for all configuration-related
+      operations.'
+    - !!python/unicode 'This command acts as a namespace for all server process management
+      operations.'
+    - !!python/unicode 'This command is responsible for locating and launching the
+      `qid-server` daemon process.'
+    - !!python/unicode 'This command is used to parse and validate the server''s configuration
+      file'
+    - !!python/unicode 'newConfigValidateCmd creates the `config validate` subcommand.'
+    - !!python/unicode 'newServerStartCmd creates the `server start` subcommand.'
+    - !!python/unicode 'without starting the server.'
+    !!python/unicode 'files':
+    - !!python/unicode 'cmd/qid/commands/config.go'
+    - !!python/unicode 'cmd/qid/commands/server.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'NewConfigCmd'
+    - !!python/unicode 'NewServerCmd'
+    - !!python/unicode 'newConfigValidateCmd'
+    - !!python/unicode 'newServerStartCmd'
+    !!python/unicode 'imports':
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/spf13/cobra'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'os'
+    - !!python/unicode 'os/exec'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs': []
+    !!python/unicode 'summary': !!python/unicode 'It runs the server in the foreground,
+      streaming its stdout and stderr, and waits for it to exit. NewConfigCmd creates
+      the root `config` command and its subcommands.'
+  !!python/unicode 'handlers':
+    !!python/unicode 'comments':
+    - !!python/unicode '- authService: The application service that contains the core
+      authentication logic.'
+    - !!python/unicode '- identityService: The application service for identity management
+      logic.'
+    - !!python/unicode '- logger: The logger for handler-specific messages.'
+    - !!python/unicode '- samlService: The service that contains the core SAML IdP
+      logic.'
+    - !!python/unicode '- w: The http.ResponseWriter to write the response to.'
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'ApplicationHandlers provides HTTP handlers for application-related
+      endpoints.'
+    - !!python/unicode 'AuthHandlers provides HTTP handlers for authentication-related
+      endpoints.'
+    - !!python/unicode 'Authorize handles the authorization endpoint.'
+    - !!python/unicode 'CreateApplication is the HTTP handler for creating a new application.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/server/http/handlers/admin_routes.go'
+    - !!python/unicode 'internal/server/http/handlers/auth.go'
+    - !!python/unicode 'internal/server/http/handlers/oidc.go'
+    - !!python/unicode 'internal/server/http/handlers/admin_api.go'
+    - !!python/unicode 'internal/server/http/handlers/saml.go'
+    - !!python/unicode 'internal/server/http/handlers/application.go'
+    - !!python/unicode 'internal/server/http/handlers/oauth.go'
+    - !!python/unicode 'internal/server/http/handlers/identity.go'
+    - !!python/unicode 'internal/server/http/handlers/helpers.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Authorize'
+    - !!python/unicode 'CreateApplication'
+    - !!python/unicode 'CreateUser'
+    - !!python/unicode 'Discovery'
+    - !!python/unicode 'GetUser'
+    - !!python/unicode 'HandleMetadata'
+    - !!python/unicode 'HandleSSO'
+    - !!python/unicode 'JWKS'
+    - !!python/unicode 'ListUsers'
+    - !!python/unicode 'Login'
+    - !!python/unicode 'Logout'
+    - !!python/unicode 'NewAdminHandler'
+    - !!python/unicode 'NewApplicationHandlers'
+    - !!python/unicode 'NewAuthHandlers'
+    - !!python/unicode 'NewIdentityHandlers'
+    - !!python/unicode 'NewOAuthHandler'
+    - !!python/unicode 'NewOIDCHandler'
+    - !!python/unicode 'NewSAMLHandlers'
+    - !!python/unicode 'RegisterAdminHandlers'
+    - !!python/unicode 'Token'
+    - !!python/unicode 'UserInfo'
+    - !!python/unicode 'WriteJSON'
+    - !!python/unicode 'WriteJSONError'
+    !!python/unicode 'imports':
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'github.com/gorilla/mux'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/protocols/saml'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/application'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/auth/protocols'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'net/http'
+    - !!python/unicode 'strconv'
+    - !!python/unicode 'strings'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'AdminHandler'
+    - !!python/unicode 'ApplicationHandlers'
+    - !!python/unicode 'AuthHandlers'
+    - !!python/unicode 'IdentityHandlers'
+    - !!python/unicode 'OAuthHandler'
+    - !!python/unicode 'OIDCHandler'
+    - !!python/unicode 'SAMLHandlers'
+    !!python/unicode 'summary': !!python/unicode '- authService: The application service
+      that contains the core authentication logic. - identityService: The application
+      service for identity management logic.'
+  !!python/unicode 'http':
+    !!python/unicode 'comments':
+    - !!python/unicode 'Config holds the configuration required for the HTTP server.'
+    - !!python/unicode 'It manages the server''s lifecycle, routing, and dependencies.'
+    - !!python/unicode 'Server encapsulates the HTTP server for the QuantaID API.'
+    - !!python/unicode 'Services is a container for all the application services that
+      the server''s handlers will depend on.'
+    - !!python/unicode 'This struct is used to inject dependencies into the server
+      and its handlers.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/server/http/server.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'NewServer'
+    - !!python/unicode 'Start'
+    - !!python/unicode 'Stop'
+    - !!python/unicode 'registerRoutes'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/gorilla/mux'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/protocols/saml'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/server/http/handlers'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/server/middleware'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/application'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/authorization'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'net/http'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'Config'
+    - !!python/unicode 'Server'
+    - !!python/unicode 'Services'
+    !!python/unicode 'summary': !!python/unicode 'Config holds the configuration required
+      for the HTTP server. It manages the server''s lifecycle, routing, and dependencies.'
+  !!python/unicode 'identity':
+    !!python/unicode 'comments':
+    - !!python/unicode 'ApplicationService provides application-level use cases for
+      identity management.'
+    - !!python/unicode 'CreateUser handles the user creation use case.'
+    - !!python/unicode 'CreateUserRequest defines the request structure for creating
+      a new user.'
+    - !!python/unicode 'GetUserByID handles the use case of retrieving a single user.'
+    - !!python/unicode 'GroupRepository defines the persistence interface for user
+      group-related data.'
+    - !!python/unicode 'IService defines the public contract for the identity domain
+      service.'
+    - !!python/unicode 'It combines the user and group repositories with crypto and
+      logging utilities'
+    - !!python/unicode 'It exposes methods for managing users and their group memberships,
+      abstracting'
+    - !!python/unicode 'It outlines the CRUD (Create, Read, Update, Delete) and query
+      operations for user entities.'
+    - !!python/unicode 'It outlines the CRUD and membership management operations
+      for group entities.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/domain/identity/service.go'
+    - !!python/unicode 'internal/domain/identity/interface.go'
+    - !!python/unicode 'internal/domain/identity/repository.go'
+    - !!python/unicode 'internal/services/identity/service.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'AddUserToGroup'
+    - !!python/unicode 'ChangeUserStatus'
+    - !!python/unicode 'CreateUser'
+    - !!python/unicode 'GetUser'
+    - !!python/unicode 'GetUserByID'
+    - !!python/unicode 'GetUserByUsername'
+    - !!python/unicode 'GetUserGroups'
+    - !!python/unicode 'NewApplicationService'
+    - !!python/unicode 'NewService'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'GroupRepository'
+    - !!python/unicode 'IService'
+    - !!python/unicode 'TransactionalRepository'
+    - !!python/unicode 'UserRepository'
+    !!python/unicode 'structs':
+    - !!python/unicode 'AddUserToGroupRequest'
+    - !!python/unicode 'ApplicationService'
+    - !!python/unicode 'CreateUserRequest'
+    - !!python/unicode 'PaginationQuery'
+    - !!python/unicode 'service'
+    !!python/unicode 'summary': !!python/unicode 'ApplicationService provides application-level
+      use cases for identity management. CreateUser handles the user creation use
+      case.'
+  !!python/unicode 'ldap':
+    !!python/unicode 'comments':
+    - !!python/unicode 'A connection pool would provide better performance and reliability.'
+    - !!python/unicode 'LDAPConfig holds the configuration for the LDAP connector.'
+    - !!python/unicode 'SyncConfig holds the configuration for the user synchronization.'
+    - !!python/unicode 'TODO: Implement a connection pool for the LDAP connector.'
+    - !!python/unicode 'The current implementation uses a single, long-lived connection,
+      which is not ideal for production use.'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/plugins/connectors/ldap/config.go'
+    - !!python/unicode 'pkg/plugins/connectors/ldap/ldap_connector.go'
+    - !!python/unicode 'pkg/plugins/connectors/ldap/mapper.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Authenticate'
+    - !!python/unicode 'GetAttributeList'
+    - !!python/unicode 'GetGroup'
+    - !!python/unicode 'GetUser'
+    - !!python/unicode 'HealthCheck'
+    - !!python/unicode 'Initialize'
+    - !!python/unicode 'MapEntryToUser'
+    - !!python/unicode 'Name'
+    - !!python/unicode 'NewLDAPConnector'
+    - !!python/unicode 'NewMapper'
+    - !!python/unicode 'SearchUsers'
+    - !!python/unicode 'Start'
+    - !!python/unicode 'Stop'
+    - !!python/unicode 'SyncGroups'
+    - !!python/unicode 'SyncUsers'
+    - !!python/unicode 'Type'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'crypto/tls'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/cenkalti/backoff/v4'
+    - !!python/unicode 'github.com/go-ldap/ldap/v3'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'LDAPConfig'
+    - !!python/unicode 'LDAPConnector'
+    - !!python/unicode 'Mapper'
+    - !!python/unicode 'SyncConfig'
+    !!python/unicode 'summary': !!python/unicode 'A connection pool would provide
+      better performance and reliability. LDAPConfig holds the configuration for the
+      LDAP connector.'
+  !!python/unicode 'main':
+    !!python/unicode 'comments':
+    - !!python/unicode 'Execute adds all child commands to the root command and sets
+      flags appropriately.'
+    - !!python/unicode 'If the command execution fails, it prints the error to stderr
+      and exits.'
+    - !!python/unicode 'It''s the entry point for the entire CLI application, configured
+      using the Cobra library.'
+    - !!python/unicode 'This is called by main.main(). It only needs to happen once
+      to the rootCmd.'
+    - !!python/unicode 'rootCmd represents the base command when called without any
+      subcommands.'
+    !!python/unicode 'files':
+    - !!python/unicode 'cmd/qid/main.go'
+    - !!python/unicode 'cmd/qid-server/mfa.go'
+    - !!python/unicode 'cmd/qid-server/oauth.go'
+    - !!python/unicode 'cmd/qid-server/main.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Execute'
+    - !!python/unicode 'RegisterMFAHandlers'
+    - !!python/unicode 'RegisterOAuthHandlers'
+    - !!python/unicode 'handleGenerateRecoveryCodes'
+    - !!python/unicode 'handleMFAChallenge'
+    - !!python/unicode 'handleTOTPSetup'
+    - !!python/unicode 'handleTOTPVerify'
+    - !!python/unicode 'init'
+    - !!python/unicode 'main'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/google/uuid'
+    - !!python/unicode 'github.com/spf13/cobra'
+    - !!python/unicode 'github.com/turtacn/QuantaID/cmd/qid/commands'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/server/http/handlers'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/storage/postgresql'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/auth/protocols'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins/mfa/totp'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'net/http'
+    - !!python/unicode 'os'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs': []
+    !!python/unicode 'summary': 入口模块。Execute adds all child commands to the root command
+      and sets flags appropriately. If the command execution fails, it prints the
+      error to stderr and exits.
+  !!python/unicode 'metrics':
+    !!python/unicode 'comments':
+    - !!python/unicode 'Handler returns a Gin handler for serving Prometheus metrics.'
+    - !!python/unicode 'Middleware returns a Gin middleware for recording Prometheus
+      metrics.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/metrics/prometheus.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Handler'
+    - !!python/unicode 'Middleware'
+    !!python/unicode 'imports':
+    - !!python/unicode 'github.com/gin-gonic/gin'
+    - !!python/unicode 'github.com/prometheus/client_golang/prometheus'
+    - !!python/unicode 'github.com/prometheus/client_golang/prometheus/promauto'
+    - !!python/unicode 'github.com/prometheus/client_golang/prometheus/promhttp'
+    - !!python/unicode 'strconv'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs': []
+    !!python/unicode 'summary': !!python/unicode 'Handler returns a Gin handler for
+      serving Prometheus metrics. Middleware returns a Gin middleware for recording
+      Prometheus metrics.'
+  !!python/unicode 'mfa':
+    !!python/unicode 'comments':
+    - !!python/unicode 'Manager orchestrates the multi-factor authentication process.'
+    - !!python/unicode 'NewManager creates a new MFA manager.'
+    - !!python/unicode 'TriggerChallenge determines the appropriate MFA method for
+      a user and sends a challenge.'
+    - !!python/unicode 'VerifyChallenge verifies a user''s response to an MFA challenge.'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/auth/mfa/manager.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'NewManager'
+    - !!python/unicode 'TriggerChallenge'
+    - !!python/unicode 'VerifyChallenge'
+    - !!python/unicode 'getMfaMethodForUser'
+    - !!python/unicode 'getPluginNameForMethod'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'Manager'
+    !!python/unicode 'summary': !!python/unicode 'Manager orchestrates the multi-factor
+      authentication process. NewManager creates a new MFA manager.'
+  !!python/unicode 'middleware':
+    !!python/unicode 'comments':
+    - !!python/unicode 'AuthMiddleware is a middleware component that protects HTTP
+      routes by requiring'
+    - !!python/unicode 'ContextKey is a custom type for context keys to prevent collisions
+      between packages.'
+    - !!python/unicode 'It initializes the status code to http.StatusOK.'
+    - !!python/unicode 'NewAuthMiddleware creates a new instance of the authentication
+      middleware.'
+    - !!python/unicode 'UserIDContextKey is the key used to store the authenticated
+      user''s ID in the request context.'
+    - !!python/unicode 'WriteHeader captures the status code before calling the original
+      WriteHeader method.'
+    - !!python/unicode 'a valid JSON Web Token (JWT) in the Authorization header.'
+    - !!python/unicode 'newResponseWriter creates a new responseWriter, wrapping the
+      original http.ResponseWriter.'
+    - !!python/unicode 'responseWriter is a wrapper around http.ResponseWriter that
+      allows for capturing'
+    - !!python/unicode 'the status code of the response, which is not normally available
+      to middleware.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/server/middleware/auth.go'
+    - !!python/unicode 'internal/server/middleware/logging.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Execute'
+    - !!python/unicode 'NewAuthMiddleware'
+    - !!python/unicode 'NewLoggingMiddleware'
+    - !!python/unicode 'WriteHeader'
+    - !!python/unicode 'newResponseWriter'
+    - !!python/unicode 'writeError'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/authorization'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'net/http'
+    - !!python/unicode 'strings'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'AuthMiddleware'
+    - !!python/unicode 'LoggingMiddleware'
+    - !!python/unicode 'responseWriter'
+    !!python/unicode 'summary': !!python/unicode 'AuthMiddleware is a middleware component
+      that protects HTTP routes by requiring ContextKey is a custom type for context
+      keys to prevent collisions between packages.'
+  !!python/unicode 'observability':
+    !!python/unicode 'comments':
+    - !!python/unicode 'InitTracerProvider initializes an OpenTelemetry tracer provider.'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/observability/metrics.go'
+    - !!python/unicode 'pkg/observability/tracing.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'InitTracerProvider'
+    - !!python/unicode 'MetricsHandler'
+    - !!python/unicode 'init'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/prometheus/client_golang/prometheus'
+    - !!python/unicode 'github.com/prometheus/client_golang/prometheus/promhttp'
+    - !!python/unicode 'go.opentelemetry.io/otel'
+    - !!python/unicode 'go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc'
+    - !!python/unicode 'go.opentelemetry.io/otel/exporters/stdout/stdouttrace'
+    - !!python/unicode 'go.opentelemetry.io/otel/propagation'
+    - !!python/unicode 'go.opentelemetry.io/otel/sdk/resource'
+    - !!python/unicode 'go.opentelemetry.io/otel/sdk/trace'
+    - !!python/unicode 'go.opentelemetry.io/otel/semconv/v1.4.0'
+    - !!python/unicode 'google.golang.org/grpc'
+    - !!python/unicode 'net/http'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs': []
+    !!python/unicode 'summary': !!python/unicode 'InitTracerProvider initializes an
+      OpenTelemetry tracer provider.'
+  !!python/unicode 'orchestrator':
+    !!python/unicode 'comments':
+    - !!python/unicode 'Each step receives the current context and state, and can
+      modify the state.'
+    - !!python/unicode 'It acts as a shared memory space for a single workflow execution.'
+    - !!python/unicode 'It returns an error to halt the workflow execution.'
+    - !!python/unicode 'State is a map used to pass data between workflow steps.'
+    - !!python/unicode 'StepFunc defines the function signature for a single workflow
+      step.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/orchestrator/engine.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Execute'
+    - !!python/unicode 'NewEngine'
+    - !!python/unicode 'RegisterWorkflow'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'Engine'
+    - !!python/unicode 'Step'
+    - !!python/unicode 'Workflow'
+    !!python/unicode 'summary': !!python/unicode 'Each step receives the current context
+      and state, and can modify the state. It acts as a shared memory space for a
+      single workflow execution.'
+  !!python/unicode 'plugins':
+    !!python/unicode 'comments':
+    - !!python/unicode '- registry: The plugin registry containing available plugin
+      factories.'
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'BasePlugin provides a skeletal implementation of the IPlugin
+      interface'
+    - !!python/unicode 'IIdentityConnector defines the interface for plugins that
+      connect to external identity sources,'
+    - !!python/unicode 'IMFAProvider defines the interface for plugins that provide
+      multi-factor authentication methods,'
+    - !!python/unicode 'IPlugin is the fundamental interface for all plugins in the
+      QuantaID system.'
+    - !!python/unicode 'It defines the basic lifecycle and identification methods
+      that every plugin must implement.'
+    - !!python/unicode 'It is used by the registry to instantiate plugins on demand.'
+    - !!python/unicode 'It''s intended to be embedded in concrete plugin implementations.'
+    - !!python/unicode 'Manager handles the lifecycle of all plugins. It is responsible
+      for loading,'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/plugins/interfaces.go'
+    - !!python/unicode 'pkg/plugins/registry.go'
+    - !!python/unicode 'pkg/plugins/manager.go'
+    - !!python/unicode 'pkg/plugins/base.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'GetPlugin'
+    - !!python/unicode 'GetPluginFactory'
+    - !!python/unicode 'HealthCheck'
+    - !!python/unicode 'Initialize'
+    - !!python/unicode 'ListPlugins'
+    - !!python/unicode 'ListPluginsByType'
+    - !!python/unicode 'LoadAndStartPlugins'
+    - !!python/unicode 'Name'
+    - !!python/unicode 'NewManager'
+    - !!python/unicode 'NewRegistry'
+    - !!python/unicode 'RegisterPlugin'
+    - !!python/unicode 'Start'
+    - !!python/unicode 'Stop'
+    - !!python/unicode 'StopAllPlugins'
+    - !!python/unicode 'Type'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'sync'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'IEventHandler'
+    - !!python/unicode 'IIdentityConnector'
+    - !!python/unicode 'IMFAProvider'
+    - !!python/unicode 'IPlugin'
+    - !!python/unicode 'IProtocolAdapter'
+    !!python/unicode 'structs':
+    - !!python/unicode 'BasePlugin'
+    - !!python/unicode 'Manager'
+    - !!python/unicode 'PluginConfig'
+    - !!python/unicode 'Registry'
+    !!python/unicode 'summary': !!python/unicode '- registry: The plugin registry
+      containing available plugin factories. // Parameters:'
+  !!python/unicode 'policy':
+    !!python/unicode 'comments':
+    - !!python/unicode '- repo: The repository for accessing policy data.'
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'It outlines the CRUD operations and query methods needed to
+      manage and evaluate policies.'
+    - !!python/unicode 'It provides the core functionality for making access control
+      decisions.'
+    - !!python/unicode 'NewService creates a new policy service instance.'
+    - !!python/unicode 'PolicyTemplateRepository defines an interface for managing
+      reusable policy templates.'
+    - !!python/unicode 'Repository defines the persistence interface for authorization
+      policies.'
+    - !!python/unicode 'Service encapsulates the business logic for managing and evaluating
+      authorization policies.'
+    - !!python/unicode 'Templates allow for the easy creation of standardized policies.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/domain/policy/service.go'
+    - !!python/unicode 'internal/domain/policy/repository.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'CreatePolicy'
+    - !!python/unicode 'Evaluate'
+    - !!python/unicode 'NewService'
+    - !!python/unicode 'getSubjectsFromContext'
+    - !!python/unicode 'matchesAction'
+    - !!python/unicode 'matchesResource'
+    - !!python/unicode 'policyMatches'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'golang.org/x/exp/slices'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'PolicyTemplateRepository'
+    - !!python/unicode 'Repository'
+    !!python/unicode 'structs':
+    - !!python/unicode 'Service'
+    !!python/unicode 'summary': !!python/unicode '- repo: The repository for accessing
+      policy data. // Parameters:'
+  !!python/unicode 'postgresql':
+    !!python/unicode 'comments':
+    - !!python/unicode '--- ApplicationRepository Implementation ---'
+    - !!python/unicode '--- AuditLogRepository Implementation ---'
+    - !!python/unicode '--- IdentityProviderRepository Implementation ---'
+    - !!python/unicode '--- PolicyRepository Implementation ---'
+    - !!python/unicode '--- UserRepository Implementation ---'
+    - !!python/unicode 'AutoMigrate runs the GORM auto-migration, which creates or
+      updates the database schema'
+    - !!python/unicode 'CreateApplication adds a new application to the database.'
+    - !!python/unicode 'CreateApplication adds a new application to the in-memory
+      store.'
+    - !!python/unicode 'CreateLogEntry adds a new audit log entry to the database.'
+    - !!python/unicode 'CreatePolicy adds a new policy to the database.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/storage/postgresql/postgres_policy_repository.go'
+    - !!python/unicode 'internal/storage/postgresql/postgres_auditlog_repository.go'
+    - !!python/unicode 'internal/storage/postgresql/postgres_auth_repository.go'
+    - !!python/unicode 'internal/storage/postgresql/db.go'
+    - !!python/unicode 'internal/storage/postgresql/auth.go'
+    - !!python/unicode 'internal/storage/postgresql/postgres_mfa_repository.go'
+    - !!python/unicode 'internal/storage/postgresql/postgres_repository.go'
+    - !!python/unicode 'internal/storage/postgresql/policy.go'
+    - !!python/unicode 'internal/storage/postgresql/prometheus.go'
+    - !!python/unicode 'internal/storage/postgresql/postgres_application_repository.go'
+    - !!python/unicode 'internal/storage/postgresql/application.go'
+    - !!python/unicode 'internal/storage/postgresql/identity.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'AddUserToGroup'
+    - !!python/unicode 'AutoMigrate'
+    - !!python/unicode 'CreateApplication'
+    - !!python/unicode 'CreateGroup'
+    - !!python/unicode 'CreateLogEntry'
+    - !!python/unicode 'CreateMFAVerificationLog'
+    - !!python/unicode 'CreatePolicy'
+    - !!python/unicode 'CreateProvider'
+    - !!python/unicode 'CreateUser'
+    - !!python/unicode 'CreateUserMFAConfig'
+    - !!python/unicode 'DeleteApplication'
+    - !!python/unicode 'DeleteGroup'
+    - !!python/unicode 'DeletePolicy'
+    - !!python/unicode 'DeleteProvider'
+    - !!python/unicode 'DeleteUser'
+    - !!python/unicode 'DeleteUserMFAConfig'
+    - !!python/unicode 'FindPoliciesForAction'
+    - !!python/unicode 'FindPoliciesForResource'
+    - !!python/unicode 'FindPoliciesForSubject'
+    - !!python/unicode 'FindUsersByAttribute'
+    - !!python/unicode 'GetApplicationByID'
+    - !!python/unicode 'GetApplicationByName'
+    - !!python/unicode 'GetGroupByID'
+    - !!python/unicode 'GetGroupByName'
+    - !!python/unicode 'GetLogsByAction'
+    - !!python/unicode 'GetLogsForUser'
+    - !!python/unicode 'GetPolicyByID'
+    - !!python/unicode 'GetProviderByID'
+    - !!python/unicode 'GetProviderByName'
+    - !!python/unicode 'GetUserByEmail'
+    - !!python/unicode 'GetUserByID'
+    - !!python/unicode 'GetUserByUsername'
+    - !!python/unicode 'GetUserGroups'
+    - !!python/unicode 'GetUserMFAConfig'
+    - !!python/unicode 'GetUserMFAConfigs'
+    - !!python/unicode 'Initialize'
+    - !!python/unicode 'ListApplications'
+    - !!python/unicode 'ListGroups'
+    - !!python/unicode 'ListPolicies'
+    - !!python/unicode 'ListProviders'
+    - !!python/unicode 'ListUsers'
+    - !!python/unicode 'Name'
+    - !!python/unicode 'NewConnection'
+    - !!python/unicode 'NewInMemoryApplicationRepository'
+    - !!python/unicode 'NewInMemoryAuthRepository'
+    - !!python/unicode 'NewInMemoryIdentityRepository'
+    - !!python/unicode 'NewInMemoryPolicyRepository'
+    - !!python/unicode 'NewPostgresApplicationRepository'
+    - !!python/unicode 'NewPostgresAuditLogRepository'
+    - !!python/unicode 'NewPostgresAuthRepository'
+    - !!python/unicode 'NewPostgresIdentityRepository'
+    - !!python/unicode 'NewPostgresMFARepository'
+    - !!python/unicode 'NewPostgresPolicyRepository'
+    - !!python/unicode 'RemoveUserFromGroup'
+    - !!python/unicode 'UpdateApplication'
+    - !!python/unicode 'UpdateGroup'
+    - !!python/unicode 'UpdatePolicy'
+    - !!python/unicode 'UpdateProvider'
+    - !!python/unicode 'UpdateUser'
+    - !!python/unicode 'UpdateUserMFAConfig'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/google/uuid'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/metrics'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'golang.org/x/exp/slices'
+    - !!python/unicode 'gorm.io/driver/postgres'
+    - !!python/unicode 'gorm.io/gorm'
+    - !!python/unicode 'strings'
+    - !!python/unicode 'sync'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'InMemoryApplicationRepository'
+    - !!python/unicode 'InMemoryAuthRepository'
+    - !!python/unicode 'InMemoryIdentityRepository'
+    - !!python/unicode 'InMemoryPolicyRepository'
+    - !!python/unicode 'PostgresApplicationRepository'
+    - !!python/unicode 'PostgresAuditLogRepository'
+    - !!python/unicode 'PostgresAuthRepository'
+    - !!python/unicode 'PostgresIdentityRepository'
+    - !!python/unicode 'PostgresMFARepository'
+    - !!python/unicode 'PostgresPolicyRepository'
+    - !!python/unicode 'PrometheusPlugin'
+    !!python/unicode 'summary': !!python/unicode '--- ApplicationRepository Implementation
+      --- --- AuditLogRepository Implementation ---'
+  !!python/unicode 'protocols':
+    !!python/unicode 'comments':
+    - !!python/unicode 'HandleAuthRequest processes an incoming OAuth 2.1 authentication
+      request.'
+    - !!python/unicode 'HandleAuthRequest processes an incoming OIDC authentication
+      request.'
+    - !!python/unicode 'HandleAuthRequest processes an incoming SAML authentication
+      request.'
+    - !!python/unicode 'HandleTokenRequest processes an incoming OAuth 2.1 token request.'
+    - !!python/unicode 'HandleTokenRequest processes an incoming OIDC token request.'
+    - !!python/unicode 'Initialize sets up the adapter.'
+    - !!python/unicode 'NewOAuthAdapter is the factory function for this plugin.'
+    - !!python/unicode 'NewOIDCAdapter is the factory function for this plugin.'
+    - !!python/unicode 'NewSAMLAdapter is the factory function for this plugin.'
+    - !!python/unicode 'OAuthAdapter implements the IProtocolAdapter for OAuth 2.1.'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/auth/protocols/oidc.go'
+    - !!python/unicode 'pkg/auth/protocols/saml.go'
+    - !!python/unicode 'pkg/auth/protocols/oauth.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'GetJWKS'
+    - !!python/unicode 'GetUserInfo'
+    - !!python/unicode 'HandleAuthRequest'
+    - !!python/unicode 'HandleTokenRequest'
+    - !!python/unicode 'Initialize'
+    - !!python/unicode 'NewOAuthAdapter'
+    - !!python/unicode 'NewOIDCAdapter'
+    - !!python/unicode 'NewSAMLAdapter'
+    - !!python/unicode 'SetAppRepo'
+    - !!python/unicode 'SetOIDCAdapter'
+    - !!python/unicode 'SetPrivateKey'
+    - !!python/unicode 'SetRedis'
+    - !!python/unicode 'SetUserRepo'
+    - !!python/unicode 'buildSAMLAssertion'
+    - !!python/unicode 'generateAccessToken'
+    - !!python/unicode 'generateIDToken'
+    - !!python/unicode 'generateRandomString'
+    - !!python/unicode 'generateTokens'
+    - !!python/unicode 'handleAuthorizationCode'
+    - !!python/unicode 'handleClientCredentials'
+    - !!python/unicode 'handleRefreshToken'
+    - !!python/unicode 'handleSSORequest'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'crypto/rand'
+    - !!python/unicode 'crypto/rsa'
+    - !!python/unicode 'encoding/base64'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'github.com/golang-jwt/jwt/v5'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/storage/redis'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'gopkg.in/square/go-jose.v2'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'OAuthAdapter'
+    - !!python/unicode 'OIDCAdapter'
+    - !!python/unicode 'SAMLAdapter'
+    !!python/unicode 'summary': !!python/unicode 'HandleAuthRequest processes an incoming
+      OAuth 2.1 authentication request. HandleAuthRequest processes an incoming OIDC
+      authentication request.'
+  !!python/unicode 'redis':
+    !!python/unicode 'comments':
+    - !!python/unicode 'Close gracefully closes the Redis connection.'
+    - !!python/unicode 'CreateSession stores a new user session in Redis with a specified
+      duration.'
+    - !!python/unicode 'DeleteRefreshToken removes a refresh token from Redis.'
+    - !!python/unicode 'DeleteSession removes a session from Redis by its ID.'
+    - !!python/unicode 'GetRefreshTokenUserID retrieves the user ID associated with
+      a refresh token from Redis.'
+    - !!python/unicode 'GetSession retrieves a session by its ID from Redis.'
+    - !!python/unicode 'HealthCheck performs a health check on the Redis connection.'
+    - !!python/unicode 'It performs a health check to ensure the connection is valid.'
+    - !!python/unicode 'NewRedisClient creates a new Redis client and establishes
+      a connection.'
+    - !!python/unicode 'NewRedisSessionRepository creates a new Redis session repository.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/storage/redis/session.go'
+    - !!python/unicode 'internal/storage/redis/cache.go'
+    - !!python/unicode 'internal/storage/redis/interface.go'
+    - !!python/unicode 'internal/storage/redis/client.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'AddToDenyList'
+    - !!python/unicode 'Client'
+    - !!python/unicode 'Close'
+    - !!python/unicode 'CreateSession'
+    - !!python/unicode 'Del'
+    - !!python/unicode 'DeleteRefreshToken'
+    - !!python/unicode 'DeleteSession'
+    - !!python/unicode 'Get'
+    - !!python/unicode 'GetRefreshTokenUserID'
+    - !!python/unicode 'GetSession'
+    - !!python/unicode 'GetUserSessions'
+    - !!python/unicode 'HealthCheck'
+    - !!python/unicode 'IsInDenyList'
+    - !!python/unicode 'NewRedisClient'
+    - !!python/unicode 'NewRedisSessionRepository'
+    - !!python/unicode 'NewRedisTokenRepository'
+    - !!python/unicode 'Set'
+    - !!python/unicode 'StoreRefreshToken'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/redis/go-redis/v9'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'RedisClientInterface'
+    !!python/unicode 'structs':
+    - !!python/unicode 'RedisConfig'
+    - !!python/unicode 'RedisSessionRepository'
+    - !!python/unicode 'RedisTokenRepository'
+    - !!python/unicode 'redisClient'
+    !!python/unicode 'summary': !!python/unicode 'Close gracefully closes the Redis
+      connection. CreateSession stores a new user session in Redis with a specified
+      duration.'
+  !!python/unicode 'saml':
+    !!python/unicode 'comments':
+    - !!python/unicode 'GetServiceProvider looks up a service provider by its metadata
+      URL (entityID).'
+    - !!python/unicode 'NewService creates a new SAML protocol service and configures
+      the underlying IdP.'
+    - !!python/unicode 'Service now acts as a wrapper around the crewjam/saml IdentityProvider'
+    - !!python/unicode 'This method implements the saml.ServiceProviderProvider interface.'
+    - !!python/unicode 'and implements the necessary provider interfaces.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/protocols/saml/service.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'GetServiceProvider'
+    - !!python/unicode 'GetSession'
+    - !!python/unicode 'HandleMetadata'
+    - !!python/unicode 'HandleSSO'
+    !!python/unicode 'imports':
+    - !!python/unicode 'crypto/rsa'
+    - !!python/unicode 'crypto/x509'
+    - !!python/unicode 'github.com/crewjam/saml'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/application'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/domain/identity'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/utils'
+    - !!python/unicode 'net/http'
+    - !!python/unicode 'net/url'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'Service'
+    !!python/unicode 'summary': !!python/unicode 'GetServiceProvider looks up a service
+      provider by its metadata URL (entityID). NewService creates a new SAML protocol
+      service and configures the underlying IdP.'
+  !!python/unicode 'sync':
+    !!python/unicode 'comments': []
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/services/sync/ldap_sync_service.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'FullSync'
+    - !!python/unicode 'IncrementalSync'
+    - !!python/unicode 'NewLDAPSyncService'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'errors'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/plugins/connectors/ldap'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'LDAPSyncService'
+    !!python/unicode 'summary': !!python/unicode ''
+  !!python/unicode 'testutils':
+    !!python/unicode 'comments':
+    - !!python/unicode 'MockAuditLogRepository is a mock implementation of the AuditLogRepository
+      interface'
+    - !!python/unicode 'MockIdentityService is a mock implementation of the IdentityService
+      interface'
+    - !!python/unicode 'MockSessionRepository is a mock implementation of the SessionRepository
+      interface'
+    - !!python/unicode 'MockTokenRepository is a mock implementation of the TokenRepository
+      interface'
+    - !!python/unicode 'MockUserRepository is a mock implementation of the UserRepository
+      interface'
+    !!python/unicode 'files':
+    - !!python/unicode 'tests/testutils/mocks.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'AddToDenyList'
+    - !!python/unicode 'AddUserToGroup'
+    - !!python/unicode 'ChangeUserStatus'
+    - !!python/unicode 'CreateLogEntry'
+    - !!python/unicode 'CreateMFAVerificationLog'
+    - !!python/unicode 'CreateSession'
+    - !!python/unicode 'CreateUser'
+    - !!python/unicode 'CreateUserMFAConfig'
+    - !!python/unicode 'DeleteRefreshToken'
+    - !!python/unicode 'DeleteSession'
+    - !!python/unicode 'DeleteUserMFAConfig'
+    - !!python/unicode 'GetLogsByAction'
+    - !!python/unicode 'GetLogsForUser'
+    - !!python/unicode 'GetRefreshTokenUserID'
+    - !!python/unicode 'GetSession'
+    - !!python/unicode 'GetUser'
+    - !!python/unicode 'GetUserByEmail'
+    - !!python/unicode 'GetUserByID'
+    - !!python/unicode 'GetUserByUsername'
+    - !!python/unicode 'GetUserGroups'
+    - !!python/unicode 'GetUserMFAConfig'
+    - !!python/unicode 'GetUserMFAConfigs'
+    - !!python/unicode 'GetUserSessions'
+    - !!python/unicode 'IsInDenyList'
+    - !!python/unicode 'StoreRefreshToken'
+    - !!python/unicode 'UpdateUserMFAConfig'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'github.com/google/uuid'
+    - !!python/unicode 'github.com/stretchr/testify/mock'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'MockAuditLogRepository'
+    - !!python/unicode 'MockIdentityService'
+    - !!python/unicode 'MockMFARepository'
+    - !!python/unicode 'MockSessionRepository'
+    - !!python/unicode 'MockTokenRepository'
+    - !!python/unicode 'MockUserRepository'
+    !!python/unicode 'summary': !!python/unicode 'MockAuditLogRepository is a mock
+      implementation of the AuditLogRepository interface MockIdentityService is a
+      mock implementation of the IdentityService interface'
+  !!python/unicode 'totp':
+    !!python/unicode 'comments': []
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/plugins/mfa/totp/totp_provider.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'GenerateQRCodeURL'
+    - !!python/unicode 'GenerateSecret'
+    - !!python/unicode 'VerifyCode'
+    !!python/unicode 'imports':
+    - !!python/unicode 'github.com/pquerna/otp'
+    - !!python/unicode 'github.com/pquerna/otp/totp'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'TOTPProvider'
+    !!python/unicode 'summary': !!python/unicode ''
+  !!python/unicode 'types':
+    !!python/unicode 'comments':
+    - !!python/unicode 'Application represents a client application that integrates
+      with QuantaID'
+    - !!python/unicode 'ApplicationRepository defines the interface for application
+      persistence.'
+    - !!python/unicode 'ApplicationStatus defines the possible states of an application.'
+    - !!python/unicode 'AuditLog represents a single audit trail event, capturing
+      a record of an action performed within the system.'
+    - !!python/unicode 'AuthMethod defines the types of authentication methods or
+      factors.'
+    - !!python/unicode 'AuthRequest represents a generic authentication request, abstracting
+      over different protocols.'
+    - !!python/unicode 'AuthResponse represents a generic authentication response.'
+    - !!python/unicode 'Build-time variables, injected by the linker.'
+    - !!python/unicode 'Claims represents the standard claims in a JWT, with custom
+      claims for QuantaID.'
+    - !!python/unicode 'Condition represents a set of complex, attribute-based conditions
+      for a policy to be evaluated.'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/types/user.go'
+    - !!python/unicode 'pkg/types/auth.go'
+    - !!python/unicode 'pkg/types/mfa.go'
+    - !!python/unicode 'pkg/types/policy.go'
+    - !!python/unicode 'pkg/types/constants.go'
+    - !!python/unicode 'pkg/types/common.go'
+    - !!python/unicode 'pkg/types/application.go'
+    - !!python/unicode 'pkg/types/oauth.go'
+    - !!python/unicode 'pkg/types/errors.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'Error'
+    - !!python/unicode 'HasRole'
+    - !!python/unicode 'NewError'
+    - !!python/unicode 'Scan'
+    - !!python/unicode 'TableName'
+    - !!python/unicode 'ToGRPCStatus'
+    - !!python/unicode 'Unwrap'
+    - !!python/unicode 'Value'
+    - !!python/unicode 'WithCause'
+    - !!python/unicode 'WithDetails'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'database/sql/driver'
+    - !!python/unicode 'encoding/json'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/golang-jwt/jwt/v4'
+    - !!python/unicode 'github.com/google/uuid'
+    - !!python/unicode 'google.golang.org/grpc/codes'
+    - !!python/unicode 'google.golang.org/grpc/status'
+    - !!python/unicode 'gorm.io/datatypes'
+    - !!python/unicode 'net/http'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'ApplicationRepository'
+    - !!python/unicode 'UserRepository'
+    !!python/unicode 'structs':
+    - !!python/unicode 'Application'
+    - !!python/unicode 'AuditLog'
+    - !!python/unicode 'AuthRequest'
+    - !!python/unicode 'AuthResponse'
+    - !!python/unicode 'Claims'
+    - !!python/unicode 'ConnectorConfig'
+    - !!python/unicode 'Error'
+    - !!python/unicode 'IdentityProvider'
+    - !!python/unicode 'MFAChallenge'
+    - !!python/unicode 'MFAVerificationLog'
+    - !!python/unicode 'MFAVerificationRequest'
+    - !!python/unicode 'PaginationQuery'
+    - !!python/unicode 'Policy'
+    - !!python/unicode 'PolicyDecision'
+    - !!python/unicode 'PolicyEvaluationContext'
+    - !!python/unicode 'Rule'
+    - !!python/unicode 'Token'
+    - !!python/unicode 'TokenRequest'
+    - !!python/unicode 'TokenResponse'
+    - !!python/unicode 'User'
+    - !!python/unicode 'UserFilter'
+    - !!python/unicode 'UserGroup'
+    - !!python/unicode 'UserInfo'
+    - !!python/unicode 'UserMFAConfig'
+    - !!python/unicode 'UserSession'
+    !!python/unicode 'summary': !!python/unicode 'Application represents a client
+      application that integrates with QuantaID ApplicationRepository defines the
+      interface for application persistence.'
+  !!python/unicode 'utils':
+    !!python/unicode 'comments':
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'Config holds all configuration for the application.'
+    - !!python/unicode 'ConfigManager is a wrapper around the Viper library that handles
+      loading,'
+    - !!python/unicode 'CryptoManager provides cryptographic utility functions, such
+      as password hashing,'
+    - !!python/unicode 'It abstracts the underlying logging library (Zap) and provides
+      methods'
+    - !!python/unicode 'JWT generation/validation, and UUID creation.'
+    - !!python/unicode 'Logger defines a standard logging interface for the QuantaID
+      project.'
+    - !!python/unicode 'NewConfigManager creates a new ConfigManager instance by reading
+      from a configuration file.'
+    - !!python/unicode 'NewCryptoManager creates a new CryptoManager with the given
+      JWT secret.'
+    - !!python/unicode 'PostgresConfig holds all configuration for the PostgreSQL
+      database connection.'
+    !!python/unicode 'files':
+    - !!python/unicode 'pkg/utils/config.go'
+    - !!python/unicode 'pkg/utils/logger.go'
+    - !!python/unicode 'pkg/utils/crypto.go'
+    - !!python/unicode 'pkg/utils/scope.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'CheckPasswordHash'
+    - !!python/unicode 'Debug'
+    - !!python/unicode 'Error'
+    - !!python/unicode 'GenerateJWT'
+    - !!python/unicode 'GenerateRecoveryCodes'
+    - !!python/unicode 'GenerateUUID'
+    - !!python/unicode 'Get'
+    - !!python/unicode 'GetBool'
+    - !!python/unicode 'GetInt'
+    - !!python/unicode 'GetString'
+    - !!python/unicode 'HashPassword'
+    - !!python/unicode 'HashRecoveryCode'
+    - !!python/unicode 'Info'
+    - !!python/unicode 'LoadConfigFromBytes'
+    - !!python/unicode 'NewConfigManager'
+    - !!python/unicode 'NewCryptoManager'
+    - !!python/unicode 'NewNoopLogger'
+    - !!python/unicode 'NewZapLogger'
+    - !!python/unicode 'NewZapLoggerWrapper'
+    - !!python/unicode 'ScopeContains'
+    - !!python/unicode 'Unmarshal'
+    - !!python/unicode 'ValidateJWT'
+    - !!python/unicode 'Warn'
+    - !!python/unicode 'With'
+    - !!python/unicode 'addTraceID'
+    - !!python/unicode 'generateSingleRecoveryCode'
+    - !!python/unicode 'getEncoder'
+    - !!python/unicode 'setDefaults'
+    - !!python/unicode 'watchConfig'
+    !!python/unicode 'imports':
+    - !!python/unicode 'bytes'
+    - !!python/unicode 'context'
+    - !!python/unicode 'crypto/rand'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/fsnotify/fsnotify'
+    - !!python/unicode 'github.com/golang-jwt/jwt/v4'
+    - !!python/unicode 'github.com/google/uuid'
+    - !!python/unicode 'github.com/spf13/viper'
+    - !!python/unicode 'go.opentelemetry.io/otel/trace'
+    - !!python/unicode 'go.uber.org/zap'
+    - !!python/unicode 'go.uber.org/zap/zapcore'
+    - !!python/unicode 'golang.org/x/crypto/bcrypt'
+    - !!python/unicode 'gopkg.in/natefinch/lumberjack.v2'
+    - !!python/unicode 'os'
+    - !!python/unicode 'strings'
+    - !!python/unicode 'time'
+    !!python/unicode 'interfaces':
+    - !!python/unicode 'Logger'
+    !!python/unicode 'structs':
+    - !!python/unicode 'Config'
+    - !!python/unicode 'ConfigManager'
+    - !!python/unicode 'ConsoleConfig'
+    - !!python/unicode 'CryptoManager'
+    - !!python/unicode 'FileConfig'
+    - !!python/unicode 'LoggerConfig'
+    - !!python/unicode 'PostgresConfig'
+    - !!python/unicode 'zapLogger'
+    !!python/unicode 'summary': !!python/unicode '// Parameters: Config holds all
+      configuration for the application.'
+  !!python/unicode 'workflows':
+    !!python/unicode 'comments':
+    - !!python/unicode '// Parameters:'
+    - !!python/unicode 'AuthWorkflow defines the standard authentication workflow
+      by registering a sequence of steps'
+    - !!python/unicode 'NewAuthWorkflow creates a new AuthWorkflow instance and registers
+      the authentication'
+    - !!python/unicode 'with the orchestrator engine. This modularizes the authentication
+      process.'
+    - !!python/unicode 'workflow with the provided engine.'
+    !!python/unicode 'files':
+    - !!python/unicode 'internal/orchestrator/workflows/auth_flow.go'
+    !!python/unicode 'functions':
+    - !!python/unicode 'NewAuthWorkflow'
+    - !!python/unicode 'authenticatePrimary'
+    - !!python/unicode 'checkMfaRequired'
+    - !!python/unicode 'issueTokens'
+    - !!python/unicode 'register'
+    - !!python/unicode 'validateInput'
+    !!python/unicode 'imports':
+    - !!python/unicode 'context'
+    - !!python/unicode 'fmt'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/orchestrator'
+    - !!python/unicode 'github.com/turtacn/QuantaID/internal/services/auth'
+    - !!python/unicode 'github.com/turtacn/QuantaID/pkg/types'
+    !!python/unicode 'interfaces': []
+    !!python/unicode 'structs':
+    - !!python/unicode 'AuthWorkflow'
+    !!python/unicode 'summary': !!python/unicode '// Parameters: AuthWorkflow defines
+      the standard authentication workflow by registering a sequence of steps'
+!!python/unicode 'project_root': !!python/unicode '/Users/turta/go/src/github.com/turtacn/QuantaID'
+!!python/unicode 'structure':
+- !!python/unicode 'cmd/qid/main.go'
+- !!python/unicode 'cmd/qid/commands/config.go'
+- !!python/unicode 'cmd/qid/commands/server.go'
+- !!python/unicode 'cmd/qid-server/mfa.go'
+- !!python/unicode 'cmd/qid-server/oauth.go'
+- !!python/unicode 'cmd/qid-server/main.go'
+- !!python/unicode 'tests/testutils/mocks.go'
+- !!python/unicode 'internal/metrics/prometheus.go'
+- !!python/unicode 'internal/cache/redis_cache.go'
+- !!python/unicode 'internal/server/middleware/auth.go'
+- !!python/unicode 'internal/server/middleware/logging.go'
+- !!python/unicode 'internal/server/http/server.go'
+- !!python/unicode 'internal/server/http/handlers/admin_routes.go'
+- !!python/unicode 'internal/server/http/handlers/auth.go'
+- !!python/unicode 'internal/server/http/handlers/oidc.go'
+- !!python/unicode 'internal/server/http/handlers/admin_api.go'
+- !!python/unicode 'internal/server/http/handlers/saml.go'
+- !!python/unicode 'internal/server/http/handlers/application.go'
+- !!python/unicode 'internal/server/http/handlers/oauth.go'
+- !!python/unicode 'internal/server/http/handlers/identity.go'
+- !!python/unicode 'internal/server/http/handlers/helpers.go'
+- !!python/unicode 'internal/storage/postgresql/postgres_policy_repository.go'
+- !!python/unicode 'internal/storage/postgresql/postgres_auditlog_repository.go'
+- !!python/unicode 'internal/storage/postgresql/postgres_auth_repository.go'
+- !!python/unicode 'internal/storage/postgresql/db.go'
+- !!python/unicode 'internal/storage/postgresql/auth.go'
+- !!python/unicode 'internal/storage/postgresql/postgres_mfa_repository.go'
+- !!python/unicode 'internal/storage/postgresql/postgres_repository.go'
+- !!python/unicode 'internal/storage/postgresql/policy.go'
+- !!python/unicode 'internal/storage/postgresql/prometheus.go'
+- !!python/unicode 'internal/storage/postgresql/postgres_application_repository.go'
+- !!python/unicode 'internal/storage/postgresql/application.go'
+- !!python/unicode 'internal/storage/postgresql/identity.go'
+- !!python/unicode 'internal/storage/redis/session.go'
+- !!python/unicode 'internal/storage/redis/cache.go'
+- !!python/unicode 'internal/storage/redis/interface.go'
+- !!python/unicode 'internal/storage/redis/client.go'
+- !!python/unicode 'internal/domain/identity/service.go'
+- !!python/unicode 'internal/domain/identity/interface.go'
+- !!python/unicode 'internal/domain/identity/repository.go'
+- !!python/unicode 'internal/domain/auth/service.go'
+- !!python/unicode 'internal/domain/auth/mfa_policy.go'
+- !!python/unicode 'internal/domain/auth/pkce.go'
+- !!python/unicode 'internal/domain/auth/repository.go'
+- !!python/unicode 'internal/domain/application/repository.go'
+- !!python/unicode 'internal/domain/policy/service.go'
+- !!python/unicode 'internal/domain/policy/repository.go'
+- !!python/unicode 'internal/protocols/saml/service.go'
+- !!python/unicode 'internal/services/identity/service.go'
+- !!python/unicode 'internal/services/auth/service.go'
+- !!python/unicode 'internal/services/audit/service.go'
+- !!python/unicode 'internal/services/application/service.go'
+- !!python/unicode 'internal/services/sync/ldap_sync_service.go'
+- !!python/unicode 'internal/services/authorization/service.go'
+- !!python/unicode 'internal/orchestrator/engine.go'
+- !!python/unicode 'internal/orchestrator/workflows/auth_flow.go'
+- !!python/unicode 'pkg/types/user.go'
+- !!python/unicode 'pkg/types/auth.go'
+- !!python/unicode 'pkg/types/mfa.go'
+- !!python/unicode 'pkg/types/policy.go'
+- !!python/unicode 'pkg/types/constants.go'
+- !!python/unicode 'pkg/types/common.go'
+- !!python/unicode 'pkg/types/application.go'
+- !!python/unicode 'pkg/types/oauth.go'
+- !!python/unicode 'pkg/types/errors.go'
+- !!python/unicode 'pkg/auth/engine.go'
+- !!python/unicode 'pkg/auth/mfa/manager.go'
+- !!python/unicode 'pkg/auth/protocols/oidc.go'
+- !!python/unicode 'pkg/auth/protocols/saml.go'
+- !!python/unicode 'pkg/auth/protocols/oauth.go'
+- !!python/unicode 'pkg/plugins/interfaces.go'
+- !!python/unicode 'pkg/plugins/registry.go'
+- !!python/unicode 'pkg/plugins/manager.go'
+- !!python/unicode 'pkg/plugins/base.go'
+- !!python/unicode 'pkg/plugins/connectors/ldap/config.go'
+- !!python/unicode 'pkg/plugins/connectors/ldap/ldap_connector.go'
+- !!python/unicode 'pkg/plugins/connectors/ldap/mapper.go'
+- !!python/unicode 'pkg/plugins/mfa/totp/totp_provider.go'
+- !!python/unicode 'pkg/utils/config.go'
+- !!python/unicode 'pkg/utils/logger.go'
+- !!python/unicode 'pkg/utils/crypto.go'
+- !!python/unicode 'pkg/utils/scope.go'
+- !!python/unicode 'pkg/observability/metrics.go'
+- !!python/unicode 'pkg/observability/tracing.go'
+- !!python/unicode 'pkg/client/auth.go'
+- !!python/unicode 'pkg/client/client.go'
+- !!python/unicode 'pkg/client/identity.go'

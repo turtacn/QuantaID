@@ -1,0 +1,319 @@
+digraph {
+	fontsize=10 rankdir=LR
+	mfa [label=mfa fillcolor=white shape=box style=filled]
+	mfa -> "github.com/turtacn/QuantaID/internal/metrics"
+	mfa -> "github.com/turtacn/QuantaID/pkg/plugins"
+	mfa -> "github.com/turtacn/QuantaID/pkg/types"
+	mfa -> "github.com/turtacn/QuantaID/pkg/utils"
+	mfa -> "go.uber.org/zap"
+	orchestrator [label=orchestrator fillcolor=white shape=box style=filled]
+	orchestrator -> "github.com/turtacn/QuantaID/pkg/utils"
+	orchestrator -> "go.uber.org/zap"
+	utils [label=utils fillcolor=white shape=box style=filled]
+	utils -> bytes
+	utils -> "github.com/fsnotify/fsnotify"
+	utils -> "github.com/spf13/viper"
+	utils -> "go.uber.org/zap"
+	utils -> "go.opentelemetry.io/otel/trace"
+	utils -> "go.uber.org/zap"
+	utils -> "go.uber.org/zap/zapcore"
+	utils -> "gopkg.in/natefinch/lumberjack.v2"
+	utils -> "crypto/rand"
+	utils -> "github.com/golang-jwt/jwt/v4"
+	utils -> "github.com/google/uuid"
+	utils -> "golang.org/x/crypto/bcrypt"
+	utils -> time
+	workflows [label=workflows fillcolor=white shape=box style=filled]
+	workflows -> "github.com/turtacn/QuantaID/internal/orchestrator"
+	workflows -> "github.com/turtacn/QuantaID/internal/services/auth"
+	workflows -> "github.com/turtacn/QuantaID/pkg/types"
+	sync [label=sync fillcolor=white shape=box style=filled]
+	sync -> errors
+	sync -> "github.com/turtacn/QuantaID/pkg/plugins/connectors/ldap"
+	sync -> "github.com/turtacn/QuantaID/pkg/types"
+	sync -> time
+	auth [label=auth fillcolor=white shape=box style=filled]
+	auth -> "github.com/turtacn/QuantaID/internal/domain/identity"
+	auth -> "github.com/turtacn/QuantaID/pkg/types"
+	auth -> "github.com/turtacn/QuantaID/pkg/utils"
+	auth -> "go.uber.org/zap"
+	auth -> time
+	auth -> "encoding/json"
+	auth -> "github.com/go-redis/redis/v8"
+	auth -> "github.com/google/uuid"
+	auth -> "github.com/turtacn/QuantaID/pkg/plugins/mfa/totp"
+	auth -> "github.com/turtacn/QuantaID/pkg/types"
+	auth -> "crypto/sha256"
+	auth -> "encoding/base64"
+	auth -> "github.com/turtacn/QuantaID/pkg/types"
+	auth -> time
+	auth -> "github.com/turtacn/QuantaID/internal/domain/auth"
+	auth -> "github.com/turtacn/QuantaID/internal/metrics"
+	auth -> "github.com/turtacn/QuantaID/pkg/types"
+	auth -> "github.com/turtacn/QuantaID/pkg/utils"
+	auth -> "go.opentelemetry.io/otel/trace"
+	auth -> time
+	auth -> "github.com/turtacn/QuantaID/pkg/plugins"
+	auth -> "github.com/turtacn/QuantaID/pkg/types"
+	auth -> "github.com/turtacn/QuantaID/pkg/utils"
+	auth -> "go.uber.org/zap"
+	metrics [label=metrics fillcolor=white shape=box style=filled]
+	metrics -> "github.com/gin-gonic/gin"
+	metrics -> "github.com/prometheus/client_golang/prometheus"
+	metrics -> "github.com/prometheus/client_golang/prometheus/promauto"
+	metrics -> "github.com/prometheus/client_golang/prometheus/promhttp"
+	metrics -> strconv
+	metrics -> time
+	plugins [label=plugins fillcolor=white shape=box style=filled]
+	plugins -> "github.com/turtacn/QuantaID/pkg/types"
+	plugins -> "github.com/turtacn/QuantaID/pkg/utils"
+	plugins -> "github.com/turtacn/QuantaID/pkg/types"
+	plugins -> "github.com/turtacn/QuantaID/pkg/utils"
+	plugins -> "go.uber.org/zap"
+	plugins -> sync
+	plugins -> "github.com/turtacn/QuantaID/pkg/types"
+	plugins -> "github.com/turtacn/QuantaID/pkg/utils"
+	plugins -> "go.uber.org/zap"
+	plugins -> sync
+	plugins -> "github.com/turtacn/QuantaID/pkg/types"
+	plugins -> "github.com/turtacn/QuantaID/pkg/utils"
+	http [label=http fillcolor=white shape=box style=filled]
+	http -> "github.com/gorilla/mux"
+	http -> "github.com/turtacn/QuantaID/internal/protocols/saml"
+	http -> "github.com/turtacn/QuantaID/internal/server/http/handlers"
+	http -> "github.com/turtacn/QuantaID/internal/server/middleware"
+	http -> "github.com/turtacn/QuantaID/internal/services/application"
+	http -> "github.com/turtacn/QuantaID/internal/services/auth"
+	http -> "github.com/turtacn/QuantaID/internal/services/authorization"
+	http -> "github.com/turtacn/QuantaID/internal/services/identity"
+	http -> "github.com/turtacn/QuantaID/pkg/utils"
+	http -> "go.uber.org/zap"
+	http -> time
+	identity [label=identity fillcolor=white shape=box style=filled]
+	identity -> "github.com/turtacn/QuantaID/pkg/types"
+	identity -> "github.com/turtacn/QuantaID/pkg/utils"
+	identity -> "go.uber.org/zap"
+	identity -> "github.com/turtacn/QuantaID/pkg/types"
+	identity -> "github.com/turtacn/QuantaID/pkg/types"
+	identity -> "github.com/turtacn/QuantaID/internal/domain/identity"
+	identity -> "github.com/turtacn/QuantaID/pkg/types"
+	identity -> "github.com/turtacn/QuantaID/pkg/utils"
+	handlers [label=handlers fillcolor=white shape=box style=filled]
+	handlers -> "github.com/turtacn/QuantaID/internal/domain/auth"
+	handlers -> "github.com/turtacn/QuantaID/pkg/types"
+	handlers -> "encoding/json"
+	handlers -> "github.com/turtacn/QuantaID/internal/services/auth"
+	handlers -> "github.com/turtacn/QuantaID/pkg/types"
+	handlers -> "github.com/turtacn/QuantaID/pkg/utils"
+	handlers -> "encoding/json"
+	handlers -> "github.com/turtacn/QuantaID/pkg/auth/protocols"
+	handlers -> "github.com/turtacn/QuantaID/pkg/utils"
+	handlers -> "go.uber.org/zap"
+	handlers -> "encoding/json"
+	handlers -> "github.com/turtacn/QuantaID/internal/domain/auth"
+	handlers -> "github.com/turtacn/QuantaID/pkg/types"
+	handlers -> strconv
+	handlers -> "github.com/turtacn/QuantaID/internal/protocols/saml"
+	handlers -> "github.com/turtacn/QuantaID/pkg/utils"
+	handlers -> "encoding/json"
+	handlers -> "github.com/turtacn/QuantaID/internal/services/application"
+	handlers -> "github.com/turtacn/QuantaID/pkg/types"
+	handlers -> "github.com/turtacn/QuantaID/pkg/utils"
+	handlers -> "encoding/json"
+	handlers -> "github.com/turtacn/QuantaID/pkg/auth/protocols"
+	handlers -> "github.com/turtacn/QuantaID/pkg/types"
+	handlers -> "github.com/turtacn/QuantaID/pkg/utils"
+	handlers -> "go.uber.org/zap"
+	handlers -> "encoding/json"
+	handlers -> "github.com/gorilla/mux"
+	handlers -> "github.com/turtacn/QuantaID/internal/services/identity"
+	handlers -> "github.com/turtacn/QuantaID/pkg/types"
+	handlers -> "github.com/turtacn/QuantaID/pkg/utils"
+	handlers -> "encoding/json"
+	handlers -> "github.com/turtacn/QuantaID/pkg/types"
+	audit [label=audit fillcolor=white shape=box style=filled]
+	audit -> "github.com/google/uuid"
+	audit -> "github.com/turtacn/QuantaID/internal/domain/auth"
+	audit -> "github.com/turtacn/QuantaID/pkg/types"
+	audit -> "github.com/turtacn/QuantaID/pkg/utils"
+	audit -> "go.uber.org/zap"
+	audit -> time
+	testutils [label=testutils fillcolor=white shape=box style=filled]
+	testutils -> "github.com/google/uuid"
+	testutils -> "github.com/stretchr/testify/mock"
+	testutils -> "github.com/turtacn/QuantaID/pkg/types"
+	testutils -> time
+	postgresql [label=postgresql fillcolor=white shape=box style=filled]
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/utils"
+	postgresql -> "gorm.io/driver/postgres"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> time
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> sync
+	postgresql -> "github.com/google/uuid"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> "github.com/turtacn/QuantaID/internal/domain/identity"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "golang.org/x/exp/slices"
+	postgresql -> sync
+	postgresql -> "github.com/turtacn/QuantaID/internal/metrics"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> "gorm.io/gorm"
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> sync
+	postgresql -> "github.com/turtacn/QuantaID/pkg/types"
+	postgresql -> sync
+	saml [label=saml fillcolor=white shape=box style=filled]
+	saml -> "crypto/rsa"
+	saml -> "crypto/x509"
+	saml -> "github.com/crewjam/saml"
+	saml -> "github.com/turtacn/QuantaID/internal/domain/application"
+	saml -> "github.com/turtacn/QuantaID/internal/domain/identity"
+	saml -> "github.com/turtacn/QuantaID/pkg/utils"
+	commands [label=commands fillcolor=white shape=box style=filled]
+	commands -> "github.com/spf13/cobra"
+	commands -> "github.com/turtacn/QuantaID/pkg/utils"
+	commands -> "github.com/spf13/cobra"
+	middleware [label=middleware fillcolor=white shape=box style=filled]
+	middleware -> "encoding/json"
+	middleware -> "github.com/turtacn/QuantaID/internal/services/authorization"
+	middleware -> "github.com/turtacn/QuantaID/pkg/types"
+	middleware -> "github.com/turtacn/QuantaID/pkg/utils"
+	middleware -> "go.uber.org/zap"
+	middleware -> "github.com/turtacn/QuantaID/pkg/utils"
+	middleware -> "go.uber.org/zap"
+	middleware -> time
+	cache [label=cache fillcolor=white shape=box style=filled]
+	cache -> "encoding/json"
+	cache -> errors
+	cache -> "github.com/redis/go-redis/v9"
+	cache -> "github.com/turtacn/QuantaID/internal/metrics"
+	cache -> "github.com/turtacn/QuantaID/pkg/types"
+	cache -> "math/rand"
+	cache -> time
+	redis [label=redis fillcolor=white shape=box style=filled]
+	redis -> "encoding/json"
+	redis -> "github.com/redis/go-redis/v9"
+	redis -> "github.com/turtacn/QuantaID/pkg/types"
+	redis -> time
+	redis -> "github.com/redis/go-redis/v9"
+	redis -> "github.com/turtacn/QuantaID/pkg/types"
+	redis -> time
+	redis -> "github.com/redis/go-redis/v9"
+	redis -> time
+	redis -> "github.com/redis/go-redis/v9"
+	redis -> time
+	client [label=client fillcolor=white shape=box style=filled]
+	client -> "github.com/turtacn/QuantaID/internal/services/auth"
+	client -> bytes
+	client -> "encoding/json"
+	client -> "github.com/turtacn/QuantaID/pkg/types"
+	client -> time
+	client -> "github.com/turtacn/QuantaID/internal/services/identity"
+	client -> "github.com/turtacn/QuantaID/pkg/types"
+	application [label=application fillcolor=white shape=box style=filled]
+	application -> "github.com/turtacn/QuantaID/pkg/types"
+	application -> "github.com/turtacn/QuantaID/internal/domain/application"
+	application -> "github.com/turtacn/QuantaID/pkg/types"
+	application -> "github.com/turtacn/QuantaID/pkg/utils"
+	totp [label=totp fillcolor=white shape=box style=filled]
+	totp -> "github.com/pquerna/otp"
+	totp -> "github.com/pquerna/otp/totp"
+	protocols [label=protocols fillcolor=white shape=box style=filled]
+	protocols -> "crypto/rsa"
+	protocols -> "github.com/golang-jwt/jwt/v5"
+	protocols -> "github.com/turtacn/QuantaID/pkg/plugins"
+	protocols -> "github.com/turtacn/QuantaID/pkg/types"
+	protocols -> "github.com/turtacn/QuantaID/pkg/utils"
+	protocols -> "gopkg.in/square/go-jose.v2"
+	protocols -> time
+	protocols -> "github.com/turtacn/QuantaID/pkg/plugins"
+	protocols -> "github.com/turtacn/QuantaID/pkg/types"
+	protocols -> "github.com/turtacn/QuantaID/pkg/utils"
+	protocols -> "crypto/rand"
+	protocols -> "encoding/base64"
+	protocols -> "encoding/json"
+	protocols -> "github.com/golang-jwt/jwt/v5"
+	protocols -> "github.com/turtacn/QuantaID/internal/domain/auth"
+	protocols -> "github.com/turtacn/QuantaID/internal/storage/redis"
+	protocols -> "github.com/turtacn/QuantaID/pkg/plugins"
+	protocols -> "github.com/turtacn/QuantaID/pkg/types"
+	protocols -> "github.com/turtacn/QuantaID/pkg/utils"
+	protocols -> "go.uber.org/zap"
+	protocols -> time
+	types [label=types fillcolor=white shape=box style=filled]
+	types -> time
+	types -> "github.com/golang-jwt/jwt/v4"
+	types -> time
+	types -> "github.com/google/uuid"
+	types -> "gorm.io/datatypes"
+	types -> time
+	types -> time
+	types -> "database/sql/driver"
+	types -> "encoding/json"
+	types -> time
+	types -> time
+	types -> "google.golang.org/grpc/codes"
+	types -> "google.golang.org/grpc/status"
+	ldap [label=ldap fillcolor=white shape=box style=filled]
+	ldap -> "crypto/tls"
+	ldap -> "github.com/cenkalti/backoff/v4"
+	ldap -> "github.com/go-ldap/ldap/v3"
+	ldap -> "github.com/turtacn/QuantaID/pkg/types"
+	ldap -> "github.com/turtacn/QuantaID/pkg/utils"
+	ldap -> "go.uber.org/zap"
+	ldap -> time
+	ldap -> "github.com/go-ldap/ldap/v3"
+	ldap -> "github.com/turtacn/QuantaID/pkg/types"
+	policy [label=policy fillcolor=white shape=box style=filled]
+	policy -> "github.com/turtacn/QuantaID/pkg/types"
+	policy -> "github.com/turtacn/QuantaID/pkg/utils"
+	policy -> "go.uber.org/zap"
+	policy -> "golang.org/x/exp/slices"
+	policy -> "github.com/turtacn/QuantaID/pkg/types"
+	observability [label=observability fillcolor=white shape=box style=filled]
+	observability -> "github.com/prometheus/client_golang/prometheus"
+	observability -> "github.com/prometheus/client_golang/prometheus/promhttp"
+	observability -> "go.opentelemetry.io/otel"
+	observability -> "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	observability -> "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	observability -> "go.opentelemetry.io/otel/propagation"
+	observability -> "go.opentelemetry.io/otel/sdk/resource"
+	observability -> "go.opentelemetry.io/otel/sdk/trace"
+	observability -> "go.opentelemetry.io/otel/semconv/v1.4.0"
+	observability -> "google.golang.org/grpc"
+	main [label=main fillcolor=lightblue shape=box style=filled]
+	main -> "github.com/spf13/cobra"
+	main -> "github.com/turtacn/QuantaID/cmd/qid/commands"
+	main -> "encoding/json"
+	main -> "github.com/google/uuid"
+	main -> "github.com/turtacn/QuantaID/internal/domain/auth"
+	main -> "github.com/turtacn/QuantaID/pkg/types"
+	main -> "github.com/turtacn/QuantaID/pkg/utils"
+	main -> "github.com/turtacn/QuantaID/internal/server/http/handlers"
+	main -> "github.com/turtacn/QuantaID/pkg/auth/protocols"
+	main -> "github.com/turtacn/QuantaID/pkg/utils"
+	main -> "github.com/turtacn/QuantaID/internal/domain/auth"
+	main -> "github.com/turtacn/QuantaID/internal/server/http/handlers"
+	main -> "github.com/turtacn/QuantaID/internal/storage/postgresql"
+	main -> "github.com/turtacn/QuantaID/pkg/plugins/mfa/totp"
+	main -> "github.com/turtacn/QuantaID/pkg/utils"
+	main -> "go.uber.org/zap"
+	authorization [label=authorization fillcolor=white shape=box style=filled]
+	authorization -> "github.com/turtacn/QuantaID/internal/domain/identity"
+	authorization -> "github.com/turtacn/QuantaID/internal/domain/policy"
+	authorization -> "github.com/turtacn/QuantaID/pkg/types"
+	authorization -> "github.com/turtacn/QuantaID/pkg/utils"
+	authorization -> "go.uber.org/zap"
+}
