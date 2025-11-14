@@ -99,7 +99,6 @@ func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*Logi
 		return nil, types.ErrInternal.WithCause(err)
 	}
 
-	s.auditService.RecordLoginSuccess(ctx, authResp.User.ID, ip, traceID, nil)
 	metrics.OauthTokensIssuedTotal.Inc()
 	return &LoginResponse{
 		AccessToken:  authResp.Token.AccessToken,

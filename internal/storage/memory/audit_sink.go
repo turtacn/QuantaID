@@ -1,0 +1,41 @@
+package memory
+
+import (
+	"context"
+	"sync"
+
+	"github.com/turtacn/QuantaID/internal/audit"
+)
+
+// InMemorySink provides an in-memory implementation of the audit sink.
+type InMemorySink struct {
+	mu     sync.RWMutex
+	events []*audit.AuditEvent
+}
+
+// NewInMemorySink creates a new in-memory audit sink.
+func NewInMemorySink() *InMemorySink {
+	return &InMemorySink{
+		events: make([]*audit.AuditEvent, 0),
+	}
+}
+
+// Write appends the event to the in-memory slice.
+func (s *InMemorySink) Write(ctx context.Context, event *audit.AuditEvent) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.events = append(s.events, event)
+	return nil
+}
+
+// Close is a no-op for InMemorySink.
+func (s *InMemorySink) Close() error {
+	return nil
+}
+
+// GetEvents returns all the events that have been written to the sink.
+func (s *InMemorySink) GetEvents() []*audit.AuditEvent {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.events
+}

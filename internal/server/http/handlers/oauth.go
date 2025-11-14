@@ -3,7 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/orchestrator"
+	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/pkg/auth/protocols"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
@@ -13,13 +17,15 @@ import (
 // OAuthHandler handles OAuth 2.1 requests.
 type OAuthHandler struct {
 	oauthAdapter *protocols.OAuthAdapter
+	engine       *orchestrator.Engine
 	logger       utils.Logger
 }
 
 // NewOAuthHandler creates a new OAuthHandler.
-func NewOAuthHandler(oauthAdapter *protocols.OAuthAdapter, logger utils.Logger) *OAuthHandler {
+func NewOAuthHandler(oauthAdapter *protocols.OAuthAdapter, engine *orchestrator.Engine, logger utils.Logger) *OAuthHandler {
 	return &OAuthHandler{
 		oauthAdapter: oauthAdapter,
+		engine:       engine,
 		logger:       logger,
 	}
 }
@@ -54,6 +60,41 @@ func (h *OAuthHandler) Authorize(w http.ResponseWriter, r *http.Request) {
 // Token handles the token endpoint.
 func (h *OAuthHandler) Token(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
+
+	if r.Form.Get("grant_type") == "password" {
+		loginCtx := auth.LoginContext{
+			Username:  r.Form.Get("username"),
+			Password:  r.Form.Get("password"),
+			CurrentIP: r.RemoteAddr,
+			UserAgent: r.UserAgent(),
+			Now:       time.Now(),
+		}
+
+		initialState := orchestrator.State{"login_ctx": loginCtx}
+		finalState, err := h.engine.Execute(r.Context(), "login_workflow", initialState)
+		if err != nil {
+			appErr, ok := err.(*types.Error)
+			if ok {
+				WriteJSONError(w, appErr, appErr.HttpStatus)
+			} else {
+				WriteJSONError(w, types.ErrInternal.WithCause(err), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		authResp := finalState["auth_response"].(*auth_service.LoginResponse)
+		tokenResp := &types.Token{
+			AccessToken:  authResp.AccessToken,
+			RefreshToken: authResp.RefreshToken,
+			TokenType:    authResp.TokenType,
+			ExpiresIn:    authResp.ExpiresIn,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tokenResp)
+		return
+	}
+
 	req := types.TokenRequest{
 		GrantType:    r.Form.Get("grant_type"),
 		Code:         r.Form.Get("code"),

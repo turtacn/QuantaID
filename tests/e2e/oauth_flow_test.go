@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/internal/orchestrator"
 	"github.com/turtacn/QuantaID/internal/server/http/handlers"
 	"github.com/turtacn/QuantaID/pkg/auth/protocols"
 	"github.com/turtacn/QuantaID/pkg/types"
@@ -126,7 +127,8 @@ func TestOAuthAuthorizationCodeFlow(t *testing.T) {
 	oauthAdapter.SetOIDCAdapter(oidcAdapter)
 	oidcAdapter.SetUserRepo(&mockUserRepo{})
 	oidcAdapter.SetPrivateKey(privateKey)
-	oauthHandler := handlers.NewOAuthHandler(oauthAdapter, utils.NewZapLoggerWrapper(logger))
+	engine := orchestrator.NewEngine(utils.NewZapLoggerWrapper(logger))
+	oauthHandler := handlers.NewOAuthHandler(oauthAdapter, engine, utils.NewZapLoggerWrapper(logger))
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		oidcHandler := handlers.NewOIDCHandler(oidcAdapter, utils.NewZapLoggerWrapper(logger), r.Host)
@@ -228,7 +230,8 @@ func TestOAuthPublicClientPKCERequired(t *testing.T) {
 	oauthAdapter.SetUserRepo(&mockUserRepo{})
 	oauthAdapter.SetAppRepo(&mockPublicAppRepo{})
 	oauthAdapter.SetRedis(&mockRedisClient{data: make(map[string]string)})
-	oauthHandler := handlers.NewOAuthHandler(oauthAdapter, utils.NewZapLoggerWrapper(logger))
+	engine := orchestrator.NewEngine(utils.NewZapLoggerWrapper(logger))
+	oauthHandler := handlers.NewOAuthHandler(oauthAdapter, engine, utils.NewZapLoggerWrapper(logger))
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		oauthHandler.Authorize(w, r)

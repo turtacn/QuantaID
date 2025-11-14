@@ -2,16 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/turtacn/QuantaID/internal/services/auth"
+	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/orchestrator"
+	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"net/http"
+	"time"
 )
 
 // AuthHandlers provides HTTP handlers for authentication-related endpoints.
 // It translates HTTP requests into calls to the authentication application service.
 type AuthHandlers struct {
-	authService *auth.ApplicationService
+	authService *auth_service.ApplicationService
+	engine      *orchestrator.Engine
 	logger      utils.Logger
 }
 
@@ -23,9 +27,10 @@ type AuthHandlers struct {
 //
 // Returns:
 //   A new AuthHandlers instance.
-func NewAuthHandlers(authService *auth.ApplicationService, logger utils.Logger) *AuthHandlers {
+func NewAuthHandlers(authService *auth_service.ApplicationService, engine *orchestrator.Engine, logger utils.Logger) *AuthHandlers {
 	return &AuthHandlers{
 		authService: authService,
+		engine:      engine,
 		logger:      logger,
 	}
 }
@@ -34,26 +39,41 @@ func NewAuthHandlers(authService *auth.ApplicationService, logger utils.Logger) 
 // It decodes the login request, calls the authentication service,
 // and writes the JSON response or error.
 func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
-	var req auth.LoginRequest
+	var req auth_service.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteJSONError(w, types.ErrBadRequest.WithCause(err), http.StatusBadRequest)
 		return
 	}
 
-	loginResp, appErr := h.authService.Login(r.Context(), req)
-	if appErr != nil {
-		WriteJSONError(w, appErr, appErr.HttpStatus)
+	loginCtx := auth.LoginContext{
+		Username:  req.Username,
+		Password:  req.Password,
+		CurrentIP: r.RemoteAddr,
+		UserAgent: r.UserAgent(),
+		Now:       time.Now(),
+	}
+
+	initialState := orchestrator.State{"login_ctx": loginCtx}
+	finalState, err := h.engine.Execute(r.Context(), "login_workflow", initialState)
+	if err != nil {
+		appErr, ok := err.(*types.Error)
+		if ok {
+			WriteJSONError(w, appErr, appErr.HttpStatus)
+		} else {
+			WriteJSONError(w, types.ErrInternal.WithCause(err), http.StatusInternalServerError)
+		}
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, loginResp)
+	authResp := finalState["auth_response"].(*auth_service.LoginResponse)
+	WriteJSON(w, http.StatusOK, authResp)
 }
 
 // Logout is the HTTP handler for the user logout endpoint.
 // It decodes the logout request, calls the authentication service to invalidate the session/token,
 // and returns a successful status.
 func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
-	var req auth.LogoutRequest
+	var req auth_service.LogoutRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteJSONError(w, types.ErrBadRequest.WithCause(err), http.StatusBadRequest)
 		return

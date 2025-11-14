@@ -36,6 +36,8 @@ type RiskAssessment struct {
 }
 
 type LoginContext struct {
+	Username         string
+	Password         string
 	UserID           string
 	CurrentIP        string
 	CurrentCountry   string
@@ -44,4 +46,5 @@ type LoginContext struct {
 	LastLoginIP      string
 	LastLoginCountry string
 	LastLoginAt      time.Time
+	TraceID          string
 }
