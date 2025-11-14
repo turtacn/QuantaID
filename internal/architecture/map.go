@@ -13,12 +13,15 @@ const (
 )
 
 const (
-	CapabilityAuthMultiProtocol Capability = "auth.multi_protocol"
-	CapabilityAuthMFA           Capability = "auth.mfa.basic"
-	CapabilityIdentityLifecycle Capability = "identity.lifecycle.basic"
-	CapabilityConnectorLDAP     Capability = "connector.ldap.basic"
-	CapabilityAuditLog          Capability = "audit.log.basic"
-	CapabilityMetricsPrometheus Capability = "metrics.prometheus.basic"
+	CapabilityAuthMultiProtocol   Capability = "auth.multi_protocol"
+	CapabilityAuthEngineCore      Capability = "auth.engine.core"
+	CapabilityAuthMFACore         Capability = "auth.mfa.core"
+	CapabilityAuthzPolicyEngine   Capability = "authz.policy.engine"
+	CapabilityIdentityLifecycleCore Capability = "identity.lifecycle.core"
+	CapabilityIdentitySyncLDAP      Capability = "identity.sync.ldap"
+	CapabilityAuditCore           Capability = "audit.core"
+	CapabilityMetricsHTTP         Capability = "metrics.http"
+	CapabilityPlatformDevCenter   Capability = "platform.devcenter"
 )
 
 type CapabilityMapping struct {
@@ -31,62 +34,84 @@ type CapabilityMapping struct {
 // DefaultMappings is a manually maintained list of capability mappings.
 var DefaultMappings = []CapabilityMapping{
 	{
-		Capability: CapabilityAuthMultiProtocol,
-		Layer:      LayerAppService,
-		Packages: []string{
-			"internal/services/auth",
-			"internal/server/http/handlers/auth.go",
-		},
-		Status: "partial",
-	},
-	{
-		Capability: CapabilityAuthMFA,
+		Capability: CapabilityAuthEngineCore,
 		Layer:      LayerDomain,
 		Packages: []string{
-			"internal/domain/auth/mfa_policy.go",
+			"pkg/auth/engine.go",
+			"internal/services/auth/service.go",
 		},
 		Status: "partial",
 	},
 	{
-		Capability: CapabilityIdentityLifecycle,
+		Capability: CapabilityAuthMFACore,
+		Layer:      LayerAppService,
+		Packages: []string{
+			"pkg/auth/mfa/manager.go",
+			"pkg/plugins/mfa/totp/",
+		},
+		Status: "partial",
+	},
+	{
+		Capability: CapabilityIdentityLifecycleCore,
 		Layer:      LayerDomain,
 		Packages: []string{
 			"internal/domain/identity",
+			"internal/services/identity",
 		},
 		Status: "done",
 	},
 	{
-		Capability: CapabilityIdentityLifecycle,
+		Capability: CapabilityIdentityLifecycleCore,
 		Layer:      LayerInfra,
 		Packages: []string{
-			"internal/storage/postgresql/identity.go",
+			"internal/storage/memory/identity_memory_repository.go",
+			"internal/storage/postgresql/identity_repository.go",
 		},
 		Status: "done",
 	},
 	{
-		Capability: CapabilityAuditLog,
-		Layer:      LayerDomain,
+		Capability: CapabilityIdentitySyncLDAP,
+		Layer:      LayerAppService,
 		Packages: []string{
-			"internal/domain/auth/repository.go", // AuditLogRepository is here
+			"internal/services/sync/ldap_sync_service.go",
+			"pkg/plugins/connectors/ldap/",
+		},
+		Status: "planned",
+	},
+	{
+		Capability: CapabilityAuditCore,
+		Layer:      LayerAppService,
+		Packages: []string{
+			"internal/audit/",
+			"internal/services/audit/",
 		},
 		Status: "partial",
 	},
 	{
-		Capability: CapabilityMetricsPrometheus,
+		Capability: CapabilityMetricsHTTP,
 		Layer:      LayerInfra,
 		Packages: []string{
-			"internal/metrics/prometheus.go",
-			"internal/storage/postgresql/prometheus.go",
+			"internal/metrics/http_middleware.go",
+			"pkg/observability/metrics.go",
 		},
 		Status: "done",
 	},
 	{
-		Capability: CapabilityConnectorLDAP,
-		Layer:      LayerInfra,
+		Capability: CapabilityAuthzPolicyEngine,
+		Layer:      LayerDomain,
 		Packages: []string{
-			"pkg/plugins/connectors/ldap",
+			"internal/services/authorization/evaluator.go",
 		},
-		Status: "planned",
+		Status: "done",
+	},
+	{
+		Capability: CapabilityPlatformDevCenter,
+		Layer:      LayerPresentation,
+		Packages: []string{
+			"internal/services/platform/",
+			"internal/server/http/handlers/devcenter.go",
+		},
+		Status: "done",
 	},
 }
 

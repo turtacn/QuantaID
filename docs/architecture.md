@@ -597,6 +597,19 @@ QuantaID/
 └── CHANGELOG.md                   # 变更日志
 ```
 
+## 代码能力映射
+
+| Capability ID | Mapped Packages |
+|---|---|
+| `identity.lifecycle.core` | `internal/domain/identity`, `internal/services/identity`, `internal/storage/memory/identity_memory_repository.go`, `internal/storage/postgresql/*identity*` |
+| `identity.sync.ldap` | `internal/services/sync/ldap_sync_service.go`, `pkg/plugins/connectors/ldap/*` |
+| `auth.engine.core` | `pkg/auth/engine.go`, `internal/services/auth/service.go` |
+| `auth.mfa.core` | `pkg/auth/mfa/manager.go`, `pkg/plugins/mfa/totp/*` |
+| `authz.policy.engine` | `internal/services/authorization/evaluator.go` |
+| `audit.core` | `internal/audit/*`, `internal/services/audit/*` |
+| `metrics.http` | `internal/metrics/http_middleware.go`, `pkg/observability/metrics.go` |
+| `platform.devcenter` | `internal/services/platform/*`, `internal/server/http/handlers/devcenter.go` |
+
 ## 参考资料
 
 [1] OAuth 2.1 Security Best Current Practice - [https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics)
