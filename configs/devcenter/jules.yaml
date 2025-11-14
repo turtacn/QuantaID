@@ -1,0 +1,3 @@
+devcenter:
+  enabled: true
+  allow_write: true # 是否允许在 Jules 环境真正创建 App / Connector

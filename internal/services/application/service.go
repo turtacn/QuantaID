@@ -64,3 +64,15 @@ func (s *ApplicationService) CreateApplication(ctx context.Context, req CreateAp
 
 	return app, nil
 }
+
+// ListApplications retrieves a list of all applications.
+func (s *ApplicationService) ListApplications(ctx context.Context) ([]*types.Application, *types.Error) {
+	apps, err := s.appRepo.ListApplications(ctx, types.PaginationQuery{})
+	if err != nil {
+		if appErr, ok := err.(*types.Error); ok {
+			return nil, appErr
+		}
+		return nil, types.ErrInternal.WithCause(err)
+	}
+	return apps, nil
+}

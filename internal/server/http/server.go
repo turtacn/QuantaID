@@ -21,6 +21,7 @@ import (
 	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/internal/services/authorization"
 	identity_service "github.com/turtacn/QuantaID/internal/services/identity"
+	"github.com/turtacn/QuantaID/internal/services/platform"
 	"github.com/turtacn/QuantaID/internal/server/http/handlers"
 	"github.com/turtacn/QuantaID/internal/server/middleware"
 	"github.com/turtacn/QuantaID/internal/storage/memory"
@@ -54,6 +55,7 @@ type Services struct {
 	SamlService           *saml.Service
 	CryptoManager         *utils.CryptoManager
 	IdentityDomainService identity.IService
+	DevCenterService      *platform.DevCenterService
 }
 
 // NewServer creates a new HTTP server instance.
@@ -147,12 +149,16 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		SessionDuration:      time.Hour * 24,
 	}, tracer)
 
+	appService := application.NewApplicationService(nil, logger, cryptoManager)
+	devCenterSvc := platform.NewDevCenterService(appService, nil, authzService, nil)
+
 	services := Services{
 		IdentityService:       identityAppService,
 		AuthService:           authAppService,
 		AuthzService:          authzService,
 		CryptoManager:         cryptoManager,
 		IdentityDomainService: identityDomainService,
+		DevCenterService:      devCenterSvc,
 	}
 
 	return NewServer(httpCfg, logger, services), nil
@@ -181,6 +187,12 @@ func (s *Server) registerRoutes(services Services) {
 	getUserHandler := http.HandlerFunc(identityHandlers.GetUser)
 	protectedGetUserRoute := authMiddleware.Execute(authzUserReadMiddleware.Execute(getUserHandler))
 	apiV1.Handle("/users/{id}", protectedGetUserRoute).Methods("GET")
+
+	devcenterHandlers := handlers.NewDevCenterHandler(services.DevCenterService)
+	devcenterAdminMiddleware := middleware.NewAuthorizationMiddleware(services.AuthzService, policy.Action("devcenter.admin"), "devcenter")
+	devcenterRouter := apiV1.PathPrefix("/devcenter").Subrouter()
+	devcenterRouter.Use(authMiddleware.Execute, devcenterAdminMiddleware.Execute)
+	devcenterHandlers.RegisterRoutes(devcenterRouter)
 
 	s.Router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
