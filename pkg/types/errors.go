@@ -93,4 +93,7 @@ var (
 	ErrInvalidGrant          = NewError("invalid_grant", "The provided authorization grant (e.g., authorization code, resource owner credentials) or refresh token is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client.", http.StatusBadRequest, codes.InvalidArgument)
 	ErrUnsupportedGrantType  = NewError("unsupported_grant_type", "The authorization grant type is not supported by the authorization server.", http.StatusBadRequest, codes.InvalidArgument)
 	ErrUserNotFound          = NewError("user_not_found", "The user was not found.", http.StatusNotFound, codes.NotFound)
+	ErrSessionExpired        = NewError("session_expired", "The user session has expired.", http.StatusUnauthorized, codes.Unauthenticated)
+	ErrDeviceMismatch        = NewError("device_mismatch", "The device fingerprint does not match the session.", http.StatusUnauthorized, codes.Unauthenticated)
+	ErrMaxSessionsExceeded   = NewError("max_sessions_exceeded", "The maximum number of concurrent sessions has been exceeded.", http.StatusForbidden, codes.PermissionDenied)
 )

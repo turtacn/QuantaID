@@ -69,13 +69,17 @@ type UserSession struct {
 	// UserID is the ID of the user this session belongs to.
 	UserID string `json:"userId"`
 	// IPAddress is the IP address from which the session was initiated.
-	IPAddress string `json:"ipAddress"`
+	IPAddress string `json:"ipAddress,omitempty"`
 	// UserAgent is the user agent string of the client.
-	UserAgent string `json:"userAgent"`
+	UserAgent string `json:"userAgent,omitempty"`
 	// CreatedAt is the timestamp when the session was created.
 	CreatedAt time.Time `json:"createdAt"`
 	// ExpiresAt is the timestamp when the session will expire.
 	ExpiresAt time.Time `json:"expiresAt"`
+	// DeviceFingerprint is a hash of device-specific information to bind the session to a device.
+	DeviceFingerprint string `json:"deviceFingerprint,omitempty"`
+	// LastRotatedAt is the timestamp when the session ID was last rotated.
+	LastRotatedAt time.Time `json:"lastRotatedAt"`
 }
 
 // UserLifecycleState defines the lifecycle state of a user, typically for provisioning workflows.

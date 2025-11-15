@@ -93,3 +93,8 @@ func Handler() gin.HandlerFunc {
 		h.ServeHTTP(c.Writer, c.Request)
 	}
 }
+
+// NewRedisMetrics creates a new set of metrics for Redis operations.
+func NewRedisMetrics(namespace string) *redis.Metrics {
+	return redis.NewMetrics(namespace, prometheus.DefaultRegisterer)
+}
