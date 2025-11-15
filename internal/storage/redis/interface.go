@@ -7,12 +7,27 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// RedisClientInterface defines the interface for Redis operations.
+// RedisClientInterface defines the interface for a Redis client.
 type RedisClientInterface interface {
+	Client() *redis.Client
+	Close() error
+	HealthCheck(ctx context.Context) error
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
 	Get(ctx context.Context, key string) (string, error)
 	Del(ctx context.Context, keys ...string) error
-	Close() error
-	Client() *redis.Client
-	HealthCheck(ctx context.Context) error
+	SAdd(ctx context.Context, key string, members ...interface{}) error
+	SCard(ctx context.Context, key string) (int64, error)
+	SRem(ctx context.Context, key string, members ...interface{}) error
+	SMembers(ctx context.Context, key string) ([]string, error)
+	ZAdd(ctx context.Context, key string, members ...redis.Z) error
+	ZCard(ctx context.Context, key string) (int64, error)
+	ZRemRangeByRank(ctx context.Context, key string, start, stop int64) (int64, error)
+	ZRem(ctx context.Context, key string, members ...interface{}) (int64, error)
+	ZRange(ctx context.Context, key string, start, stop int64) ([]string, error)
+}
+
+// UUIDGenerator generates a new UUID.
+type UUIDGenerator interface {
+	New() string
 }

@@ -4,89 +4,71 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/turtacn/QuantaID/pkg/types"
 )
 
 // RedisSessionRepository provides a Redis-backed implementation of the auth.SessionRepository interface.
+// It leverages the SessionManager for all session-related operations.
 type RedisSessionRepository struct {
-	client *redis.Client
+	client       RedisClientInterface
+	sessionManager *SessionManager
 }
 
 // NewRedisSessionRepository creates a new Redis session repository.
-func NewRedisSessionRepository(client *redis.Client) *RedisSessionRepository {
+func NewRedisSessionRepository(client RedisClientInterface, sessionManager *SessionManager) *RedisSessionRepository {
 	return &RedisSessionRepository{
-		client: client,
+		client:       client,
+		sessionManager: sessionManager,
 	}
 }
 
-// CreateSession stores a new user session in Redis with a specified duration.
-func (r *RedisSessionRepository) CreateSession(ctx context.Context, session *types.UserSession) error {
-	key := fmt.Sprintf("session:%s", session.ID)
-	data, err := json.Marshal(session)
-	if err != nil {
-		return fmt.Errorf("marshal session: %w", err)
-	}
-
-	ttl := time.Until(session.ExpiresAt)
-	if ttl <= 0 {
-		return fmt.Errorf("session already expired")
-	}
-
-	return r.client.SetEx(ctx, key, data, ttl).Err()
+// CreateSession stores a new user session in Redis. Note that the core logic is now in SessionManager.
+// This function now expects an *http.Request to generate a device fingerprint.
+func (r *RedisSessionRepository) CreateSession(ctx context.Context, userID string, req *http.Request) (*types.UserSession, error) {
+	return r.sessionManager.CreateSession(ctx, userID, req)
 }
 
 // GetSession retrieves a session by its ID from Redis.
-func (r *RedisSessionRepository) GetSession(ctx context.Context, sessionID string) (*types.UserSession, error) {
-	key := fmt.Sprintf("session:%s", sessionID)
-	data, err := r.client.Get(ctx, key).Bytes()
-	if err == redis.Nil {
-		return nil, types.ErrNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("redis get: %w", err)
-	}
-
-	var session types.UserSession
-	if err := json.Unmarshal(data, &session); err != nil {
-		return nil, fmt.Errorf("unmarshal session: %w", err)
-	}
-
-	return &session, nil
+// This function now expects an *http.Request to validate the device fingerprint.
+func (r *RedisSessionRepository) GetSession(ctx context.Context, sessionID string, req *http.Request) (*types.UserSession, error) {
+	return r.sessionManager.GetSession(ctx, sessionID, req)
 }
 
 // DeleteSession removes a session from Redis by its ID.
-func (r *RedisSessionRepository) DeleteSession(ctx context.Context, sessionID string) error {
-	key := fmt.Sprintf("session:%s", sessionID)
-	return r.client.Del(ctx, key).Err()
+func (r *RedisSessionRepository) DeleteSession(ctx context.Context, userID, sessionID string) error {
+	return r.sessionManager.DeleteSession(ctx, userID, sessionID)
 }
 
 // GetUserSessions retrieves all active sessions for a specific user from Redis.
-// This implementation uses SCAN to avoid blocking the server with KEYS.
+// This implementation is now efficient, using a Redis sorted set to track user sessions.
 func (r *RedisSessionRepository) GetUserSessions(ctx context.Context, userID string) ([]*types.UserSession, error) {
+	userSessionsKey := fmt.Sprintf("user_sessions:%s", userID)
+	sessionIDs, err := r.client.ZRange(ctx, userSessionsKey, 0, -1)
+	if err != nil {
+		if err == redis.Nil {
+			return []*types.UserSession{}, nil
+		}
+		return nil, fmt.Errorf("could not retrieve user sessions: %w", err)
+	}
+
 	var userSessions []*types.UserSession
-	iter := r.client.Scan(ctx, 0, "session:*", 0).Iterator()
-	for iter.Next(ctx) {
-		key := iter.Val()
-		data, err := r.client.Get(ctx, key).Bytes()
+	for _, sessionID := range sessionIDs {
+		key := fmt.Sprintf("session:%s", sessionID)
+		data, err := r.client.Get(ctx, key)
 		if err != nil {
-			// Log the error but continue processing other keys
+			// Session might have expired, which is acceptable.
 			continue
 		}
 
 		var session types.UserSession
-		if err := json.Unmarshal(data, &session); err != nil {
+		if err := json.Unmarshal([]byte(data), &session); err != nil {
+			// Log this error but continue, as other sessions might be valid.
 			continue
 		}
-
-		if session.UserID == userID {
-			userSessions = append(userSessions, &session)
-		}
-	}
-	if err := iter.Err(); err != nil {
-		return nil, fmt.Errorf("redis scan: %w", err)
+		userSessions = append(userSessions, &session)
 	}
 
 	return userSessions, nil

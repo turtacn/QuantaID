@@ -45,9 +45,44 @@ redis:
   # Redis database to use
   db: 0
   # Connection pool size
-  pool_size: 10
+  pool_size: 20
   # Dial timeout in seconds
   dial_timeout: 5
+  # Minimum number of idle connections
+  min_idle_conns: 5
+  # Maximum age of a connection
+  max_conn_age: "30m"
+  # Amount of time to wait for a connection when the pool is full
+  pool_timeout: "4s"
+  # Amount of time after which an idle connection is closed
+  idle_timeout: "5m"
+  # Health check configuration for the connection pool
+  health_check:
+    # Enable periodic health checks
+    enabled: true
+    # Interval between health checks
+    interval: "30s"
+  # Retry configuration for establishing a connection
+  retry:
+    # Maximum number of retry attempts
+    max_attempts: 3
+    # Initial backoff duration for the first retry
+    initial_backoff: "1s"
+    # Maximum backoff duration between retries
+    max_backoff: "10s"
+
+# Session management configuration
+session:
+  # Default session TTL (Time-To-Live)
+  default_ttl: "24h"
+  # Enable session rotation to prevent session fixation attacks
+  enable_rotation: true
+  # How often a session ID should be rotated
+  rotation_interval: "5m"
+  # Bind sessions to a device fingerprint (User-Agent + IP)
+  enable_device_binding: true
+  # Maximum number of concurrent sessions per user (0 for unlimited)
+  max_sessions_per_user: 5
 
 # Observability configuration
 observability:
