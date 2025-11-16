@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
@@ -41,9 +42,10 @@ func NewOAuthAdapter() plugins.IPlugin {
 // Initialize sets up the adapter.
 func (a *OAuthAdapter) Initialize(ctx context.Context, config types.ConnectorConfig, logger utils.Logger) error {
 	a.logger = logger
+	redisMetrics := redis.NewMetrics("oauth", prometheus.DefaultRegisterer)
 	redisClient, err := redis.NewRedisClient(&redis.RedisConfig{
 		Host: config.RedisURL,
-	})
+	}, redisMetrics)
 	if err != nil {
 		return err
 	}
@@ -56,6 +58,7 @@ func (a *OAuthAdapter) Initialize(ctx context.Context, config types.ConnectorCon
 // HandleAuthRequest processes an incoming OAuth 2.1 authentication request.
 func (a *OAuthAdapter) HandleAuthRequest(ctx context.Context, request *types.AuthRequest) (*types.AuthResponse, error) {
 	oauthRequest := request.Credentials
+	a.logger.Info(ctx, "handling auth request", zap.Any("request", oauthRequest))
 	if oauthRequest["response_type"] != "code" {
 		return nil, types.ErrInvalidRequest.WithDetails(map[string]string{"error": "unsupported response_type"})
 	}

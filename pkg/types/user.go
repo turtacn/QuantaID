@@ -29,6 +29,15 @@ type User struct {
 	UpdatedAt time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
 	// LastLoginAt records the timestamp of the user's last successful login.
 	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
+	// MergeHistory records the history of merges for this user.
+	MergeHistory []MergeRecord `json:"mergeHistory,omitempty" gorm:"type:jsonb"`
+}
+
+// MergeRecord represents a record of a merge operation.
+type MergeRecord struct {
+	SourceIDs []string  `json:"sourceIDs"`
+	MergedAt  time.Time `json:"mergedAt"`
+	Strategy  string    `json:"strategy"`
 }
 
 // UserStatus defines the possible states of a user account.
@@ -113,3 +122,15 @@ func (u *User) HasRole(roleName string) bool {
 	return false
 }
 
+// SyncState represents the state of a sync operation.
+type SyncState struct {
+	ID            string    `json:"id" gorm:"primaryKey"`
+	SourceID      string    `json:"sourceId" gorm:"index"`
+	SyncType      string    `json:"syncType"`
+	Status        string    `json:"status"`
+	StartedAt     time.Time `json:"startedAt"`
+	CompletedAt   *time.Time `json:"completedAt,omitempty"`
+	LastChangeNum int64     `json:"lastChangeNum"`
+	Progress      string    `json:"progress"`
+	ErrorMessage  string    `json:"errorMessage,omitempty"`
+}

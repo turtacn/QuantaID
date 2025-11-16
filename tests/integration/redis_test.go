@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,8 @@ func TestRedisClient(t *testing.T) {
 		Host: "localhost",
 		Port: 6379,
 	}
-	client, err := redis.NewRedisClient(cfg)
+	metrics := redis.NewMetrics("test", prometheus.NewRegistry())
+	client, err := redis.NewRedisClient(cfg, metrics)
 	assert.NoError(t, err)
 	defer client.Close()
 

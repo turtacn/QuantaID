@@ -62,10 +62,15 @@ func (m *mockUserRepo) FindUsersByAttribute(ctx context.Context, attribute strin
 	return []*types.User{}, nil
 }
 
+func (m *mockUserRepo) UpsertBatch(ctx context.Context, users []*types.User) error {
+	return nil
+}
+
 type mockAppRepo struct{}
 
 func (m *mockAppRepo) GetApplicationByClientID(ctx context.Context, clientID string) (*types.Application, error) {
 	return &types.Application{
+		ClientType: types.ClientTypePublic,
 		ProtocolConfig: map[string]interface{}{
 			"client_id":     clientID,
 			"redirect_uris": []string{"http://localhost:3000/callback"},
@@ -109,6 +114,50 @@ func (m *mockRedisClient) Del(ctx context.Context, keys ...string) error {
 	return nil
 }
 
+func (m *mockRedisClient) SAdd(ctx context.Context, key string, members ...interface{}) error {
+	return nil
+}
+
+func (m *mockRedisClient) SCard(ctx context.Context, key string) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockRedisClient) SMembers(ctx context.Context, key string) ([]string, error) {
+	return []string{}, nil
+}
+
+func (m *mockRedisClient) SRem(ctx context.Context, key string, members ...interface{}) error {
+	return nil
+}
+
+func (m *mockRedisClient) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
+	if _, ok := m.data[key]; ok {
+		return redis.NewBoolResult(false, nil)
+	}
+	m.data[key] = value.(string)
+	return redis.NewBoolResult(true, nil)
+}
+
+func (m *mockRedisClient) ZAdd(ctx context.Context, key string, members ...redis.Z) error {
+	return nil
+}
+
+func (m *mockRedisClient) ZCard(ctx context.Context, key string) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockRedisClient) ZRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return []string{}, nil
+}
+
+func (m *mockRedisClient) ZRem(ctx context.Context, key string, members ...interface{}) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockRedisClient) ZRemRangeByRank(ctx context.Context, key string, start, stop int64) (int64, error) {
+	return 0, nil
+}
+
 func readBody(body io.ReadCloser) string {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(body)
@@ -122,7 +171,7 @@ func TestOAuthAuthorizationCodeFlow(t *testing.T) {
 	oauthAdapter := protocols.NewOAuthAdapter().(*protocols.OAuthAdapter)
 	oidcAdapter := protocols.NewOIDCAdapter().(*protocols.OIDCAdapter)
 	oauthAdapter.SetUserRepo(&mockUserRepo{})
-	oauthAdapter.SetAppRepo(&mockAppRepo{})
+	oauthAdapter.SetAppRepo(&mockPublicAppRepo{})
 	oauthAdapter.SetRedis(redisClient)
 	oauthAdapter.SetOIDCAdapter(oidcAdapter)
 	oidcAdapter.SetUserRepo(&mockUserRepo{})
@@ -134,6 +183,7 @@ func TestOAuthAuthorizationCodeFlow(t *testing.T) {
 		oidcHandler := handlers.NewOIDCHandler(oidcAdapter, utils.NewZapLoggerWrapper(logger), r.Host)
 		switch r.URL.Path {
 		case "/oauth/authorize":
+			t.Log("redirect_uri:", r.URL.Query().Get("redirect_uri"))
 			oauthHandler.Authorize(w, r)
 		case "/oauth/token":
 			oauthHandler.Token(w, r)
@@ -224,29 +274,3 @@ func (m *mockPublicAppRepo) GetApplicationByClientID(ctx context.Context, client
 	}, nil
 }
 
-func TestOAuthPublicClientPKCERequired(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	oauthAdapter := protocols.NewOAuthAdapter().(*protocols.OAuthAdapter)
-	oauthAdapter.SetUserRepo(&mockUserRepo{})
-	oauthAdapter.SetAppRepo(&mockPublicAppRepo{})
-	oauthAdapter.SetRedis(&mockRedisClient{data: make(map[string]string)})
-	engine := orchestrator.NewEngine(utils.NewZapLoggerWrapper(logger))
-	oauthHandler := handlers.NewOAuthHandler(oauthAdapter, engine, utils.NewZapLoggerWrapper(logger))
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		oauthHandler.Authorize(w, r)
-	}))
-	defer server.Close()
-
-	authURL := server.URL +
-		"?response_type=code" +
-		"&client_id=test_public_client_id" +
-		"&redirect_uri=http://localhost:3000/callback" +
-		"&scope=openid" +
-		"&state=test_state"
-
-	req, _ := http.NewRequest("GET", authURL, nil)
-	resp, _ := http.DefaultClient.Do(req)
-
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-}

@@ -286,3 +286,28 @@ func (r *IdentityMemoryRepository) GetUserGroups(ctx context.Context, userID str
 	}
 	return groups, nil
 }
+
+func (r *IdentityMemoryRepository) UpsertBatch(ctx context.Context, users []*types.User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, user := range users {
+		var existingUser *types.User
+		for _, u := range r.users {
+			if u.Email == user.Email {
+				existingUser = u
+				break
+			}
+		}
+
+		if existingUser != nil {
+			existingUser.Username = user.Username
+			existingUser.Attributes = user.Attributes
+			existingUser.Status = user.Status
+		} else {
+			user.ID = uuid.New().String()
+			r.users[user.ID] = user
+		}
+	}
+	return nil
+}

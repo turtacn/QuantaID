@@ -1,0 +1,20 @@
+sync_policies:
+  - source_id: "corp_ad"
+    mode: "both"
+    full_sync:
+      schedule: "0 2 * * *"
+      batch_size: 100
+      concurrency: 5
+    incremental:
+      enabled: true
+      poll_interval: "30s"
+    deduplication:
+      rules:
+        - match_fields: ["email"]
+          priority: 1
+        - match_fields: ["employee_id"]
+          priority: 2
+      conflict_resolution: "priority"
+    retry:
+      max_attempts: 3
+      backoff: "5m"

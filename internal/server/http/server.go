@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/turtacn/QuantaID/internal/domain/auth"
-	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/turtacn/QuantaID/internal/config"
+	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
 	"github.com/turtacn/QuantaID/internal/metrics"
+	"github.com/turtacn/QuantaID/internal/orchestrator"
 	"github.com/turtacn/QuantaID/internal/protocols/saml"
 	"github.com/turtacn/QuantaID/internal/services/application"
 	audit_service "github.com/turtacn/QuantaID/internal/services/audit"
@@ -166,7 +167,8 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 
 // registerRoutes sets up the API routes, their handlers, and associated middleware.
 func (s *Server) registerRoutes(services Services) {
-	authHandlers := handlers.NewAuthHandlers(services.AuthService, s.logger)
+	engine := orchestrator.NewEngine(s.logger)
+	authHandlers := handlers.NewAuthHandlers(services.AuthService, engine, s.logger)
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
 
 	loggingMiddleware := middleware.NewLoggingMiddleware(s.logger)

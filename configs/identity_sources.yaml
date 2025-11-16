@@ -1,0 +1,20 @@
+sources:
+  - id: "corp_ad"
+    type: "ldap"
+    schema:
+      mappings:
+        - ldap_attr: "sAMAccountName"
+          quanta_field: "username"
+          required: true
+          transform: "lowercase"
+        - ldap_attr: "mail"
+          quanta_field: "email"
+          required: true
+          fallback_attr: "userPrincipalName"
+        - ldap_attr: "cn"
+          quanta_field: "display_name"
+        - ldap_attr: "employeeID"
+          quanta_field: "external_id"
+      defaults:
+        source: "corp_ad"
+        status: "active"

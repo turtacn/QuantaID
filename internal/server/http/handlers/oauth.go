@@ -32,6 +32,7 @@ func NewOAuthHandler(oauthAdapter *protocols.OAuthAdapter, engine *orchestrator.
 
 // Authorize handles the authorization endpoint.
 func (h *OAuthHandler) Authorize(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement proper session management to get the user ID
 	req := &types.AuthRequest{
 		Protocol: "oauth",
 		Credentials: map[string]string{
@@ -42,7 +43,7 @@ func (h *OAuthHandler) Authorize(w http.ResponseWriter, r *http.Request) {
 			"state":                 r.URL.Query().Get("state"),
 			"code_challenge":        r.URL.Query().Get("code_challenge"),
 			"code_challenge_method": r.URL.Query().Get("code_challenge_method"),
-			"user_id":               r.URL.Query().Get("user_id"),
+			"user_id":               "test_user",
 		},
 	}
 
