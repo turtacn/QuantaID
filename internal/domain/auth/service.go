@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"github.com/turtacn/QuantaID/internal/auth/adaptive"
+	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
@@ -18,7 +20,8 @@ type Service struct {
 	auditRepo       AuditLogRepository
 	crypto          *utils.CryptoManager
 	logger          utils.Logger
-	riskEngine      RiskEngine
+	riskEngine      *adaptive.RiskEngine
+	mfaManager      *mfa.MFAManager
 }
 
 // Config holds configuration for the auth service, specifically token and session lifetimes.
@@ -31,19 +34,14 @@ type Config struct {
 	SessionDuration time.Duration
 }
 
+type AuthnRequest struct {
+	Username          string
+	Password          string
+	IPAddress         string
+	DeviceFingerprint string
+}
+
 // NewService creates a new authentication service instance.
-// It brings together all the necessary dependencies to handle authentication logic.
-//
-// Parameters:
-//   - identityService: The service for interacting with user identity data.
-//   - sessionRepo: The repository for managing user sessions.
-//   - tokenRepo: The repository for managing tokens and deny lists.
-//   - auditRepo: The repository for recording audit logs.
-//   - crypto: The utility for cryptographic operations.
-//   - logger: The logger for logging service-level messages.
-//
-// Returns:
-//   A new authentication service instance.
 func NewService(
 	identityService identity.IService,
 	sessionRepo SessionRepository,
@@ -51,7 +49,8 @@ func NewService(
 	auditRepo AuditLogRepository,
 	crypto *utils.CryptoManager,
 	logger utils.Logger,
-	riskEngine RiskEngine,
+	riskEngine *adaptive.RiskEngine,
+	mfaManager *mfa.MFAManager,
 ) *Service {
 	return &Service{
 		identityService: identityService,
@@ -61,23 +60,13 @@ func NewService(
 		crypto:          crypto,
 		logger:          logger,
 		riskEngine:      riskEngine,
+		mfaManager:      mfaManager,
 	}
 }
 
 // LoginWithPassword handles the traditional username and password authentication flow.
-// It validates the user's credentials, checks their account status, and if successful,
-// creates a new session and issues access and refresh tokens.
-//
-// Parameters:
-//   - ctx: The context for the request.
-//   - username: The user's username.
-//   - password: The user's plain-text password.
-//   - serviceConfig: The configuration containing token and session durations.
-//
-// Returns:
-//   An AuthResponse containing tokens and user info, or an error if login fails.
-func (s *Service) LoginWithPassword(ctx context.Context, username, password string, serviceConfig Config) (*types.AuthResponse, error) {
-	user, err := s.identityService.GetUserByUsername(ctx, username)
+func (s *Service) LoginWithPassword(ctx context.Context, req AuthnRequest, serviceConfig Config) (*types.AuthResponse, error) {
+	user, err := s.identityService.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, types.ErrInvalidCredentials.WithCause(err)
 	}
@@ -87,10 +76,30 @@ func (s *Service) LoginWithPassword(ctx context.Context, username, password stri
 		return nil, types.ErrUserDisabled
 	}
 
-	if !s.crypto.CheckPasswordHash(password, user.Password) {
+	if !s.crypto.CheckPasswordHash(req.Password, user.Password) {
 		s.logAuthFailure(ctx, user.ID, "login_password", "invalid_password")
 		return nil, types.ErrInvalidCredentials
 	}
+
+	riskScore, err := s.riskEngine.Evaluate(ctx, &adaptive.AuthEvent{
+		UserID:            user.ID,
+		IPAddress:         req.IPAddress,
+		DeviceFingerprint: req.DeviceFingerprint,
+		Timestamp:         time.Now(),
+	})
+	if err != nil {
+		return nil, types.ErrInternal.WithCause(err)
+	}
+
+	if riskScore.Recommendation == "require_mfa" {
+		// TODO: return a response that indicates MFA is required
+		return &types.AuthResponse{
+			Success:      false,
+			NextStep:     "mfa",
+			RequiredMFA:  []string{"totp", "webauthn"},
+		}, nil
+	}
+
 
 	return s.createSessionAndTokens(ctx, user, serviceConfig)
 }
@@ -136,16 +145,6 @@ func (s *Service) createSessionAndTokens(ctx context.Context, user *types.User, 
 }
 
 // Logout handles the user logout process.
-// It deletes the user's session and adds the provided access token to a deny list
-// to prevent its reuse until it expires.
-//
-// Parameters:
-//   - ctx: The context for the request.
-//   - sessionID: The ID of the session to be terminated.
-//   - accessToken: The access token to be invalidated.
-//
-// Returns:
-//   An error if the process fails, otherwise nil.
 func (s *Service) Logout(ctx context.Context, sessionID, accessToken string) error {
 	if err := s.sessionRepo.DeleteSession(ctx, sessionID); err != nil {
 		s.logger.Warn(ctx, "Failed to delete session on logout", zap.Error(err), zap.String("sessionID", sessionID))
@@ -167,7 +166,6 @@ func (s *Service) Logout(ctx context.Context, sessionID, accessToken string) err
 }
 
 // logAuthSuccess records a successful authentication event to the audit log.
-// It runs in a separate goroutine to avoid blocking the main authentication flow.
 func (s *Service) logAuthSuccess(ctx context.Context, userID, method string) {
 	go func() {
 		logEntry := &types.AuditLog{
@@ -186,7 +184,6 @@ func (s *Service) logAuthSuccess(ctx context.Context, userID, method string) {
 }
 
 // logAuthFailure records a failed authentication attempt to the audit log.
-// It runs in a separate goroutine.
 func (s *Service) logAuthFailure(ctx context.Context, userID, method, reason string) {
 	go func() {
 		logEntry := &types.AuditLog{

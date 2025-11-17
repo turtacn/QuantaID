@@ -1,0 +1,31 @@
+# configs/mfa_config.yaml
+mfa:
+  enabled_providers:
+    - totp
+    - webauthn
+    - sms
+  require_setup: false
+  grace_period: 7 # New users have a 7-day grace period
+  max_attempts: 5
+
+  totp:
+    issuer: "QuantaID"
+    digits: 6
+    period: 30
+    algorithm: "SHA256"
+
+  webauthn:
+    rp_display_name: "QuantaID"
+    rp_id: "quantaid.example.com"
+    rp_origin: "https://quantaid.example.com"
+    timeout: 60000
+    authenticator_selection:
+      user_verification: "preferred"
+      authenticator_attachment: "cross-platform"
+
+  sms:
+    provider: "twilio"
+    twilio:
+      account_sid: "${TWILIO_ACCOUNT_SID}"
+      auth_token: "${TWILIO_AUTH_TOKEN}"
+      from_number: "+1234567890"

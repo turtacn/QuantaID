@@ -89,7 +89,13 @@ func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*Logi
 		SessionDuration:      s.config.SessionDuration,
 	}
 
-	authResp, err := s.authDomain.LoginWithPassword(ctx, req.Username, req.Password, domainConfig)
+	authReq := auth.AuthnRequest{
+		Username:          req.Username,
+		Password:          req.Password,
+		IPAddress:         ip,
+		DeviceFingerprint: "not_implemented",
+	}
+	authResp, err := s.authDomain.LoginWithPassword(ctx, authReq, domainConfig)
 	if err != nil {
 		span.RecordError(err)
 		s.auditService.RecordLoginFailed(ctx, req.Username, ip, traceID, err.Error(), nil)

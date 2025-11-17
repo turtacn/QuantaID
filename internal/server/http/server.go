@@ -11,6 +11,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/turtacn/QuantaID/internal/config"
+	"github.com/turtacn/QuantaID/internal/auth/adaptive"
+	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
@@ -137,11 +139,10 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
 	identityAppService := identity_service.NewApplicationService(identityDomainService, logger)
 
-	riskEngine := auth_service.NewSimpleRiskEngine(auth_service.SimpleRiskConfig{
-		MfaThreshold: 0.5, // Example value
-	}, auditService)
+	riskEngine := &adaptive.RiskEngine{}
+	mfaManager := &mfa.MFAManager{}
 
-	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, nil, cryptoManager, logger, riskEngine)
+	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, nil, cryptoManager, logger, riskEngine, mfaManager)
 	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
 
 	authAppService := auth_service.NewApplicationService(authDomainService, auditService, logger, auth_service.Config{

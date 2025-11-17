@@ -47,7 +47,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&types.Policy{},
 		&types.Application{},
 		&types.AuditLog{},
-		&types.UserMFAConfig{},
+		&types.MFAFactor{},
 		&types.MFAVerificationLog{},
 	)
 	if err != nil {

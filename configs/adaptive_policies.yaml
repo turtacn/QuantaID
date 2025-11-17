@@ -1,0 +1,47 @@
+# configs/adaptive_policies.yaml
+policies:
+  - name: "High-risk users must use WebAuthn"
+    priority: 1
+    conditions:
+      - type: "role"
+        operator: "in"
+        values: ["admin", "super_admin"]
+    actions:
+      - require_mfa: ["webauthn"]
+      - deny_mfa: ["sms", "email"]
+
+  - name: "High-risk login requires additional verification"
+    priority: 2
+    conditions:
+      - type: "risk_score"
+        operator: ">"
+        value: 60
+    actions:
+      - require_mfa: ["totp", "webauthn"]
+      - notify_user: true
+      - alert_admin: true
+
+  - name: "Login outside of work hours requires approval"
+    priority: 3
+    conditions:
+      - type: "time"
+        operator: "not_between"
+        value: ["09:00", "18:00"]
+      - type: "role"
+        operator: "in"
+        values: ["employee"]
+    actions:
+      - require_approval: true
+      - temporary_block: "1h"
+
+  - name: "Trusted devices are exempt from MFA"
+    priority: 10
+    conditions:
+      - type: "device_trusted"
+        operator: "=="
+        value: true
+      - type: "risk_score"
+        operator: "<"
+        value: 30
+    actions:
+      - skip_mfa: true

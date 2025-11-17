@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/turtacn/QuantaID/internal/audit"
-	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/auth/adaptive"
 	"github.com/turtacn/QuantaID/pkg/types"
 )
 
@@ -16,9 +16,12 @@ type MockRiskEngine struct {
 	mock.Mock
 }
 
-func (m *MockRiskEngine) Assess(ctx context.Context, loginCtx auth.LoginContext) (*auth.RiskAssessment, error) {
-	args := m.Called(ctx, loginCtx)
-	return args.Get(0).(*auth.RiskAssessment), args.Error(1)
+func (m *MockRiskEngine) Evaluate(ctx context.Context, event *adaptive.AuthEvent) (*adaptive.RiskScore, error) {
+	args := m.Called(ctx, event)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*adaptive.RiskScore), args.Error(1)
 }
 
 // MockSink is a simple in-memory sink for testing the pipeline.
@@ -44,28 +47,33 @@ type MockMFARepository struct {
 	mock.Mock
 }
 
-func (m *MockMFARepository) CreateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
-	args := m.Called(ctx, config)
+func (m *MockMFARepository) CreateFactor(ctx context.Context, factor *types.MFAFactor) error {
+	args := m.Called(ctx, factor)
 	return args.Error(0)
 }
 
-func (m *MockMFARepository) GetUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) (*types.UserMFAConfig, error) {
-	args := m.Called(ctx, userID, method)
-	return args.Get(0).(*types.UserMFAConfig), args.Error(1)
+func (m *MockMFARepository) GetFactor(ctx context.Context, factorID uuid.UUID) (*types.MFAFactor, error) {
+	args := m.Called(ctx, factorID)
+	return args.Get(0).(*types.MFAFactor), args.Error(1)
 }
 
-func (m *MockMFARepository) GetUserMFAConfigs(ctx context.Context, userID uuid.UUID) ([]*types.UserMFAConfig, error) {
+func (m *MockMFARepository) GetUserFactors(ctx context.Context, userID uuid.UUID) ([]*types.MFAFactor, error) {
 	args := m.Called(ctx, userID)
-	return args.Get(0).([]*types.UserMFAConfig), args.Error(1)
+	return args.Get(0).([]*types.MFAFactor), args.Error(1)
 }
 
-func (m *MockMFARepository) UpdateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error {
-	args := m.Called(ctx, config)
+func (m *MockMFARepository) UpdateFactor(ctx context.Context, factor *types.MFAFactor) error {
+	args := m.Called(ctx, factor)
 	return args.Error(0)
 }
 
-func (m *MockMFARepository) DeleteUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) error {
-	args := m.Called(ctx, userID, method)
+func (m *MockMFARepository) DeleteFactor(ctx context.Context, factorID uuid.UUID) error {
+	args := m.Called(ctx, factorID)
+	return args.Error(0)
+}
+
+func (m *MockMFARepository) CreateVerificationLog(ctx context.Context, log *types.MFAVerificationLog) error {
+	args := m.Called(ctx, log)
 	return args.Error(0)
 }
 

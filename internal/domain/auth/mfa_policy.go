@@ -11,12 +11,12 @@ import (
 
 // MFARepository defines the interface for a persistence layer for MFA configurations.
 type MFARepository interface {
-	CreateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error
-	GetUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) (*types.UserMFAConfig, error)
-	GetUserMFAConfigs(ctx context.Context, userID uuid.UUID) ([]*types.UserMFAConfig, error)
-	UpdateUserMFAConfig(ctx context.Context, config *types.UserMFAConfig) error
-	DeleteUserMFAConfig(ctx context.Context, userID uuid.UUID, method string) error
-	CreateMFAVerificationLog(ctx context.Context, log *types.MFAVerificationLog) error
+	CreateFactor(ctx context.Context, factor *types.MFAFactor) error
+	GetFactor(ctx context.Context, factorID uuid.UUID) (*types.MFAFactor, error)
+	GetUserFactors(ctx context.Context, userID uuid.UUID) ([]*types.MFAFactor, error)
+	UpdateFactor(ctx context.Context, factor *types.MFAFactor) error
+	DeleteFactor(ctx context.Context, factorID uuid.UUID) error
+	CreateVerificationLog(ctx context.Context, log *types.MFAVerificationLog) error
 }
 
 // MFAPolicy handles the business logic for MFA.
@@ -43,12 +43,12 @@ func (mp *MFAPolicy) ShouldEnforceMFA(ctx context.Context, user *types.User) (bo
 	if err != nil {
 		return false, err
 	}
-	configs, err := mp.mfaRepo.GetUserMFAConfigs(ctx, userID)
+	factors, err := mp.mfaRepo.GetUserFactors(ctx, userID)
 	if err != nil {
 		return false, err
 	}
-	for _, config := range configs {
-		if config.Enabled {
+	for _, factor := range factors {
+		if factor.Status == "active" {
 			return true, nil
 		}
 	}
@@ -57,33 +57,32 @@ func (mp *MFAPolicy) ShouldEnforceMFA(ctx context.Context, user *types.User) (bo
 
 // GetAvailableMFAMethods returns a list of available MFA methods for a user.
 func (mp *MFAPolicy) GetAvailableMFAMethods(ctx context.Context, userID uuid.UUID) ([]string, error) {
-	configs, err := mp.mfaRepo.GetUserMFAConfigs(ctx, userID)
+	factors, err := mp.mfaRepo.GetUserFactors(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	var methods []string
-	for _, config := range configs {
-		if config.Enabled {
-			methods = append(methods, config.Method)
+	for _, factor := range factors {
+		if factor.Status == "active" {
+			methods = append(methods, factor.Type)
 		}
 	}
 	return methods, nil
 }
 
 func (mp *MFAPolicy) VerifyTOTP(ctx context.Context, userID uuid.UUID, code string) (bool, error) {
-	config, err := mp.mfaRepo.GetUserMFAConfig(ctx, userID, "totp")
+	factors, err := mp.mfaRepo.GetUserFactors(ctx, userID)
 	if err != nil {
 		return false, types.ErrNotFound.WithCause(err)
 	}
 
-	var totpConfig struct {
-		Secret string `json:"secret"`
-	}
-	if err := json.Unmarshal(config.Config, &totpConfig); err != nil {
-		return false, types.ErrInternal.WithCause(err)
+	for _, factor := range factors {
+		if factor.Type == "totp" {
+			return mp.TotpProvider.VerifyCode(factor.Secret, code), nil
+		}
 	}
 
-	return mp.TotpProvider.VerifyCode(totpConfig.Secret, code), nil
+	return false, types.ErrNotFound
 }
 
 // VerifyMFAChallenge verifies an MFA challenge.
@@ -103,21 +102,19 @@ func (mp *MFAPolicy) VerifyMFAChallenge(ctx context.Context, challengeID, method
 	// 2. Verify the code based on the method
 	switch method {
 	case "totp":
-		mfaConfig, err := mp.mfaRepo.GetUserMFAConfig(ctx, challengeData.UserID, "totp")
+		factors, err := mp.mfaRepo.GetUserFactors(ctx, challengeData.UserID)
 		if err != nil {
 			return types.ErrUnauthorized
 		}
 
-		var totpConfig struct {
-			Secret string `json:"secret"`
-		}
-		if err := json.Unmarshal(mfaConfig.Config, &totpConfig); err != nil {
-			return types.ErrInternal
+		for _, factor := range factors {
+			if factor.Type == "totp" {
+				if !mp.TotpProvider.VerifyCode(factor.Secret, code) {
+					return types.ErrUnauthorized
+				}
+			}
 		}
 
-		if !mp.TotpProvider.VerifyCode(totpConfig.Secret, code) {
-			return types.ErrUnauthorized
-		}
 	case "sms":
 		storedCode, err := mp.redis.Get(ctx, "sms:otp:"+challengeData.UserID.String()).Result()
 		if err != nil || storedCode != code {

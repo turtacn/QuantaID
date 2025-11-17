@@ -35,6 +35,10 @@ type AuthResponse struct {
 	RedirectURI string `json:"redirect_uri,omitempty"`
 	// State is an opaque value used to maintain state between the request and callback.
 	State string `json:"state,omitempty"`
+	// NextStep indicates the next step in the authentication flow.
+	NextStep string `json:"next_step,omitempty"`
+	// RequiredMFA lists the MFA methods that can be used to complete the authentication.
+	RequiredMFA []string `json:"required_mfa,omitempty"`
 }
 
 // Token represents an access token and related data, typically issued upon successful authentication.

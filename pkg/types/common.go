@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // AuditLog represents a single audit trail event, capturing a record of an action performed within the system.
@@ -60,4 +62,12 @@ func (j *JSONB) Scan(value interface{}) error {
 		return nil
 	}
 	return json.Unmarshal(bytes, j)
+}
+
+func MustParseUUID(s string) uuid.UUID {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return id
 }

@@ -50,8 +50,11 @@ func TestMFAFlow(t *testing.T) {
 	code, err := totp.GenerateCode(secret, time.Now())
 	assert.NoError(t, err)
 
-	mfaRepo.On("GetUserMFAConfig", mock.Anything, mock.Anything, "totp").Return(&types.UserMFAConfig{
-		Config: []byte(`{"secret":"` + secret + `"}`),
+	mfaRepo.On("GetUserFactors", mock.Anything, mock.Anything).Return([]*types.MFAFactor{
+		{
+			Type:   "totp",
+			Secret: secret,
+		},
 	}, nil)
 
 	verifyReqBody := `{"code": "` + code + `"}`

@@ -3,9 +3,13 @@ package auth
 import (
 	"context"
 	"testing"
+	"net"
 
+	"github.com/oschwald/geoip2-golang"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/turtacn/QuantaID/internal/auth/adaptive"
+	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
@@ -24,7 +28,14 @@ func TestApplicationService_Login(t *testing.T) {
 	logger := utils.NewNoopLogger()
 	tracer := trace.NewNoopTracerProvider().Tracer("test")
 
-	riskEngine := &testutils.MockRiskEngine{}
+	mockGeoIP := &testutils.MockGeoIPReader{
+		LookupFunc: func(ip net.IP) (*geoip2.City, error) {
+			return &geoip2.City{}, nil
+		},
+	}
+
+	riskEngine := adaptive.NewRiskEngine(mockGeoIP, logger)
+	mfaManager := &mfa.MFAManager{}
 	authDomain := auth.NewService(
 		identityService,
 		sessionRepo,
@@ -33,6 +44,7 @@ func TestApplicationService_Login(t *testing.T) {
 		cryptoManager,
 		logger,
 		riskEngine,
+		mfaManager,
 	)
 	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger, &testutils.MockSink{})
 	auditService := audit.NewService(auditPipeline)
