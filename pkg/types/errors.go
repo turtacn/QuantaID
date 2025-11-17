@@ -96,4 +96,7 @@ var (
 	ErrSessionExpired        = NewError("session_expired", "The user session has expired.", http.StatusUnauthorized, codes.Unauthenticated)
 	ErrDeviceMismatch        = NewError("device_mismatch", "The device fingerprint does not match the session.", http.StatusUnauthorized, codes.Unauthenticated)
 	ErrMaxSessionsExceeded   = NewError("max_sessions_exceeded", "The maximum number of concurrent sessions has been exceeded.", http.StatusForbidden, codes.PermissionDenied)
+	ErrAuthorizationPending  = NewError("authorization_pending", "The authorization request is still pending as the end-user has not yet completed the user interaction steps.", http.StatusBadRequest, codes.Unavailable)
+	ErrAccessDenied          = NewError("access_denied", "The resource owner or authorization server denied the request.", http.StatusForbidden, codes.PermissionDenied)
+	ErrExpiredToken          = NewError("expired_token", "The token has expired.", http.StatusBadRequest, codes.Unauthenticated)
 )

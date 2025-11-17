@@ -9,6 +9,8 @@ type TokenRequest struct {
 	ClientSecret string `json:"client_secret"`
 	CodeVerifier string `json:"code_verifier"`
 	RefreshToken string `json:"refresh_token"`
+	UserID       string `json:"user_id"`
+	Scope        string `json:"scope"`
 }
 
 // TokenResponse represents the successful response from the token endpoint.
@@ -43,4 +45,24 @@ type UserInfo struct {
 	PhoneNumberVerified bool `json:"phone_number_verified,omitempty"`
 	Address         string `json:"address,omitempty"`
 	UpdatedAt       int64  `json:"updated_at,omitempty"`
+}
+
+// Client represents an OAuth 2.0 client.
+type Client struct {
+	ID                      string   `json:"id"`
+	Secret                  string   `json:"secret"`
+	RedirectURIs            []string `json:"redirect_uris"`
+	GrantTypes              []string `json:"grant_types"`
+	ResponseTypes           []string `json:"response_types"`
+	ClientName              string   `json:"client_name"`
+	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+}
+
+// ClientMetadata represents the metadata for a new client registration.
+type ClientMetadata struct {
+	RedirectURIs            []string `json:"redirect_uris"`
+	GrantTypes              []string `json:"grant_types"`
+	ResponseTypes           []string `json:"response_types"`
+	ClientName              string   `json:"client_name"`
+	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
 }

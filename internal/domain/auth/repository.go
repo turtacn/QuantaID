@@ -59,3 +59,29 @@ type AuditLogRepository interface {
 	// GetLogsByAction retrieves a paginated list of audit logs for a specific action type.
 	GetLogsByAction(ctx context.Context, action string, pq types.PaginationQuery) ([]*types.AuditLog, error)
 }
+
+// TokenFamily represents a chain of rotated refresh tokens.
+type TokenFamily struct {
+    FamilyID       string
+    OriginalToken  string
+    CurrentToken   string
+    IssuedTokens   []string // All refresh tokens issued in this family.
+    UserID         string
+    ClientID       string
+    RevokedAt      *time.Time
+}
+
+// TokenFamilyRepository defines the interface for managing refresh token families.
+// This is essential for implementing refresh token rotation and detecting replay attacks.
+type TokenFamilyRepository interface {
+    // CreateFamily creates a new token family when a refresh token is first issued.
+    CreateFamily(ctx context.Context, family *TokenFamily) error
+    // GetFamilyByToken retrieves the token family associated with a given refresh token.
+    GetFamilyByToken(ctx context.Context, token string) (*TokenFamily, error)
+    // GetFamilyByID retrieves a token family by its unique ID.
+    GetFamilyByID(ctx context.Context, familyID string) (*TokenFamily, error)
+    // UpdateFamily updates an existing token family, typically to add a new token during rotation.
+    UpdateFamily(ctx context.Context, family *TokenFamily) error
+    // RevokeFamily marks an entire token family as revoked, invalidating all its tokens.
+    RevokeFamily(ctx context.Context, familyID string) error
+}
