@@ -1,0 +1,30 @@
+package audit
+
+import (
+	"context"
+	"time"
+)
+
+// AuditRepository defines the interface for storing and retrieving audit events.
+type AuditRepository interface {
+	// WriteBatch writes a slice of audit events to the persistent storage.
+	// This method is designed for high-throughput, asynchronous logging.
+	WriteBatch(ctx context.Context, events []*AuditEvent) error
+
+	// WriteSync writes a single audit event immediately to persistent storage.
+	// This is a fallback for critical events or when the async buffer is full.
+	WriteSync(ctx context.Context, event *AuditEvent) error
+
+	// Query retrieves audit events based on a set of filters and pagination options.
+	// The implementation should handle complex queries on indexed fields.
+	Query(ctx context.Context, filter QueryFilter) ([]*AuditEvent, error)
+}
+
+// QueryFilter defines the criteria for querying audit logs.
+type QueryFilter struct {
+	StartTimestamp time.Time
+	EndTimestamp   time.Time
+	EventTypes     []EventType
+	ActorID        string
+	TargetID       string
+}

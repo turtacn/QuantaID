@@ -1,0 +1,8 @@
+# configs/audit_policies.yaml
+retention_policies:
+  default:
+    hot_data_retention_days: 30
+    warm_data_retention_days: 365
+    cold_data_retention_days: 2555 # 7 years
+    enable_auto_archive: true
+    enable_auto_delete: true

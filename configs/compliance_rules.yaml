@@ -1,0 +1,33 @@
+# configs/compliance_rules.yaml
+compliance_rules:
+  GDPR:
+    - id: "GDPR-01"
+      name: "Data Subject Consent"
+      description: "Ensures that user consent is properly recorded for data processing activities."
+      check_type: "query"
+      check_params:
+        query_name: "verify_user_consent"
+      severity: "critical"
+    - id: "GDPR-05"
+      name: "Data Retention Period"
+      description: "Verifies that personally identifiable information is not stored beyond the legally allowed retention period."
+      check_type: "internal"
+      check_params:
+        function_name: "check_data_retention"
+        max_retention_days: 2555 # 7 years for financial records
+      severity: "high"
+  SOC2:
+    - id: "SOC2-CC6.1"
+      name: "Logical and Physical Access Controls"
+      description: "Checks that access to sensitive data and systems is restricted to authorized personnel."
+      check_type: "query"
+      check_params:
+        query_name: "verify_access_controls"
+      severity: "critical"
+    - id: "SOC2-CC7.2"
+      name: "System Monitoring"
+      description: "Ensures that system components are monitored to detect performance issues and security events."
+      check_type: "internal"
+      check_params:
+        function_name: "verify_monitoring_coverage"
+      severity: "high"
