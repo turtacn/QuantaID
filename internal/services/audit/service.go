@@ -70,7 +70,7 @@ func (s *Service) RecordPolicyDecision(ctx context.Context, userID, ip, resource
 		UserID:    userID,
 		IP:        ip,
 		Resource:  resource,
-		Result:    result, // "success", "fail", "deny"
+		Result:    audit.Result(result), // "success", "fail", "deny"
 		TraceID:   traceID,
 		Details:   details,
 	}

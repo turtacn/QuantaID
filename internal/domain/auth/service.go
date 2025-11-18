@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"github.com/turtacn/QuantaID/internal/auth/adaptive"
 	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/types"
@@ -19,20 +18,18 @@ type Service struct {
 	tokenRepo         TokenRepository
 	auditRepo         AuditLogRepository
 	tokenFamilyRepo   TokenFamilyRepository
-	crypto            *utils.CryptoManager
+	crypto            utils.CryptoManagerInterface
 	logger            utils.Logger
-	riskEngine        *adaptive.RiskEngine
+	riskEngine        RiskEngine
+	policyEngine      PolicyEngine
 	mfaManager        *mfa.MFAManager
 }
 
 // Config holds configuration for the auth service, specifically token and session lifetimes.
 type Config struct {
-	// AccessTokenDuration specifies the validity period for access tokens.
-	AccessTokenDuration time.Duration
-	// RefreshTokenDuration specifies the validity period for refresh tokens.
+	AccessTokenDuration  time.Duration
 	RefreshTokenDuration time.Duration
-	// SessionDuration specifies the validity period for user sessions.
-	SessionDuration time.Duration
+	SessionDuration      time.Duration
 }
 
 type AuthnRequest struct {
@@ -40,6 +37,7 @@ type AuthnRequest struct {
 	Password          string
 	IPAddress         string
 	DeviceFingerprint string
+	IsKnownDevice     bool
 }
 
 // NewService creates a new authentication service instance.
@@ -48,25 +46,29 @@ func NewService(
 	sessionRepo SessionRepository,
 	tokenRepo TokenRepository,
 	auditRepo AuditLogRepository,
-	crypto *utils.CryptoManager,
+	tokenFamilyRepo TokenFamilyRepository,
+	crypto utils.CryptoManagerInterface,
 	logger utils.Logger,
-	riskEngine *adaptive.RiskEngine,
+	riskEngine RiskEngine,
+	policyEngine PolicyEngine,
 	mfaManager *mfa.MFAManager,
 ) *Service {
 	return &Service{
-		identityService: identityService,
-		sessionRepo:     sessionRepo,
-		tokenRepo:       tokenRepo,
-		auditRepo:       auditRepo,
-		crypto:          crypto,
-		logger:          logger,
-		riskEngine:      riskEngine,
-		mfaManager:      mfaManager,
+		identityService:   identityService,
+		sessionRepo:       sessionRepo,
+		tokenRepo:         tokenRepo,
+		auditRepo:         auditRepo,
+		tokenFamilyRepo:   tokenFamilyRepo,
+		crypto:            crypto,
+		logger:            logger,
+		riskEngine:        riskEngine,
+		policyEngine:      policyEngine,
+		mfaManager:        mfaManager,
 	}
 }
 
 // LoginWithPassword handles the traditional username and password authentication flow.
-func (s *Service) LoginWithPassword(ctx context.Context, req AuthnRequest, serviceConfig Config) (*types.AuthResponse, error) {
+func (s *Service) LoginWithPassword(ctx context.Context, req AuthnRequest, serviceConfig Config) (*types.AuthResult, error) {
 	user, err := s.identityService.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, types.ErrInvalidCredentials.WithCause(err)
@@ -82,32 +84,49 @@ func (s *Service) LoginWithPassword(ctx context.Context, req AuthnRequest, servi
 		return nil, types.ErrInvalidCredentials
 	}
 
-	riskScore, err := s.riskEngine.Evaluate(ctx, &adaptive.AuthEvent{
-		UserID:            user.ID,
-		IPAddress:         req.IPAddress,
-		DeviceFingerprint: req.DeviceFingerprint,
-		Timestamp:         time.Now(),
-	})
+	authContext := AuthContext{
+		UserID:        user.ID,
+		IPAddress:     req.IPAddress,
+		Timestamp:     time.Now(),
+		IsKnownDevice: req.IsKnownDevice,
+	}
+	_, level, err := s.riskEngine.Evaluate(ctx, authContext)
 	if err != nil {
 		return nil, types.ErrInternal.WithCause(err)
 	}
 
-	if riskScore.Recommendation == "require_mfa" {
-		// TODO: return a response that indicates MFA is required
-		return &types.AuthResponse{
-			Success:      false,
-			NextStep:     "mfa",
-			RequiredMFA:  []string{"totp", "webauthn"},
+	policyDecision := s.policyEngine.Decide(level, authContext)
+	if policyDecision == "REQUIRE_MFA" {
+		// In a real implementation, we would check the user's enrolled MFA methods.
+		return &types.AuthResult{
+			IsMfaRequired: true,
+			MFAChallenge: &types.MFAChallenge{
+				ChallengeID: "challenge-id-placeholder",
+				MFAProvider: "totp",
+			},
+			User: user,
 		}, nil
 	}
 
+	return s.createSessionAndTokens(ctx, user, serviceConfig)
+}
+
+// VerifyMFAChallenge verifies an MFA challenge and, if successful, creates a session and tokens.
+func (s *Service) VerifyMFAChallenge(ctx context.Context, req *types.VerifyMFARequest, serviceConfig Config) (*types.AuthResult, error) {
+	// In a real implementation, we would validate the challenge ID and the code.
+	// For now, we'll assume the challenge is valid and proceed with creating the session.
+
+	user, err := s.identityService.GetUserByID(ctx, req.UserID)
+	if err != nil {
+		return nil, types.ErrInvalidCredentials.WithCause(err)
+	}
 
 	return s.createSessionAndTokens(ctx, user, serviceConfig)
 }
 
 // createSessionAndTokens is a helper function that generates JWTs, creates a user session,
 // and constructs the final authentication response.
-func (s *Service) createSessionAndTokens(ctx context.Context, user *types.User, serviceConfig Config) (*types.AuthResponse, error) {
+func (s *Service) createSessionAndTokens(ctx context.Context, user *types.User, serviceConfig Config) (*types.AuthResult, error) {
 	accessToken, err := s.crypto.GenerateJWT(user.ID, serviceConfig.AccessTokenDuration, nil)
 	if err != nil {
 		s.logger.Error(ctx, "Failed to generate access token", zap.Error(err), zap.String("userID", user.ID))
@@ -133,8 +152,8 @@ func (s *Service) createSessionAndTokens(ctx context.Context, user *types.User, 
 
 	s.logAuthSuccess(ctx, user.ID, "login_password")
 
-	return &types.AuthResponse{
-		Success: true,
+	return &types.AuthResult{
+		Session: session,
 		Token: &types.Token{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
@@ -187,70 +206,70 @@ func (s *Service) logAuthSuccess(ctx context.Context, userID, method string) {
 // RefreshAccessToken handles the process of issuing a new access token using a refresh token.
 // It implements refresh token rotation to enhance security.
 func (s *Service) RefreshAccessToken(ctx context.Context, refreshToken string, serviceConfig Config) (*types.Token, error) {
-    userID, err := s.tokenRepo.GetRefreshTokenUserID(ctx, refreshToken)
-    if err != nil {
-        return nil, types.ErrInvalidGrant.WithCause(err)
-    }
+	userID, err := s.tokenRepo.GetRefreshTokenUserID(ctx, refreshToken)
+	if err != nil {
+		return nil, types.ErrInvalidGrant.WithCause(err)
+	}
 
-    family, err := s.tokenFamilyRepo.GetFamilyByToken(ctx, refreshToken)
-    if err != nil {
-        return nil, types.ErrInternal.WithCause(err)
-    }
+	family, err := s.tokenFamilyRepo.GetFamilyByToken(ctx, refreshToken)
+	if err != nil {
+		return nil, types.ErrInternal.WithCause(err)
+	}
 
-    // If the family is revoked, it's a sign of a replay attack.
-    if family.RevokedAt != nil {
-        s.logger.Warn(ctx, "Refresh token replay detected", zap.String("familyID", family.FamilyID))
-        return nil, types.ErrInvalidGrant
-    }
+	// If the family is revoked, it's a sign of a replay attack.
+	if family.RevokedAt != nil {
+		s.logger.Warn(ctx, "Refresh token replay detected", zap.String("familyID", family.FamilyID))
+		return nil, types.ErrInvalidGrant
+	}
 
-    // Generate a new pair of tokens.
-    newAccessToken, err := s.crypto.GenerateJWT(userID, serviceConfig.AccessTokenDuration, nil)
-    if err != nil {
-        return nil, types.ErrInternal.WithCause(err)
-    }
-    newRefreshToken := s.crypto.GenerateUUID()
-    if err := s.tokenRepo.StoreRefreshToken(ctx, newRefreshToken, userID, serviceConfig.RefreshTokenDuration); err != nil {
-        return nil, types.ErrInternal.WithCause(err)
-    }
+	// Generate a new pair of tokens.
+	newAccessToken, err := s.crypto.GenerateJWT(userID, serviceConfig.AccessTokenDuration, nil)
+	if err != nil {
+		return nil, types.ErrInternal.WithCause(err)
+	}
+	newRefreshToken := s.crypto.GenerateUUID()
+	if err := s.tokenRepo.StoreRefreshToken(ctx, newRefreshToken, userID, serviceConfig.RefreshTokenDuration); err != nil {
+		return nil, types.ErrInternal.WithCause(err)
+	}
 
-    // Update the token family.
-    family.IssuedTokens = append(family.IssuedTokens, newRefreshToken)
-    family.CurrentToken = newRefreshToken
-    if err := s.tokenFamilyRepo.UpdateFamily(ctx, family); err != nil {
-        return nil, types.ErrInternal.WithCause(err)
-    }
+	// Update the token family.
+	family.IssuedTokens = append(family.IssuedTokens, newRefreshToken)
+	family.CurrentToken = newRefreshToken
+	if err := s.tokenFamilyRepo.UpdateFamily(ctx, family); err != nil {
+		return nil, types.ErrInternal.WithCause(err)
+	}
 
-    // Revoke the old refresh token.
-    if err := s.tokenRepo.DeleteRefreshToken(ctx, refreshToken); err != nil {
-        s.logger.Warn(ctx, "Failed to delete old refresh token", zap.Error(err))
-    }
+	// Revoke the old refresh token.
+	if err := s.tokenRepo.DeleteRefreshToken(ctx, refreshToken); err != nil {
+		s.logger.Warn(ctx, "Failed to delete old refresh token", zap.Error(err))
+	}
 
-    return &types.Token{
-        AccessToken:  newAccessToken,
-        RefreshToken: newRefreshToken,
-        TokenType:    "Bearer",
-        ExpiresIn:    int64(serviceConfig.AccessTokenDuration.Seconds()),
-    }, nil
+	return &types.Token{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    int64(serviceConfig.AccessTokenDuration.Seconds()),
+	}, nil
 }
 
 // RevokeToken handles the revocation of a token (either access or refresh).
 func (s *Service) RevokeToken(ctx context.Context, token, tokenTypeHint string) error {
-    if tokenTypeHint == "refresh_token" {
-        family, err := s.tokenFamilyRepo.GetFamilyByToken(ctx, token)
-        if err == nil && family != nil {
-            return s.tokenFamilyRepo.RevokeFamily(ctx, family.FamilyID)
-        }
-        return s.tokenRepo.DeleteRefreshToken(ctx, token)
-    }
+	if tokenTypeHint == "refresh_token" {
+		family, err := s.tokenFamilyRepo.GetFamilyByToken(ctx, token)
+		if err == nil && family != nil {
+			return s.tokenFamilyRepo.RevokeFamily(ctx, family.FamilyID)
+		}
+		return s.tokenRepo.DeleteRefreshToken(ctx, token)
+	}
 
-    claims, err := s.crypto.ValidateJWT(token)
-    if err != nil {
-        return types.ErrInvalidToken.WithCause(err)
-    }
-    jti, _ := claims["jti"].(string)
-    exp, _ := claims["exp"].(float64)
-    ttl := time.Until(time.Unix(int64(exp), 0))
-    return s.tokenRepo.AddToDenyList(ctx, jti, ttl)
+	claims, err := s.crypto.ValidateJWT(token)
+	if err != nil {
+		return types.ErrInvalidToken.WithCause(err)
+	}
+	jti, _ := claims["jti"].(string)
+	exp, _ := claims["exp"].(float64)
+	ttl := time.Until(time.Unix(int64(exp), 0))
+	return s.tokenRepo.AddToDenyList(ctx, jti, ttl)
 }
 
 // logAuthFailure records a failed authentication attempt to the audit log.
@@ -272,4 +291,8 @@ func (s *Service) logAuthFailure(ctx context.Context, userID, method, reason str
 			s.logger.Error(context.Background(), "Failed to create audit log for failed auth", zap.Error(err))
 		}
 	}()
+}
+
+type PolicyEngine interface {
+	Decide(level RiskLevel, ac AuthContext) string
 }

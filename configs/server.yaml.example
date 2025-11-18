@@ -94,3 +94,28 @@ observability:
   tracing_enabled: true
   # OTLP exporter endpoint (e.g., "jaeger:4317")
   otlp_endpoint: "stdout"
+
+# Security configuration
+security:
+  # Adaptive risk engine configuration
+  adaptive_risk:
+    # Thresholds for risk levels
+    thresholds:
+      low: 0.3
+      medium: 0.7
+      high: 1.0
+    # Weights for risk factors
+    weights:
+      ip_reputation: 0.5
+      geo_reputation: 0.2
+      device_change: 0.3
+      geo_velocity: 0.1
+      time_anomaly: 0.1
+  # MFA policies configuration
+  mfa_policies:
+    # Require MFA for all logins
+    require_mfa: false
+    # List of enabled MFA providers
+    enabled_providers:
+      - "totp"
+      - "webauthn"

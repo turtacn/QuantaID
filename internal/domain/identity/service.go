@@ -100,6 +100,22 @@ func (s *service) GetUser(ctx context.Context, userID string) (*types.User, erro
 	return user, nil
 }
 
+// GetUserByID retrieves a user by their unique ID.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - userID: The ID of the user to retrieve.
+//
+// Returns:
+//   The user object if found, or an error.
+func (s *service) GetUserByID(ctx context.Context, userID string) (*types.User, error) {
+	user, err := s.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
+	}
+	return user, nil
+}
+
 // GetUserByUsername retrieves a user by their unique username.
 //
 // Parameters:

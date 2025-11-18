@@ -71,6 +71,42 @@ var (
 		},
 		[]string{"status"}, // "success" or "failure"
 	)
+
+	// AuthRiskScore is a histogram for the risk scores of authentication attempts.
+	AuthRiskScore = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "quantaid_auth_risk_score",
+			Help:    "Distribution of risk scores for authentication attempts",
+			Buckets: prometheus.LinearBuckets(0, 0.1, 10),
+		},
+	)
+
+	// AuthRiskLevelTotal is a counter for the total number of authentication attempts per risk level.
+	AuthRiskLevelTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "quantaid_auth_risk_level_total",
+			Help: "Total number of authentication attempts per risk level",
+		},
+		[]string{"level"}, // "low", "medium", "high"
+	)
+
+	// MFAChallengeTotal is a counter for the total number of MFA challenges issued.
+	MFAChallengeTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "quantaid_auth_mfa_challenge_total",
+			Help: "Total number of MFA challenges issued",
+		},
+		[]string{"provider"}, // "totp", "webauthn", etc.
+	)
+
+	// MFAFailureTotal is a counter for the total number of failed MFA verifications.
+	MFAFailureTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "quantaid_auth_mfa_failure_total",
+			Help: "Total number of failed MFA verifications",
+		},
+		[]string{"provider", "reason"}, // e.g., "invalid_code", "timeout"
+	)
 )
 
 // Middleware returns a Gin middleware for recording Prometheus metrics.

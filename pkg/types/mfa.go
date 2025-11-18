@@ -41,3 +41,16 @@ func (f *MFAFactor) TableName() string {
 func (l *MFAVerificationLog) TableName() string {
 	return "mfa_verification_logs"
 }
+
+// VerifyMFARequest represents a request to verify an MFA challenge.
+type VerifyMFARequest struct {
+	ChallengeID string `json:"challenge_id"`
+	Code        string `json:"code"`
+	UserID      string `json:"user_id"`
+}
+
+// MFAMethod represents an MFA method that is available to the user.
+type MFAMethod struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+}

@@ -14,6 +14,8 @@ type IService interface {
 	CreateUser(ctx context.Context, username, email, password string) (*types.User, error)
 	// GetUser retrieves a user by their unique ID.
 	GetUser(ctx context.Context, userID string) (*types.User, error)
+	// GetUserByID retrieves a user by their unique ID.
+	GetUserByID(ctx context.Context, userID string) (*types.User, error)
 	// GetUserByUsername retrieves a user by their unique username.
 	GetUserByUsername(ctx context.Context, username string) (*types.User, error)
 	// GetUserGroups retrieves all groups a user is a member of.

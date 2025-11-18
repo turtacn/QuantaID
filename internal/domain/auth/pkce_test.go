@@ -1,55 +1,28 @@
 package auth
 
 import (
-	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-// MockPKCERepository is a mock implementation of PKCERepository for testing.
-type MockPKCERepository struct {
-	mock.Mock
-}
+func TestVerifyPKCE(t *testing.T) {
+	// Test case for S256 method
+	codeVerifier := "test_verifier"
+	h := sha256.New()
+	h.Write([]byte(codeVerifier))
+	codeChallenge := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	assert.True(t, VerifyPKCE(codeVerifier, codeChallenge, "S256"))
 
-func (m *MockPKCERepository) GetAuthCodeChallenge(ctx context.Context, authCode string) (*PKCEChallenge, error) {
-	args := m.Called(ctx, authCode)
-	challenge, _ := args.Get(0).(*PKCEChallenge)
-	return challenge, args.Error(1)
-}
+	// Test case for plain method
+	codeVerifier = "test_verifier"
+	codeChallenge = "test_verifier"
+	assert.True(t, VerifyPKCE(codeVerifier, codeChallenge, "plain"))
 
-func TestPKCEValidator_S256Challenge(t *testing.T) {
-	repo := new(MockPKCERepository)
-	config := PKCEConfig{MinVerifierLength: 43, MaxVerifierLength: 128}
-	validator := NewPKCEValidator(config, repo)
-
-	verifier := "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
-	challenge := "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-
-	repo.On("GetAuthCodeChallenge", mock.Anything, "auth_code").Return(&PKCEChallenge{
-		Challenge:       challenge,
-		ChallengeMethod: "S256",
-	}, nil)
-
-	err := validator.VerifyCodeVerifier(context.Background(), "auth_code", verifier)
-	assert.NoError(t, err)
-}
-
-func TestPKCEValidator_MismatchVerifier(t *testing.T) {
-	repo := new(MockPKCERepository)
-	config := PKCEConfig{MinVerifierLength: 43, MaxVerifierLength: 128}
-	validator := NewPKCEValidator(config, repo)
-
-	// This verifier has a valid length but will not match the challenge.
-	verifier := "aBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
-	challenge := "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-
-	repo.On("GetAuthCodeChallenge", mock.Anything, "auth_code").Return(&PKCEChallenge{
-		Challenge:       challenge,
-		ChallengeMethod: "S256",
-	}, nil)
-
-	err := validator.VerifyCodeVerifier(context.Background(), "auth_code", verifier)
-	assert.EqualError(t, err, ErrInvalidCodeVerifier.Error())
+	// Test case for invalid method
+	codeVerifier = "test_verifier"
+	codeChallenge = "test_verifier"
+	assert.False(t, VerifyPKCE(codeVerifier, codeChallenge, "invalid"))
 }

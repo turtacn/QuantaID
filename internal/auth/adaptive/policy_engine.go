@@ -1,91 +1,43 @@
 package adaptive
 
 import (
-	"context"
-	"sort"
-	"time"
+	"github.com/turtacn/QuantaID/internal/domain/auth"
 )
 
+// PolicyDecision represents the action to be taken based on a risk assessment.
+type PolicyDecision string
+
+const (
+	// PolicyDecisionAllow allows the authentication attempt to proceed without further checks.
+	PolicyDecisionAllow PolicyDecision = "ALLOW"
+	// PolicyDecisionRequireMFA requires the user to complete a Multi-Factor Authentication challenge.
+	PolicyDecisionRequireMFA PolicyDecision = "REQUIRE_MFA"
+	// PolicyDecisionDeny denies the authentication attempt outright.
+	PolicyDecisionDeny PolicyDecision = "DENY"
+)
+
+// PolicyEngine determines the appropriate action based on the risk level.
 type PolicyEngine struct {
-	policies  []Policy
-	evaluator *ConditionEvaluator
+	// In a real implementation, this would hold tenant-specific policies.
 }
 
-type Policy struct {
-	Name       string      `yaml:"name"`
-	Priority   int         `yaml:"priority"`
-	Conditions []Condition `yaml:"conditions"`
-	Actions    []Action    `yaml:"actions"`
+// NewPolicyEngine creates a new policy engine.
+func NewPolicyEngine() *PolicyEngine {
+	return &PolicyEngine{}
 }
 
-type Condition struct {
-	Type     string      `yaml:"type"`
-	Operator string      `yaml:"operator"`
-	Value    interface{} `yaml:"value"`
-	Values   []string    `yaml:"values"`
-}
-
-type Action struct {
-	RequireMFA     []string `yaml:"require_mfa"`
-	DenyMFA        []string `yaml:"deny_mfa"`
-	SkipMFA        bool     `yaml:"skip_mfa"`
-	RequireApproval bool    `yaml:"require_approval"`
-	NotifyUser     bool     `yaml:"notify_user"`
-	AlertAdmin     bool     `yaml:"alert_admin"`
-	TemporaryBlock string   `yaml:"temporary_block"`
-}
-
-type AuthContext struct {
-	UserRoles     []string
-	RiskScore     *RiskScore
-	Timestamp     time.Time
-	DeviceTrusted bool
-}
-
-type PolicyDecision struct {
-	MatchedPolicies []string
-	Actions         []Action
-}
-
-func (pe *PolicyEngine) Evaluate(ctx context.Context, authCtx *AuthContext) (*PolicyDecision, error) {
-	sort.Slice(pe.policies, func(i, j int) bool {
-		return pe.policies[i].Priority < pe.policies[j].Priority
-	})
-
-	decision := &PolicyDecision{
-		Actions: []Action{},
+// Decide makes a policy decision based on the provided risk level.
+func (p *PolicyEngine) Decide(level auth.RiskLevel, ac auth.AuthContext) PolicyDecision {
+	switch level {
+	case auth.RiskLevelLow:
+		return PolicyDecisionAllow
+	case auth.RiskLevelMedium:
+		return PolicyDecisionRequireMFA
+	case auth.RiskLevelHigh:
+		// Depending on policy, this could be REQUIRE_STRONG_MFA or DENY.
+		// For now, we'll map it to REQUIRE_MFA.
+		return PolicyDecisionRequireMFA
+	default:
+		return PolicyDecisionDeny
 	}
-
-	for _, policy := range pe.policies {
-		matched := true
-		for _, condition := range policy.Conditions {
-			if !pe.evaluator.EvaluateCondition(condition, authCtx) {
-				matched = false
-				break
-			}
-		}
-
-		if matched {
-			decision.MatchedPolicies = append(decision.MatchedPolicies, policy.Name)
-			decision.Actions = append(decision.Actions, policy.Actions...)
-		}
-	}
-
-	return decision, nil
-}
-
-type ConditionEvaluator struct{}
-
-func (ce *ConditionEvaluator) EvaluateCondition(cond Condition, authCtx *AuthContext) bool {
-	switch cond.Type {
-	case "role":
-		// return ce.evaluateRoleCondition(cond, authCtx.UserRoles)
-	case "risk_score":
-		// return ce.evaluateNumericCondition(cond, authCtx.RiskScore.TotalScore)
-	case "time":
-		// return ce.evaluateTimeCondition(cond, authCtx.Timestamp)
-	case "device_trusted":
-		// return ce.evaluateBoolCondition(cond, authCtx.DeviceTrusted)
-	}
-	return false
 }

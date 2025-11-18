@@ -3,115 +3,59 @@ package mfa
 import (
 	"context"
 	"fmt"
-	"github.com/turtacn/QuantaID/internal/storage/postgresql"
 	"github.com/turtacn/QuantaID/pkg/types"
-	"time"
 )
 
+// MFAManager manages all MFA providers.
 type MFAManager struct {
-	providers   map[MFAType]MFAProvider
-	repo        *postgresql.PostgresMFARepository
-	// rateLimiter RateLimiter // TODO: Implement rate limiting
-	config      MFAConfig
+	providers map[string]MFAProvider
 }
 
-type MFAType string
-
-const (
-	MFATypeTOTP     MFAType = "totp"
-	MFATypeSMS      MFAType = "sms"
-	MFATypeEmail    MFAType = "email"
-	MFATypeWebAuthn MFAType = "webauthn"
-)
-
-type EnrollParams struct {
-	Email string
+// NewMFAManager creates a new MFAManager.
+func NewMFAManager() *MFAManager {
+	return &MFAManager{
+		providers: make(map[string]MFAProvider),
+	}
 }
 
-type EnrollResult struct {
-	CredentialID  string
-	Secret        string
-	QRCodeImage   string
-	BackupCodes   []string
-	SetupURL      string
-	Challenge     string
-	// RegistrationOptions for WebAuthn
+// RegisterProvider registers a new MFA provider.
+func (m *MFAManager) RegisterProvider(name string, provider MFAProvider) {
+	m.providers[name] = provider
 }
 
-type MFAProvider interface {
-	Enroll(ctx context.Context, userID string, params EnrollParams) (*EnrollResult, error)
-	Verify(ctx context.Context, userID string, credential string) (bool, error)
-	Revoke(ctx context.Context, userID string, credentialID string) error
+// GetAvailableMFAMethods returns the MFA methods available for the user.
+func (m *MFAManager) GetAvailableMFAMethods(ctx context.Context, user *types.User, requiredStrength StrengthLevel) ([]*types.MFAMethod, error) {
+	var availableMethods []*types.MFAMethod
+
+	for _, provider := range m.providers {
+		if provider.GetStrength() == requiredStrength {
+			methods, err := provider.ListMethods(ctx, user)
+			if err != nil {
+				return nil, err
+			}
+			availableMethods = append(availableMethods, methods...)
+		}
+	}
+
+	return availableMethods, nil
 }
 
-type MFAConfig struct {
-	EnabledProviders []MFAType `yaml:"enabled_providers"`
-	RequireSetup     bool      `yaml:"require_setup"`
-	GracePeriod      int       `yaml:"grace_period"`
-	MaxAttempts      int       `yaml:"max_attempts"`
-}
-
-func (mm *MFAManager) EnrollFactor(ctx context.Context, userID string, mfaType MFAType, params EnrollParams) (*EnrollResult, error) {
-	// TODO: check if user already has a factor of this type
-	provider, ok := mm.providers[mfaType]
+// Challenge generates an MFA challenge for the user.
+func (m *MFAManager) Challenge(ctx context.Context, user *types.User, providerName string) (*types.MFAChallenge, error) {
+	provider, ok := m.providers[providerName]
 	if !ok {
-		return nil, fmt.Errorf("MFA provider not found: %s", mfaType)
+		return nil, fmt.Errorf("provider not found: %s", providerName)
 	}
 
-	result, err := provider.Enroll(ctx, userID, params)
-	if err != nil {
-		return nil, err
-	}
-
-	factor := &types.MFAFactor{
-		UserID:       types.MustParseUUID(userID),
-		Type:         string(mfaType),
-		Status:       "pending",
-		CredentialID: result.CredentialID,
-		Secret:       result.Secret,
-		CreatedAt:    time.Now(),
-	}
-	err = mm.repo.CreateFactor(ctx, factor)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return provider.Challenge(ctx, user)
 }
 
-func (mm *MFAManager) VerifyFactor(ctx context.Context, userID string, mfaType MFAType, credential string) (bool, error) {
-	// TODO: Rate limiting
-	factors, err := mm.repo.GetUserFactorsByType(ctx, types.MustParseUUID(userID), string(mfaType))
-	if err != nil {
-		return false, err
-	}
-	if len(factors) == 0 {
-		return false, fmt.Errorf("no factor enrolled")
+// Verify verifies the user's response to an MFA challenge.
+func (m *MFAManager) Verify(ctx context.Context, user *types.User, providerName, code string) (bool, error) {
+	provider, ok := m.providers[providerName]
+	if !ok {
+		return false, fmt.Errorf("provider not found: %s", providerName)
 	}
 
-	for _, factor := range factors {
-		provider := mm.providers[MFAType(factor.Type)]
-		valid, err := provider.Verify(ctx, userID, credential)
-		if err != nil {
-			// mm.recordVerificationAttempt(ctx, factor.ID, false, err)
-			continue
-		}
-		if valid {
-			// mm.recordVerificationAttempt(ctx, factor.ID, true, nil)
-			// mm.updateLastUsed(ctx, factor.ID)
-			return true, nil
-		}
-	}
-
-	return false, fmt.Errorf("invalid credential")
-}
-
-func (mm *MFAManager) ActivateFactor(ctx context.Context, userID string, mfaType MFAType, credential string) error {
-	// TODO:
-	return nil
-}
-
-func (mm *MFAManager) GetRequiredFactors(ctx context.Context, userID string) ([]MFAType, error) {
-	// TODO:
-	return nil, nil
+	return provider.Verify(ctx, user, code)
 }

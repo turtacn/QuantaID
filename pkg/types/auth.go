@@ -41,6 +41,20 @@ type AuthResponse struct {
 	RequiredMFA []string `json:"required_mfa,omitempty"`
 }
 
+// AuthResult represents the outcome of an authentication attempt within the domain layer.
+type AuthResult struct {
+	// Session is the user session created upon successful authentication.
+	Session *UserSession
+	// Token is the set of tokens (access, refresh) issued.
+	Token *Token
+	// User is the authenticated user.
+	User *User
+	// MFAChallenge is populated if an MFA step is required.
+	MFAChallenge *MFAChallenge
+	// IsMfaRequired is true if the authentication process is not complete and requires an MFA step.
+	IsMfaRequired bool
+}
+
 // Token represents an access token and related data, typically issued upon successful authentication.
 type Token struct {
 	// AccessToken is the token used to access protected resources.

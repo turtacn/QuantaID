@@ -2,139 +2,67 @@ package adaptive
 
 import (
 	"context"
-	"net"
-	"time"
 
-	"github.com/turtacn/QuantaID/pkg/utils"
+	"github.com/turtacn/QuantaID/internal/config"
+	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"go.uber.org/zap"
 )
 
+// RiskEngine evaluates the risk of an authentication attempt.
 type RiskEngine struct {
-	geoIP         GeoIPReader
-	logger        utils.Logger
-	// deviceFP      *DeviceFingerprint // TODO:
-	// behaviorModel *BehaviorModel // TODO:
-	config        RiskConfig
+	config config.RiskConfig
+	// geoIP         GeoIPReader // GeoIP reader would be a dependency here.
+	logger *zap.Logger
 }
 
-type RiskConfig struct {
-	Weights RiskWeights `yaml:"weights"`
-}
-
-type RiskWeights struct {
-	IPReputation    float64 `yaml:"ip_reputation"`
-	GeoAnomaly      float64 `yaml:"geo_anomaly"`
-	DeviceChange    float64 `yaml:"device_change"`
-	TimeAnomaly     float64 `yaml:"time_anomaly"`
-	VelocityAnomaly float64 `yaml:"velocity_anomaly"`
-}
-
-type RiskScore struct {
-	TotalScore     float64
-	Level          RiskLevel
-	Factors        map[string]float64
-	Recommendation string
-}
-
-type RiskLevel string
-
-const (
-	RiskLevelLow    RiskLevel = "low"
-	RiskLevelMedium RiskLevel = "medium"
-	RiskLevelHigh   RiskLevel = "high"
-)
-
-type AuthEvent struct {
-	UserID            string
-	IPAddress         string
-	DeviceFingerprint string
-	Timestamp         time.Time
-}
-
-func NewRiskEngine(geoIP GeoIPReader, logger utils.Logger) *RiskEngine {
+// NewRiskEngine creates a new risk engine with the given configuration and dependencies.
+func NewRiskEngine(cfg config.RiskConfig, logger *zap.Logger) *RiskEngine {
 	return &RiskEngine{
-		geoIP:  geoIP,
+		config: cfg,
 		logger: logger,
 	}
 }
 
-func (re *RiskEngine) Evaluate(ctx context.Context, event *AuthEvent) (*RiskScore, error) {
-	factors := make(map[string]float64)
+// Evaluate assesses the risk of the authentication attempt based on the AuthContext.
+func (e *RiskEngine) Evaluate(ctx context.Context, ac auth.AuthContext) (auth.RiskScore, auth.RiskLevel, error) {
+	// In a real implementation, you would fetch historical data, device info, etc.
+	// For this phase, we'll use placeholder logic.
+	factors := e.buildRiskFactors(ctx, ac)
 
-	ipScore := re.evaluateIPReputation(event.IPAddress)
-	factors["ip_reputation"] = ipScore
+	score := factors.ToScore(e.config)
+	level := score.Level(e.config.Thresholds)
 
-	geoScore := re.evaluateGeoAnomaly(ctx, event.UserID, event.IPAddress)
-	factors["geo_anomaly"] = geoScore
+	e.logger.Info("Risk evaluation complete",
+		zap.Float64("score", float64(score)),
+		zap.String("level", string(level)),
+	)
 
-	// deviceScore := re.evaluateDeviceChange(ctx, event.UserID, event.DeviceFingerprint)
-	// factors["device_change"] = deviceScore
-
-	// timeScore := re.evaluateTimeAnomaly(ctx, event.UserID, event.Timestamp)
-	// factors["time_anomaly"] = timeScore
-
-	// velocityScore := re.evaluateVelocity(ctx, event.UserID, event.Timestamp)
-	// factors["velocity_anomaly"] = velocityScore
-
-	totalScore := ipScore*re.config.Weights.IPReputation +
-		geoScore*re.config.Weights.GeoAnomaly
-		// deviceScore*re.config.Weights.DeviceChange +
-		// timeScore*re.config.Weights.TimeAnomaly +
-		// velocityScore*re.config.Weights.VelocityAnomaly
-
-	var level RiskLevel
-	var recommendation string
-	switch {
-	case totalScore > 60:
-		level = RiskLevelHigh
-		recommendation = "require_mfa_and_notify"
-	case totalScore > 30:
-		level = RiskLevelMedium
-		recommendation = "require_mfa"
-	default:
-		level = RiskLevelLow
-		recommendation = "allow"
-	}
-
-	return &RiskScore{
-		TotalScore:     totalScore,
-		Level:          level,
-		Factors:        factors,
-		Recommendation: recommendation,
-	}, nil
+	return score, level, nil
 }
 
-func (re *RiskEngine) evaluateIPReputation(ip string) float64 {
-	parsedIP := net.ParseIP(ip)
-	if parsedIP == nil {
-		return 0.5 // Unknown IP format, medium risk
+// buildRiskFactors assembles the risk factors from the AuthContext.
+func (e *RiskEngine) buildRiskFactors(ctx context.Context, ac auth.AuthContext) auth.RiskFactors {
+	// Placeholder logic for risk factor calculation.
+	return auth.RiskFactors{
+		IPReputation:   e.evaluateIPReputation(ac.IPAddress),
+		GeoReputation:  0.2, // Placeholder
+		IsKnownDevice:  ac.IsKnownDevice,
+		GeoVelocity:    0.1, // Placeholder
+		UserAgent:      ac.UserAgent,
+		IPAddress:      ac.IPAddress,
+		AcceptLanguage: ac.AcceptLanguage,
+		TimeWindow:     ac.Timestamp,
 	}
-
-	if re.geoIP == nil {
-		return 0.0
-	}
-
-	record, err := re.geoIP.City(parsedIP)
-	if err != nil {
-		return 0.2 // Couldn't determine location, slight risk
-	}
-
-	score := 0.0
-	if record.Traits.IsAnonymousProxy {
-		score += 0.4
-	}
-
-	highRiskCountries := map[string]bool{
-		"CN": true, "RU": true, "KP": true,
-	}
-
-	if highRiskCountries[record.Country.IsoCode] {
-		score += 0.8
-	}
-
-	return score
 }
 
-func (re *RiskEngine) evaluateGeoAnomaly(ctx context.Context, userID, ip string) float64 {
-	// TODO:
-	return 0
+// evaluateIPReputation provides a placeholder score for IP reputation.
+func (e *RiskEngine) evaluateIPReputation(ip string) float64 {
+	// In a real implementation, this would involve lookups against threat intelligence feeds.
+	if ip == "8.8.8.8" { // Known good IP
+		return 0.1
+	}
+	if ip == "1.2.3.4" { // Known bad IP
+		return 0.9
+	}
+	return 0.4 // Neutral
 }
