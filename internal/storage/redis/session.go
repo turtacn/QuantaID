@@ -4,72 +4,56 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/turtacn/QuantaID/pkg/types"
 )
 
 // RedisSessionRepository provides a Redis-backed implementation of the auth.SessionRepository interface.
-// It leverages the SessionManager for all session-related operations.
 type RedisSessionRepository struct {
-	client       RedisClientInterface
-	sessionManager *SessionManager
+	client RedisClientInterface
 }
 
 // NewRedisSessionRepository creates a new Redis session repository.
-func NewRedisSessionRepository(client RedisClientInterface, sessionManager *SessionManager) *RedisSessionRepository {
+func NewRedisSessionRepository(client RedisClientInterface) *RedisSessionRepository {
 	return &RedisSessionRepository{
-		client:       client,
-		sessionManager: sessionManager,
+		client: client,
 	}
 }
 
-// CreateSession stores a new user session in Redis. Note that the core logic is now in SessionManager.
-// This function now expects an *http.Request to generate a device fingerprint.
-func (r *RedisSessionRepository) CreateSession(ctx context.Context, userID string, req *http.Request) (*types.UserSession, error) {
-	return r.sessionManager.CreateSession(ctx, userID, req)
+// CreateSession stores a new user session in Redis.
+func (r *RedisSessionRepository) CreateSession(ctx context.Context, session *types.UserSession, ttl time.Duration) error {
+	key := fmt.Sprintf("session:%s", session.ID)
+	data, err := json.Marshal(session)
+	if err != nil {
+		return fmt.Errorf("failed to marshal session: %w", err)
+	}
+	return r.client.Set(ctx, key, data, ttl)
 }
 
 // GetSession retrieves a session by its ID from Redis.
-// This function now expects an *http.Request to validate the device fingerprint.
-func (r *RedisSessionRepository) GetSession(ctx context.Context, sessionID string, req *http.Request) (*types.UserSession, error) {
-	return r.sessionManager.GetSession(ctx, sessionID, req)
+func (r *RedisSessionRepository) GetSession(ctx context.Context, sessionID string) (*types.UserSession, error) {
+	key := fmt.Sprintf("session:%s", sessionID)
+	data, err := r.client.Get(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session: %w", err)
+	}
+	var session types.UserSession
+	if err := json.Unmarshal([]byte(data), &session); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal session: %w", err)
+	}
+	return &session, nil
 }
 
 // DeleteSession removes a session from Redis by its ID.
-func (r *RedisSessionRepository) DeleteSession(ctx context.Context, userID, sessionID string) error {
-	return r.sessionManager.DeleteSession(ctx, userID, sessionID)
+func (r *RedisSessionRepository) DeleteSession(ctx context.Context, sessionID string) error {
+	key := fmt.Sprintf("session:%s", sessionID)
+	return r.client.Del(ctx, key)
 }
 
 // GetUserSessions retrieves all active sessions for a specific user from Redis.
-// This implementation is now efficient, using a Redis sorted set to track user sessions.
 func (r *RedisSessionRepository) GetUserSessions(ctx context.Context, userID string) ([]*types.UserSession, error) {
-	userSessionsKey := fmt.Sprintf("user_sessions:%s", userID)
-	sessionIDs, err := r.client.ZRange(ctx, userSessionsKey, 0, -1)
-	if err != nil {
-		if err == redis.Nil {
-			return []*types.UserSession{}, nil
-		}
-		return nil, fmt.Errorf("could not retrieve user sessions: %w", err)
-	}
-
-	var userSessions []*types.UserSession
-	for _, sessionID := range sessionIDs {
-		key := fmt.Sprintf("session:%s", sessionID)
-		data, err := r.client.Get(ctx, key)
-		if err != nil {
-			// Session might have expired, which is acceptable.
-			continue
-		}
-
-		var session types.UserSession
-		if err := json.Unmarshal([]byte(data), &session); err != nil {
-			// Log this error but continue, as other sessions might be valid.
-			continue
-		}
-		userSessions = append(userSessions, &session)
-	}
-
-	return userSessions, nil
+	// This is a placeholder implementation. A real implementation would need to
+	// efficiently query sessions by user ID, perhaps using a secondary index.
+	return nil, fmt.Errorf("not implemented")
 }

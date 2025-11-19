@@ -115,3 +115,23 @@ func (r *PostgresIdentityRepository) GetUserGroups(ctx context.Context, userID s
 	}
 	return groups, nil
 }
+
+func (r *PostgresIdentityRepository) CreateBatch(ctx context.Context, users []*types.User) error {
+	return r.db.WithContext(ctx).Create(&users).Error
+}
+
+func (r *PostgresIdentityRepository) UpdateBatch(ctx context.Context, users []*types.User) error {
+	return r.db.WithContext(ctx).Save(&users).Error
+}
+
+func (r *PostgresIdentityRepository) DeleteBatch(ctx context.Context, userIDs []string) error {
+	return r.db.WithContext(ctx).Delete(&types.User{}, "id IN ?", userIDs).Error
+}
+
+func (r *PostgresIdentityRepository) FindUsersBySource(ctx context.Context, sourceID string) ([]*types.User, error) {
+	// This is a placeholder implementation. In a real scenario, you'd have a way
+	// to associate users with a source. For now, we return all users.
+	var users []*types.User
+	err := r.db.WithContext(ctx).Find(&users).Error
+	return users, err
+}

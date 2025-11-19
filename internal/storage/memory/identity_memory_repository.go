@@ -46,6 +46,50 @@ func (r *IdentityMemoryRepository) CreateUser(ctx context.Context, user *types.U
 	r.users[user.ID] = user
 	return nil
 }
+func (r *IdentityMemoryRepository) FindUsersBySource(ctx context.Context, sourceID string) ([]*types.User, error) {
+	// This is a placeholder implementation. In a real scenario, you'd have a way
+	// to associate users with a source. For now, we return all users.
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	users := make([]*types.User, 0, len(r.users))
+	for _, user := range r.users {
+		users = append(users, user)
+	}
+	return users, nil
+}
+func (r *IdentityMemoryRepository) CreateBatch(ctx context.Context, users []*types.User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, user := range users {
+		user.ID = uuid.New().String()
+		r.users[user.ID] = user
+	}
+	return nil
+}
+
+func (r *IdentityMemoryRepository) UpdateBatch(ctx context.Context, users []*types.User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, user := range users {
+		if _, ok := r.users[user.ID]; !ok {
+			return fmt.Errorf("user with ID '%s' not found for update", user.ID)
+		}
+		r.users[user.ID] = user
+	}
+	return nil
+}
+func (r *IdentityMemoryRepository) DeleteBatch(ctx context.Context, userIDs []string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, id := range userIDs {
+		delete(r.users, id)
+	}
+	return nil
+}
 
 func (r *IdentityMemoryRepository) GetUserByID(ctx context.Context, id string) (*types.User, error) {
 	r.mu.RLock()

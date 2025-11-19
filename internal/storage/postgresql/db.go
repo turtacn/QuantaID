@@ -12,7 +12,9 @@ import (
 
 // NewConnection creates a new database connection using the provided configuration.
 func NewConnection(config utils.PostgresConfig) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(config.DSN), &gorm.Config{})
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
+		config.Host, config.User, config.Password, config.DbName, config.Port, config.SSLMode)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}

@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-ldap/ldap/v3"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/metrics"
@@ -62,44 +63,66 @@ func (se *SyncEngine) StartFullSync(ctx context.Context, sourceID, baseDN, filte
 	startTime := time.Now()
 	se.logger.Info("starting full sync", zap.String("sourceID", sourceID))
 
-	var pageCookie string
-	for {
-		entries, newCookie, err := se.ldapClient.SearchPaged(ctx, baseDN, filter, uint32(se.config.BatchSize), pageCookie)
-		if err != nil {
-			se.metrics.RecordSyncError("search_paged")
-			return err
-		}
+	// 1. Fetch all LDAP users
+	ldapUsers, err := se.fetchAllLdapUsers(ctx, baseDN, filter)
+	if err != nil {
+		return fmt.Errorf("failed to fetch all LDAP users: %w", err)
+	}
 
-		var users []*types.User
-		for _, entry := range entries {
-			user, err := se.schemaMapper.MapEntry(entry)
-			if err != nil {
-				se.logger.Warn("failed to map entry", zap.Error(err))
-				continue
+	// 2. Fetch all local users linked to this source
+	localUsers, err := se.identityRepo.FindUsersBySource(ctx, sourceID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch local users: %w", err)
+	}
+
+	// 3. Create maps for efficient lookup
+	ldapMap := make(map[string]*types.User)
+	for _, u := range ldapUsers {
+		ldapMap[u.Username] = u
+	}
+	localMap := make(map[string]*types.User)
+	for _, u := range localUsers {
+		localMap[u.Username] = u
+	}
+
+	var toCreate, toUpdate []*types.User
+	var toDelete []string
+
+	// 4. Iterate LDAP users -> find users to create or update
+	for _, ldapUser := range ldapUsers {
+		if localUser, exists := localMap[ldapUser.Username]; exists {
+			// User exists, check for changes
+			if se.hasChanged(localUser, ldapUser) {
+				ldapUser.ID = localUser.ID // Preserve the original ID
+				toUpdate = append(toUpdate, ldapUser)
 			}
-			users = append(users, user)
+		} else {
+			// User doesn't exist, create them
+			toCreate = append(toCreate, ldapUser)
 		}
+	}
 
-		dedupedUsers, err := se.deduplicator.Process(ctx, users)
-		if err != nil {
-			se.metrics.RecordSyncError("deduplication")
-			se.logger.Error("failed to process users", zap.Error(err))
-			continue
+	// 5. Iterate local users -> find users to delete
+	for _, localUser := range localUsers {
+		if _, exists := ldapMap[localUser.Username]; !exists {
+			toDelete = append(toDelete, localUser.ID)
 		}
+	}
 
-		if err := se.identityRepo.UpsertBatch(ctx, dedupedUsers); err != nil {
-			se.metrics.RecordSyncError("upsert_batch")
-			se.logger.Error("failed to upsert batch", zap.Error(err))
-			continue
+	// 6. Perform batch operations
+	if len(toCreate) > 0 {
+		if err := se.identityRepo.CreateBatch(ctx, toCreate); err != nil {
+			se.logger.Error("failed to create users", zap.Error(err))
 		}
-
-		if err := se.syncStateRepo.UpdateProgress(ctx, sourceID, len(users)); err != nil {
-			se.logger.Error("failed to update progress", zap.Error(err))
+	}
+	if len(toUpdate) > 0 {
+		if err := se.identityRepo.UpdateBatch(ctx, toUpdate); err != nil {
+			se.logger.Error("failed to update users", zap.Error(err))
 		}
-
-		pageCookie = newCookie
-		if pageCookie == "" {
-			break
+	}
+	if len(toDelete) > 0 {
+		if err := se.identityRepo.DeleteBatch(ctx, toDelete); err != nil {
+			se.logger.Error("failed to delete users", zap.Error(err))
 		}
 	}
 
@@ -108,8 +131,54 @@ func (se *SyncEngine) StartFullSync(ctx context.Context, sourceID, baseDN, filte
 	}
 
 	se.metrics.RecordFullSyncDuration(time.Since(startTime))
-	se.logger.Info("full sync completed", zap.String("sourceID", sourceID), zap.Duration("duration", time.Since(startTime)))
+	se.logger.Info("full sync completed",
+		zap.String("sourceID", sourceID),
+		zap.Duration("duration", time.Since(startTime)),
+		zap.Int("created", len(toCreate)),
+		zap.Int("updated", len(toUpdate)),
+		zap.Int("deleted", len(toDelete)),
+	)
 	return nil
+}
+
+func (se *SyncEngine) fetchAllLdapUsers(ctx context.Context, baseDN, filter string) ([]*types.User, error) {
+	var allEntries []*ldap.Entry
+	var pageCookie string
+	for {
+		entries, newCookie, err := se.ldapClient.SearchPaged(ctx, baseDN, filter, uint32(se.config.BatchSize), pageCookie)
+		if err != nil {
+			se.metrics.RecordSyncError("search_paged")
+			return nil, err
+		}
+		allEntries = append(allEntries, entries...)
+		pageCookie = newCookie
+		if pageCookie == "" {
+			break
+		}
+	}
+
+	var users []*types.User
+	for _, entry := range allEntries {
+		user, err := se.schemaMapper.MapEntry(entry)
+		if err != nil {
+			se.logger.Warn("failed to map entry", zap.Error(err))
+			continue
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+func (se *SyncEngine) hasChanged(local, ldap *types.User) bool {
+	if local.Email != ldap.Email {
+		return true
+	}
+	if local.Status != ldap.Status {
+		return true
+	}
+
+	// A more robust implementation would compare all mapped attributes
+	return false
 }
 
 func (se *SyncEngine) StartIncrementalSync(ctx context.Context, sourceID, baseDN, filter string) error {

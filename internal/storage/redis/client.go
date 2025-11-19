@@ -310,6 +310,10 @@ func (rc *redisClient) SetEx(ctx context.Context, key string, value interface{},
 	return rc.client.SetEx(ctx, key, value, expiration)
 }
 
+func (rc *redisClient) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
+	return rc.client.SIsMember(ctx, key, member)
+}
+
 // Exists checks if a key exists.
 func (rc *redisClient) Exists(ctx context.Context, keys ...string) (int64, error) {
 	return rc.client.Exists(ctx, keys...).Result()

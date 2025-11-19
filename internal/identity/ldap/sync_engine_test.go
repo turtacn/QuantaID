@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/go-ldap/ldap/v3"
 	"github.com/turtacn/QuantaID/internal/metrics"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"go.uber.org/zap"
@@ -39,14 +40,21 @@ func (m *MockLDAPClient) Close() {
 	m.Called()
 }
 
-func TestSyncEngine_FullSync(t *testing.T) {
+func TestSyncEngine_FullSync_CompareAndSwap(t *testing.T) {
+	// Arrange
 	mockLDAP := new(MockLDAPClient)
 	mockIdentityRepo := new(identity.MockIdentityRepository)
 	mockSyncStateRepo := new(identity.MockSyncStateRepository)
 	mockMetrics := metrics.NewSyncMetrics("test")
-	logger := zap.NewNop()
+	logger, _ := zap.NewDevelopment()
 
-	schemaMapper := NewSchemaMapper(SchemaMapConfig{})
+	schemaMapper := NewSchemaMapper(SchemaMapConfig{
+		Mappings: []AttributeMapping{
+			{LDAPAttr: "uid", QuantaField: "username"},
+			{LDAPAttr: "mail", QuantaField: "email"},
+			{LDAPAttr: "userAccountControl", QuantaField: "userAccountControl"},
+		},
+	})
 	deduplicator := NewDeduplicator([]DeduplicationRule{}, &ConflictManager{})
 
 	engine := NewSyncEngine(
@@ -60,14 +68,28 @@ func TestSyncEngine_FullSync(t *testing.T) {
 		logger,
 	)
 
-	mockLDAP.On("SearchPaged", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*types.Entry{}, "", nil)
-	mockIdentityRepo.On("UpsertBatch", mock.Anything, mock.Anything).Return(nil)
-	mockSyncStateRepo.On("UpdateProgress", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	mockSyncStateRepo.On("MarkCompleted", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	localUsers := []*types.User{
+		{ID: "1", Username: "alice", Email: "alice@example.com", Status: types.UserStatusInactive}, // Status changed
+		{ID: "3", Username: "charlie", Email: "charlie@example.com", Status: types.UserStatusActive}, // To be deleted
+	}
 
+	mockLDAP.On("SearchPaged", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*ldap.Entry{
+		{Attributes: []*ldap.EntryAttribute{{Name: "uid", Values: []string{"alice"}}, {Name: "mail", Values: []string{"alice@example.com"}}}},
+		{Attributes: []*ldap.EntryAttribute{{Name: "uid", Values: []string{"bob"}}, {Name: "mail", Values: []string{"bob@example.com"}}}},
+	}, "", nil)
+	mockIdentityRepo.On("FindUsersBySource", mock.Anything, "test").Return(localUsers, nil)
+	mockIdentityRepo.On("CreateBatch", mock.Anything, mock.Anything).Return(nil)
+	mockIdentityRepo.On("UpdateBatch", mock.Anything, mock.MatchedBy(func(users []*types.User) bool {
+		return len(users) == 1 && users[0].Username == "alice"
+	})).Return(nil)
+	mockIdentityRepo.On("DeleteBatch", mock.Anything, mock.Anything).Return(nil)
+	mockSyncStateRepo.On("MarkCompleted", mock.Anything, "test", mock.Anything).Return(nil)
+
+	// Act
 	err := engine.StartFullSync(context.Background(), "test", "dc=example,dc=com", "(objectClass=*)")
-	assert.NoError(t, err)
 
+	// Assert
+	assert.NoError(t, err)
 	mockLDAP.AssertExpectations(t)
 	mockIdentityRepo.AssertExpectations(t)
 	mockSyncStateRepo.AssertExpectations(t)

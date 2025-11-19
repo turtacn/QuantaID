@@ -20,6 +20,10 @@ type UserRepository interface {
 	ListUsers(ctx context.Context, pq PaginationQuery) ([]*types.User, error)
 	FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error)
 	UpsertBatch(ctx context.Context, users []*types.User) error
+	CreateBatch(ctx context.Context, users []*types.User) error
+	UpdateBatch(ctx context.Context, users []*types.User) error
+	DeleteBatch(ctx context.Context, userIDs []string) error
+	FindUsersBySource(ctx context.Context, sourceID string) ([]*types.User, error)
 }
 
 type GroupRepository interface {

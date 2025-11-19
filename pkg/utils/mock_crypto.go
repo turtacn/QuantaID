@@ -45,3 +45,15 @@ func (m *MockCryptoManager) HashRecoveryCode(code string) (string, error) {
 	args := m.Called(code)
 	return args.String(0), args.Error(1)
 }
+
+// Encrypt is a mock implementation of the Encrypt method.
+func (m *MockCryptoManager) Encrypt(plaintext string) (string, error) {
+	args := m.Called(plaintext)
+	return args.String(0), args.Error(1)
+}
+
+// Decrypt is a mock implementation of the Decrypt method.
+func (m *MockCryptoManager) Decrypt(ciphertextHex string) (string, error) {
+	args := m.Called(ciphertextHex)
+	return args.String(0), args.Error(1)
+}

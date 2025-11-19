@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/turtacn/QuantaID/internal/orchestrator"
-	"github.com/turtacn/QuantaID/internal/services/auth"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"time"
 	auth_domain "github.com/turtacn/QuantaID/internal/domain/auth"
+	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
 )
 
 // AuthWorkflow defines the standard authentication workflow by registering a sequence of steps
 // with the orchestrator engine. This modularizes the authentication process.
 type AuthWorkflow struct {
 	engine      *orchestrator.Engine
-	authService *auth.ApplicationService
-	riskEngine  auth.RiskEngine
+	authService *auth_service.ApplicationService
+	riskEngine  auth_domain.RiskEngine
 }
 
 // NewAuthWorkflow creates a new AuthWorkflow instance and registers the authentication
@@ -27,7 +27,7 @@ type AuthWorkflow struct {
 //
 // Returns:
 //   A new instance of AuthWorkflow.
-func NewAuthWorkflow(engine *orchestrator.Engine, authService *auth.ApplicationService, riskEngine auth.RiskEngine) *AuthWorkflow {
+func NewAuthWorkflow(engine *orchestrator.Engine, authService *auth_service.ApplicationService, riskEngine auth_domain.RiskEngine) *AuthWorkflow {
 	awf := &AuthWorkflow{
 		engine:      engine,
 		authService: authService,
@@ -77,7 +77,6 @@ func (awf *AuthWorkflow) authenticatePrimary(ctx context.Context, state orchestr
 func (awf *AuthWorkflow) assessRisk(ctx context.Context, state orchestrator.State) error {
 	user := state["user"].(*types.User)
 	clientIP, _ := state["client_ip"].(string)
-	clientCountry, _ := state["client_country"].(string)
 	userAgent, _ := state["user_agent"].(string)
 
 	// For testing, we can override the last login details from the state.
@@ -95,25 +94,22 @@ func (awf *AuthWorkflow) assessRisk(ctx context.Context, state orchestrator.Stat
 		now = time.Now().UTC()
 	}
 
-	loginCtx := auth_domain.LoginContext{
-		UserID:           user.ID,
-		CurrentIP:        clientIP,
-		CurrentCountry:   clientCountry,
-		UserAgent:        userAgent,
-		Now:              now,
-		LastLoginIP:      lastLoginIP,
-		LastLoginCountry: lastLoginCountry,
-		LastLoginAt:      time.Now().UTC().Add(-24 * time.Hour), // Dummy data
+	authCtx := auth_domain.AuthContext{
+		UserID:    user.ID,
+		IPAddress: clientIP,
+		UserAgent: userAgent,
+		Timestamp: now,
 	}
 
-	assessment, err := awf.riskEngine.Assess(ctx, loginCtx)
+	score, level, err := awf.riskEngine.Evaluate(ctx, authCtx)
 	if err != nil {
 		return err
 	}
 
-	state["risk_assessment"] = assessment
+	state["risk_score"] = score
+	state["risk_level"] = level
 
-	if assessment.Decision == auth_domain.RiskDecisionDeny {
+	if level == auth_domain.RiskLevelHigh {
 		return fmt.Errorf("login blocked due to high risk")
 	}
 
@@ -124,7 +120,7 @@ func (awf *AuthWorkflow) assessRisk(ctx context.Context, state orchestrator.Stat
 // step is necessary. This is a placeholder for more complex logic.
 func (awf *AuthWorkflow) checkMfaRequired(ctx context.Context, state orchestrator.State) error {
 	user := state["user"].(*types.User)
-	assessment, ok := state["risk_assessment"].(*auth_domain.RiskAssessment)
+	level, ok := state["risk_level"].(auth_domain.RiskLevel)
 	if !ok {
 		// Default to MFA required if risk assessment is missing for some reason.
 		state["mfa_required"] = true
@@ -132,9 +128,9 @@ func (awf *AuthWorkflow) checkMfaRequired(ctx context.Context, state orchestrato
 		return nil
 	}
 
-	isMfaRequired := assessment.Decision == auth_domain.RiskDecisionRequireMFA
+	isMfaRequired := level == auth_domain.RiskLevelMedium || level == auth_domain.RiskLevelHigh
 
-	fmt.Printf("Checking MFA status for user: %s. Risk Score: %f, MFA Required: %t\n", user.Username, assessment.Score, isMfaRequired)
+	fmt.Printf("Checking MFA status for user: %s. Risk Level: %s, MFA Required: %t\n", user.Username, level, isMfaRequired)
 	state["mfa_required"] = isMfaRequired
 	return nil
 }

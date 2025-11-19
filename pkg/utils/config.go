@@ -5,16 +5,35 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"github.com/turtacn/QuantaID/internal/config"
+	"github.com/turtacn/QuantaID/internal/storage/redis"
 	"go.uber.org/zap"
 	"strings"
 )
 
 // PostgresConfig holds all configuration for the PostgreSQL database connection.
 type PostgresConfig struct {
-	DSN             string `mapstructure:"dsn"`
+	Host            string `mapstructure:"host"`
+	Port            int    `mapstructure:"port"`
+	User            string `mapstructure:"user"`
+	Password        string `mapstructure:"password"`
+	DbName          string `mapstructure:"dbname"`
+	SSLMode         string `mapstructure:"sslmode"`
 	MaxIdleConns    int    `mapstructure:"maxIdleConns"`
 	MaxOpenConns    int    `mapstructure:"maxOpenConns"`
 	ConnMaxLifetime string `mapstructure:"connMaxLifetime"`
+}
+
+type RedisConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
+}
+
+type SecurityConfig struct {
+	Session redis.SessionConfig `mapstructure:"session"`
+	Risk    config.RiskConfig   `mapstructure:"adaptive_risk"`
 }
 
 // StorageConfig holds the configuration for the storage layer.
@@ -25,6 +44,8 @@ type StorageConfig struct {
 // Config holds all configuration for the application.
 type Config struct {
 	Postgres PostgresConfig `mapstructure:"postgres"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+	Security SecurityConfig `mapstructure:"security"`
 	Storage  StorageConfig  `mapstructure:"storage"`
 }
 

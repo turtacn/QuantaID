@@ -17,6 +17,10 @@ const (
 
 // MFAProvider defines the interface for all MFA providers.
 type MFAProvider interface {
+	// Enroll starts the enrollment process for a new MFA factor.
+	// It should return the necessary details for the user to complete the process,
+	// such as a TOTP secret/QR code URL.
+	Enroll(ctx context.Context, user *types.User) (*types.MFAEnrollment, error)
 	// Challenge generates an MFA challenge for the user.
 	Challenge(ctx context.Context, user *types.User) (*types.MFAChallenge, error)
 	// Verify verifies the user's response to an MFA challenge.

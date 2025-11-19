@@ -27,6 +27,7 @@ type RedisClientInterface interface {
 	ZRange(ctx context.Context, key string, start, stop int64) ([]string, error)
 	SetEx(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Exists(ctx context.Context, keys ...string) (int64, error)
+	SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd
 }
 
 // UUIDGenerator generates a new UUID.

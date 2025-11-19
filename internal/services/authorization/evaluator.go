@@ -2,7 +2,6 @@ package authorization
 
 import (
 	"context"
-	"net"
 
 	"github.com/turtacn/QuantaID/internal/domain/policy"
 	"github.com/turtacn/QuantaID/pkg/types"
@@ -31,14 +30,14 @@ func (e *DefaultEvaluator) Evaluate(ctx context.Context, evalCtx policy.Evaluati
 	// A more optimized approach might involve more specific queries.
 	policies, err := e.repo.FindPoliciesForSubject(ctx, "user:"+evalCtx.Subject.UserID)
 	if err != nil {
-		return policy.Decision{Allowed: false, Reason: "Error fetching policies"}, err
+		return policy.DecisionDeny, err
 	}
 
 	// Deny overrides allow
 	for _, p := range policies {
 		if e.matches(p, evalCtx) {
 			if p.Effect == types.EffectDeny {
-				return policy.Decision{Allowed: false, Reason: "Denied by policy: " + p.ID}, nil
+				return policy.DecisionDeny, nil
 			}
 		}
 	}
@@ -46,13 +45,13 @@ func (e *DefaultEvaluator) Evaluate(ctx context.Context, evalCtx policy.Evaluati
 	for _, p := range policies {
 		if e.matches(p, evalCtx) {
 			if p.Effect == types.EffectAllow {
-				return policy.Decision{Allowed: true}, nil
+				return policy.DecisionAllow, nil
 			}
 		}
 	}
 
 	// Default deny if no rule matches
-	return policy.Decision{Allowed: false, Reason: "No matching policy found"}, nil
+	return policy.DecisionDeny, nil
 }
 
 func (e *DefaultEvaluator) matches(p *types.Policy, evalCtx policy.EvaluationContext) bool {

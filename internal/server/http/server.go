@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/turtacn/QuantaID/internal/config"
+	"gorm.io/gorm"
+	i_audit "github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/auth/adaptive"
 	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
 	"github.com/turtacn/QuantaID/internal/metrics"
-	"github.com/turtacn/QuantaID/internal/orchestrator"
 	"github.com/turtacn/QuantaID/internal/protocols/saml"
 	"github.com/turtacn/QuantaID/internal/services/application"
 	audit_service "github.com/turtacn/QuantaID/internal/services/audit"
@@ -33,7 +32,6 @@ import (
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
 )
 
 // Server encapsulates the HTTP server for the QuantaID API.
@@ -79,18 +77,17 @@ func NewServer(config Config, logger utils.Logger, services Services) *Server {
 	return server
 }
 
-type PolicyConfig struct {
-	Rules []authorization.Rule `yaml:"rules"`
-}
-
 // NewServerWithConfig creates a new server instance based on the provided configuration.
 func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logger, cryptoManager *utils.CryptoManager) (*Server, error) {
 	var idRepo identity.UserRepository
 	var groupRepo identity.GroupRepository
 	var sessionRepo auth.SessionRepository
 	var tokenRepo auth.TokenRepository
-	var idpRepo auth.IdentityProviderRepository
 	var auditRepo auth.AuditLogRepository
+	var policyRepo policy.PolicyRepository
+	var db *gorm.DB
+	var err error
+	var redisClient redis.RedisClientInterface
 
 	switch appCfg.Storage.Mode {
 	case "memory":
@@ -107,44 +104,41 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 			zap.String("dbname", appCfg.Postgres.DbName),
 		)
 		// Postgres Connection
-		db, err := postgresql.NewConnection(appCfg.Postgres)
+		db, err = postgresql.NewConnection(appCfg.Postgres)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 		}
 
 		// Postgres Repositories
-		// Postgres Repositories
 		pgIdRepo := postgresql.NewPostgresIdentityRepository(db)
 		idRepo = pgIdRepo
 		groupRepo = pgIdRepo
-		idpRepo, auditRepo = postgresql.NewPostgresAuthRepository(db)
-		policyRepo := postgresql.NewPostgresPolicyRepository(db)
+		_, auditRepo = postgresql.NewPostgresAuthRepository(db)
+		policyRepo = postgresql.NewPostgresPolicyRepository(db)
 
 		// Redis Connection
-		redisMetrics := metrics.NewRedisMetrics(prometheus.DefaultRegisterer)
-		redisClient, err := redis.NewRedisClient(&appCfg.Redis, redisMetrics)
+		redisMetrics := metrics.NewRedisMetrics("quantid")
+		redisConfig := &redis.RedisConfig{
+			Host:     appCfg.Redis.Host,
+			Port:     appCfg.Redis.Port,
+			Password: appCfg.Redis.Password,
+			DB:       appCfg.Redis.DB,
+		}
+		redisClient, err = redis.NewRedisClient(redisConfig, redisMetrics)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to redis: %w", err)
 		}
 
 		// Redis Repositories
-		sessionManager := redis.NewSessionManager(
-			redisClient,
-			appCfg.Security.Session,
-			logger.GetZapLogger(),
-			&redis.GoogleUUIDGenerator{},
-			&redis.RealClock{},
-			redisMetrics,
-		)
-		sessionRepo = redis.NewRedisSessionRepository(redisClient, sessionManager)
+		sessionRepo = redis.NewRedisSessionRepository(redisClient)
 		tokenRepo = redis.NewRedisTokenRepository(redisClient)
 	default:
 		return nil, fmt.Errorf("invalid storage mode: %s", appCfg.Storage.Mode)
 	}
 
-	// Authorization Service Setup
 	// Audit Service Setup
-	auditService := audit_service.NewService(auditRepo)
+	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger)
+	auditService := audit_service.NewService(auditPipeline)
 
 	evaluator := authorization.NewDefaultEvaluator(policyRepo)
 	authzService := authorization.NewService(evaluator, auditService)
@@ -152,10 +146,11 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
 	identityAppService := identity_service.NewApplicationService(identityDomainService, logger)
 
-	riskEngine := &adaptive.RiskEngine{}
+	riskEngine := adaptive.NewRiskEngine(appCfg.Security.Risk, redisClient, logger.(*utils.ZapLogger).Logger)
 	mfaManager := &mfa.MFAManager{}
+	policyEngine := authorization.NewPolicyEngine(evaluator)
 
-	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, idpRepo, cryptoManager, logger, riskEngine, mfaManager)
+	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, auditRepo, nil, cryptoManager, logger, riskEngine, policyEngine, mfaManager)
 	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
 
 	authAppService := auth_service.NewApplicationService(authDomainService, auditService, logger, auth_service.Config{
@@ -164,7 +159,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		SessionDuration:      time.Hour * 24,
 	}, tracer)
 
-	appService := application.NewApplicationService(nil, logger, cryptoManager)
+	appService := application.NewApplicationService(postgresql.NewPostgresApplicationRepository(db), logger, cryptoManager)
 	devCenterSvc := platform.NewDevCenterService(appService, nil, authzService, nil)
 
 	services := Services{
@@ -181,8 +176,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 
 // registerRoutes sets up the API routes, their handlers, and associated middleware.
 func (s *Server) registerRoutes(services Services) {
-	engine := orchestrator.NewEngine(s.logger)
-	authHandlers := handlers.NewAuthHandlers(services.AuthService, engine, s.logger)
+	authHandlers := handlers.NewAuthHandlers(services.AuthService, s.logger)
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
 
 	loggingMiddleware := middleware.NewLoggingMiddleware(s.logger)

@@ -90,3 +90,18 @@ func (m *MockRedisClient) ZRange(ctx context.Context, key string, start, stop in
 	args := m.Called(ctx, key, start, stop)
 	return args.Get(0).([]string), args.Error(1)
 }
+
+func (m *MockRedisClient) Exists(ctx context.Context, keys ...string) (int64, error) {
+	args := m.Called(ctx, keys)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockRedisClient) SetEx(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	args := m.Called(ctx, key, value, expiration)
+	return args.Get(0).(*redis.StatusCmd)
+}
+
+func (m *MockRedisClient) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
+	args := m.Called(ctx, key, member)
+	return args.Get(0).(*redis.BoolCmd)
+}

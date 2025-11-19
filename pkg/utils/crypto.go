@@ -1,11 +1,16 @@
 package utils
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"io"
 	"time"
 )
 
@@ -13,10 +18,11 @@ import (
 // JWT generation/validation, and UUID creation.
 type CryptoManager struct {
 	jwtSecret []byte
+	aesKey    []byte
 }
 
 // NewCryptoManager creates a new CryptoManager with the given JWT secret.
-// The secret is used for signing and verifying JWTs.
+// The secret is used for signing and verifying JWTs and deriving the AES key.
 //
 // Parameters:
 //   - jwtSecret: The secret key for JWT operations.
@@ -24,7 +30,63 @@ type CryptoManager struct {
 // Returns:
 //   A new CryptoManager instance.
 func NewCryptoManager(jwtSecret string) *CryptoManager {
-	return &CryptoManager{jwtSecret: []byte(jwtSecret)}
+	hash := sha256.Sum256([]byte(jwtSecret))
+	return &CryptoManager{
+		jwtSecret: []byte(jwtSecret),
+		aesKey:    hash[:], // Use the 32-byte hash as the AES key
+	}
+}
+
+// Encrypt encrypts plaintext using AES-GCM and returns it as a hex-encoded string.
+func (cm *CryptoManager) Encrypt(plaintext string) (string, error) {
+	block, err := aes.NewCipher(cm.aesKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to create cipher block: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", fmt.Errorf("failed to create GCM: %w", err)
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", fmt.Errorf("failed to generate nonce: %w", err)
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+	return hex.EncodeToString(ciphertext), nil
+}
+
+// Decrypt decrypts a hex-encoded AES-GCM ciphertext.
+func (cm *CryptoManager) Decrypt(ciphertextHex string) (string, error) {
+	ciphertext, err := hex.DecodeString(ciphertextHex)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode hex ciphertext: %w", err)
+	}
+
+	block, err := aes.NewCipher(cm.aesKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to create cipher block: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", fmt.Errorf("failed to create GCM: %w", err)
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return "", fmt.Errorf("ciphertext is too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt: %w", err)
+	}
+
+	return string(plaintext), nil
 }
 
 // HashPassword generates a bcrypt hash of a given password.

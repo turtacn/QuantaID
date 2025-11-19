@@ -4,34 +4,43 @@ import (
 	"context"
 	"github.com/stretchr/testify/mock"
 	"github.com/turtacn/QuantaID/internal/auth/mfa"
+	"github.com/turtacn/QuantaID/pkg/types"
 )
 
-type MockMFAManager struct {
+type MockMFAProvider struct {
 	mock.Mock
 }
 
-func (m *MockMFAManager) EnrollFactor(ctx context.Context, userID string, mfaType mfa.MFAType, params mfa.EnrollParams) (*mfa.EnrollResult, error) {
-	args := m.Called(ctx, userID, mfaType, params)
+func (m *MockMFAProvider) Enroll(ctx context.Context, user *types.User) (*types.MFAEnrollment, error) {
+	args := m.Called(ctx, user)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*mfa.EnrollResult), args.Error(1)
+	return args.Get(0).(*types.MFAEnrollment), args.Error(1)
 }
 
-func (m *MockMFAManager) VerifyFactor(ctx context.Context, userID string, mfaType mfa.MFAType, credential string) (bool, error) {
-	args := m.Called(ctx, userID, mfaType, credential)
+func (m *MockMFAProvider) Challenge(ctx context.Context, user *types.User) (*types.MFAChallenge, error) {
+	args := m.Called(ctx, user)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*types.MFAChallenge), args.Error(1)
+}
+
+func (m *MockMFAProvider) Verify(ctx context.Context, user *types.User, code string) (bool, error) {
+	args := m.Called(ctx, user, code)
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockMFAManager) ActivateFactor(ctx context.Context, userID string, mfaType mfa.MFAType, credential string) error {
-	args := m.Called(ctx, userID, mfaType, credential)
-	return args.Error(0)
-}
-
-func (m *MockMFAManager) GetRequiredFactors(ctx context.Context, userID string) ([]mfa.MFAType, error) {
-	args := m.Called(ctx, userID)
+func (m *MockMFAProvider) ListMethods(ctx context.Context, user *types.User) ([]*types.MFAMethod, error) {
+	args := m.Called(ctx, user)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]mfa.MFAType), args.Error(1)
+	return args.Get(0).([]*types.MFAMethod), args.Error(1)
+}
+
+func (m *MockMFAProvider) GetStrength() mfa.StrengthLevel {
+	args := m.Called()
+	return args.Get(0).(mfa.StrengthLevel)
 }

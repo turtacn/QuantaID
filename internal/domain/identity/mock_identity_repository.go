@@ -55,6 +55,26 @@ func (m *MockIdentityRepository) UpsertBatch(ctx context.Context, users []*types
 	return args.Error(0)
 }
 
+func (m *MockIdentityRepository) CreateBatch(ctx context.Context, users []*types.User) error {
+	args := m.Called(ctx, users)
+	return args.Error(0)
+}
+
+func (m *MockIdentityRepository) UpdateBatch(ctx context.Context, users []*types.User) error {
+	args := m.Called(ctx, users)
+	return args.Error(0)
+}
+
+func (m *MockIdentityRepository) DeleteBatch(ctx context.Context, userIDs []string) error {
+	args := m.Called(ctx, userIDs)
+	return args.Error(0)
+}
+
+func (m *MockIdentityRepository) FindUsersBySource(ctx context.Context, sourceID string) ([]*types.User, error) {
+	args := m.Called(ctx, sourceID)
+	return args.Get(0).([]*types.User), args.Error(1)
+}
+
 func (m *MockIdentityRepository) CreateGroup(ctx context.Context, group *types.UserGroup) error {
 	args := m.Called(ctx, group)
 	return args.Error(0)

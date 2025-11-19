@@ -31,6 +31,7 @@ func NewSchemaMapper(config SchemaMapConfig) *SchemaMapper {
 func (sm *SchemaMapper) MapEntry(entry *ldap.Entry) (*types.User, error) {
 	user := &types.User{
 		Attributes: make(map[string]interface{}),
+		Status:     types.UserStatusActive, // Default to active for new users from LDAP
 	}
 
 	for _, mapping := range sm.config.Mappings {
@@ -73,9 +74,25 @@ func (sm *SchemaMapper) setField(user *types.User, field, value string) {
 		user.Username = value
 	case "email":
 		user.Email = value
+	case "userAccountControl":
+		// Handle the UserAccountControl attribute to map to user status
+		// This is a simplified example. A real implementation would be more robust.
+		if val, err := sm.parseUserAccountControl(value); err == nil {
+			if (val & 2) != 0 { // ADS_UF_ACCOUNTDISABLE
+				user.Status = types.UserStatusInactive
+			}
+		}
 	default:
 		user.Attributes[field] = value
 	}
+}
+
+func (sm *SchemaMapper) parseUserAccountControl(value string) (int, error) {
+	// The value is a string, so we need to parse it.
+	// This is a placeholder for a more robust implementation.
+	var val int
+	_, err := fmt.Sscanf(value, "%d", &val)
+	return val, err
 }
 
 func (sm *SchemaMapper) isMapped(attrName string) bool {

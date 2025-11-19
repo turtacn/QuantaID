@@ -54,3 +54,14 @@ type MFAMethod struct {
 	ID   string `json:"id"`
 	Type string `json:"type"`
 }
+
+// MFAEnrollment holds the necessary information for a user to complete MFA enrollment.
+// This is a temporary object and should not be stored.
+type MFAEnrollment struct {
+	// Secret is the plaintext secret key for the user to enter into their authenticator app.
+	Secret string `json:"secret"`
+	// URL is the provisioning URL for the QR code.
+	URL string `json:"url"`
+	// RecoveryCodes are the one-time codes the user can use if they lose their device.
+	RecoveryCodes []string `json:"recovery_codes,omitempty"`
+}

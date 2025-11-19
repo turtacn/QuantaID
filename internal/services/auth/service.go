@@ -75,27 +75,15 @@ type UserDTO struct {
 //
 // Returns:
 //   A LoginResponse DTO on success, or an application error on failure.
-func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*LoginResponse, *types.Error) {
-	ctx, span := s.tracer.Start(ctx, "ApplicationService.Login")
+func (s *ApplicationService) LoginWithPassword(ctx context.Context, req auth.AuthnRequest, serviceConfig auth.Config) (*types.AuthResult, error) {
+	ctx, span := s.tracer.Start(ctx, "ApplicationService.LoginWithPassword")
 	defer span.End()
 
 	// TODO: Extract IP and TraceID from context
 	ip := "not_implemented"
 	traceID := "not_implemented"
 
-	domainConfig := auth.Config{
-		AccessTokenDuration:  s.config.AccessTokenDuration,
-		RefreshTokenDuration: s.config.RefreshTokenDuration,
-		SessionDuration:      s.config.SessionDuration,
-	}
-
-	authReq := auth.AuthnRequest{
-		Username:          req.Username,
-		Password:          req.Password,
-		IPAddress:         ip,
-		DeviceFingerprint: "not_implemented",
-	}
-	authResp, err := s.authDomain.LoginWithPassword(ctx, authReq, domainConfig)
+	authResp, err := s.authDomain.LoginWithPassword(ctx, req, serviceConfig)
 	if err != nil {
 		span.RecordError(err)
 		s.auditService.RecordLoginFailed(ctx, req.Username, ip, traceID, err.Error(), nil)
@@ -106,17 +94,7 @@ func (s *ApplicationService) Login(ctx context.Context, req LoginRequest) (*Logi
 	}
 
 	metrics.OauthTokensIssuedTotal.Inc()
-	return &LoginResponse{
-		AccessToken:  authResp.Token.AccessToken,
-		RefreshToken: authResp.Token.RefreshToken,
-		TokenType:    authResp.Token.TokenType,
-		ExpiresIn:    authResp.Token.ExpiresIn,
-		User: &UserDTO{
-			ID:       authResp.User.ID,
-			Username: authResp.User.Username,
-			Email:    authResp.User.Email,
-		},
-	}, nil
+	return authResp, nil
 }
 
 // LogoutRequest defines the DTO for a logout request.
@@ -142,4 +120,8 @@ func (s *ApplicationService) Logout(ctx context.Context, req LogoutRequest) *typ
 		return types.ErrInternal.WithCause(err)
 	}
 	return nil
+}
+
+func (s *ApplicationService) VerifyMFAChallenge(ctx context.Context, req *types.VerifyMFARequest, serviceConfig auth.Config) (*types.AuthResult, error) {
+	return s.authDomain.VerifyMFAChallenge(ctx, req, serviceConfig)
 }

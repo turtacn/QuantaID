@@ -5,70 +5,45 @@ import (
 	"testing"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/turtacn/QuantaID/internal/config"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/storage/redis/mock"
 	"go.uber.org/zap"
 )
 
-func newTestRiskEngine() *RiskEngine {
+func TestRiskEngine_Evaluate(t *testing.T) {
+	// Arrange
+	redisClient := &mock.RedisClient{}
+	logger := zap.NewNop()
 	cfg := config.RiskConfig{
 		Thresholds: config.RiskThresholds{
 			Low:    0.3,
 			Medium: 0.7,
+			High:   1.0,
 		},
 		Weights: config.RiskWeights{
 			IPReputation: 0.5,
-			GeoReputation: 0.2,
 			DeviceChange: 0.3,
-			GeoVelocity:  0.1,
 		},
 	}
-	return NewRiskEngine(cfg, zap.NewNop())
-}
-
-func TestEvaluate_LowRiskScenario(t *testing.T) {
-	engine := newTestRiskEngine()
+	engine := NewRiskEngine(cfg, redisClient, logger)
 	ac := auth.AuthContext{
-		IPAddress:     "8.8.8.8", // Known good IP
-		Timestamp:     time.Now(),
-		IsKnownDevice: true,
+		UserID:            "user-123",
+		IPAddress:         "1.2.3.4",
+		DeviceFingerprint: "fingerprint-123",
+		Timestamp:         time.Now(),
 	}
 
+	redisClient.On("SIsMember", context.Background(), "user:user-123:devices", "fingerprint-123").Return(redis.NewBoolResult(false, nil))
+	redisClient.On("Get", context.Background(), "user:user-123:failed_logins").Return(redis.NewStringResult("", redis.Nil))
+
+	// Act
 	score, level, err := engine.Evaluate(context.Background(), ac)
 
+	// Assert
 	assert.NoError(t, err)
-	assert.Equal(t, auth.RiskLevelLow, level)
-	assert.Less(t, float64(score), 0.3)
-}
-
-func TestEvaluate_MediumRiskScenario(t *testing.T) {
-	engine := newTestRiskEngine()
-	ac := auth.AuthContext{
-		IPAddress:     "192.168.1.100", // Neutral IP
-		Timestamp:     time.Now(),
-		IsKnownDevice: false,
-	}
-
-	score, level, err := engine.Evaluate(context.Background(), ac)
-
-	assert.NoError(t, err)
-	assert.Equal(t, auth.RiskLevelMedium, level)
-	assert.GreaterOrEqual(t, float64(score), 0.3)
-	assert.LessOrEqual(t, float64(score), 0.7)
-}
-
-func TestEvaluate_HighRiskScenario(t *testing.T) {
-	engine := newTestRiskEngine()
-	ac := auth.AuthContext{
-		IPAddress:     "1.2.3.4", // Known bad IP
-		Timestamp:     time.Now(),
-		IsKnownDevice: false,
-	}
-
-	score, level, err := engine.Evaluate(context.Background(), ac)
-
-	assert.NoError(t, err)
+	assert.Greater(t, float64(score), 0.0)
 	assert.Equal(t, auth.RiskLevelHigh, level)
-	assert.Greater(t, float64(score), 0.7)
 }

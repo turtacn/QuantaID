@@ -1,8 +1,12 @@
 package redis
 
 import (
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+var registerMetricsOnce sync.Once
 
 // Metrics holds the Prometheus metrics for Redis operations.
 type Metrics struct {
@@ -98,17 +102,19 @@ func NewMetrics(namespace string, reg prometheus.Registerer) *Metrics {
 		),
 	}
 
-	reg.MustRegister(
-		m.Commands,
-		m.CommandLatency,
-		m.Errors,
-		m.PoolHits,
-		m.PoolMisses,
-		m.PoolTimeouts,
-		m.PoolTotalConns,
-		m.PoolIdleConns,
-		m.PoolStaleConns,
-	)
+	registerMetricsOnce.Do(func() {
+		reg.MustRegister(
+			m.Commands,
+			m.CommandLatency,
+			m.Errors,
+			m.PoolHits,
+			m.PoolMisses,
+			m.PoolTimeouts,
+			m.PoolTotalConns,
+			m.PoolIdleConns,
+			m.PoolStaleConns,
+		)
+	})
 
 	return m
 }

@@ -14,4 +14,6 @@ type CryptoManagerInterface interface {
 	GenerateUUID() string
 	GenerateRecoveryCodes() ([]string, error)
 	HashRecoveryCode(code string) (string, error)
+	Encrypt(plaintext string) (string, error)
+	Decrypt(ciphertextHex string) (string, error)
 }
