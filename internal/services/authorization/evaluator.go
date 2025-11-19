@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/turtacn/QuantaID/internal/domain/policy"
+	"github.com/turtacn/QuantaID/pkg/types"
 	"golang.org/x/exp/slices"
 )
 
@@ -14,69 +15,68 @@ type Evaluator interface {
 }
 
 // DefaultEvaluator is the default implementation of the Evaluator interface.
-// It loads rules from a configuration and evaluates them in memory.
+// It uses a policy repository to fetch and evaluate policies.
 type DefaultEvaluator struct {
-	rules []Rule
-}
-
-// Rule represents a single authorization rule.
-type Rule struct {
-	Name        string          `yaml:"name"`
-	Effect      policy.Decision `yaml:"effect"`
-	Actions     []string        `yaml:"actions"`
-	Subjects    []string        `yaml:"subjects"`
-	IPWhitelist []string        `yaml:"ip_whitelist"`
-	TimeRanges  []TimeRange     `yaml:"time_ranges"`
-}
-
-// TimeRange represents a time interval.
-type TimeRange struct {
-	Start string `yaml:"start"`
-	End   string `yaml:"end"`
+	repo policy.PolicyRepository
 }
 
 // NewDefaultEvaluator creates a new DefaultEvaluator.
-// In the future, this will load rules from a configuration file.
-func NewDefaultEvaluator(rules []Rule) *DefaultEvaluator {
-	return &DefaultEvaluator{rules: rules}
+func NewDefaultEvaluator(repo policy.PolicyRepository) *DefaultEvaluator {
+	return &DefaultEvaluator{repo: repo}
 }
 
-// Evaluate checks the evaluation context against the configured rules.
+// Evaluate checks the evaluation context against the policies in the repository.
 func (e *DefaultEvaluator) Evaluate(ctx context.Context, evalCtx policy.EvaluationContext) (policy.Decision, error) {
-	for _, rule := range e.rules {
-		if e.matches(rule, evalCtx) {
-			return rule.Effect, nil
+	// For simplicity, we fetch all policies for the subject.
+	// A more optimized approach might involve more specific queries.
+	policies, err := e.repo.FindPoliciesForSubject(ctx, "user:"+evalCtx.Subject.UserID)
+	if err != nil {
+		return policy.Decision{Allowed: false, Reason: "Error fetching policies"}, err
+	}
+
+	// Deny overrides allow
+	for _, p := range policies {
+		if e.matches(p, evalCtx) {
+			if p.Effect == types.EffectDeny {
+				return policy.Decision{Allowed: false, Reason: "Denied by policy: " + p.ID}, nil
+			}
 		}
 	}
+
+	for _, p := range policies {
+		if e.matches(p, evalCtx) {
+			if p.Effect == types.EffectAllow {
+				return policy.Decision{Allowed: true}, nil
+			}
+		}
+	}
+
 	// Default deny if no rule matches
-	return policy.DecisionDeny, nil
+	return policy.Decision{Allowed: false, Reason: "No matching policy found"}, nil
 }
 
-func (e *DefaultEvaluator) matches(rule Rule, evalCtx policy.EvaluationContext) bool {
-	return e.matchesAction(rule, evalCtx) &&
-		e.matchesSubject(rule, evalCtx) &&
-		e.matchesIP(rule, evalCtx) &&
-		e.matchesTime(rule, evalCtx)
+func (e *DefaultEvaluator) matches(p *types.Policy, evalCtx policy.EvaluationContext) bool {
+	return e.matchesAction(p, evalCtx) && e.matchesSubject(p, evalCtx)
 }
 
-func (e *DefaultEvaluator) matchesAction(rule Rule, evalCtx policy.EvaluationContext) bool {
-	if len(rule.Actions) == 0 {
+func (e *DefaultEvaluator) matchesAction(p *types.Policy, evalCtx policy.EvaluationContext) bool {
+	if len(p.Actions) == 0 {
 		return true
 	}
 	action := string(evalCtx.Action)
-	return slices.Contains(rule.Actions, "*") || slices.Contains(rule.Actions, action)
+	return slices.Contains(p.Actions, "*") || slices.Contains(p.Actions, action)
 }
 
-func (e *DefaultEvaluator) matchesSubject(rule Rule, evalCtx policy.EvaluationContext) bool {
-	if len(rule.Subjects) == 0 {
+func (e *DefaultEvaluator) matchesSubject(p *types.Policy, evalCtx policy.EvaluationContext) bool {
+	if len(p.Subjects) == 0 {
 		return true
 	}
 
-	if slices.Contains(rule.Subjects, "*") {
+	if slices.Contains(p.Subjects, "*") {
 		return true
 	}
 
-	for _, subject := range rule.Subjects {
+	for _, subject := range p.Subjects {
 		if subject == "user:"+evalCtx.Subject.UserID {
 			return true
 		}
@@ -89,42 +89,3 @@ func (e *DefaultEvaluator) matchesSubject(rule Rule, evalCtx policy.EvaluationCo
 	return false
 }
 
-func (e *DefaultEvaluator) matchesIP(rule Rule, evalCtx policy.EvaluationContext) bool {
-	if len(rule.IPWhitelist) == 0 {
-		return true
-	}
-
-	ip := net.ParseIP(evalCtx.Environment.IP)
-	if ip == nil {
-		return false
-	}
-
-	for _, cidr := range rule.IPWhitelist {
-		_, ipNet, err := net.ParseCIDR(cidr)
-		if err != nil {
-			// Log this error in a real application
-			continue
-		}
-		if ipNet.Contains(ip) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (e *DefaultEvaluator) matchesTime(rule Rule, evalCtx policy.EvaluationContext) bool {
-	if len(rule.TimeRanges) == 0 {
-		return true
-	}
-
-	now := evalCtx.Environment.Time
-	nowStr := now.Format("15:04")
-
-	for _, tr := range rule.TimeRanges {
-		if nowStr >= tr.Start && nowStr <= tr.End {
-			return true
-		}
-	}
-	return false
-}

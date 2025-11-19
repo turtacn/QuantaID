@@ -29,6 +29,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/server/middleware"
 	"github.com/turtacn/QuantaID/internal/storage/memory"
 	"github.com/turtacn/QuantaID/internal/storage/postgresql"
+	"github.com/turtacn/QuantaID/internal/storage/redis"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -88,6 +89,8 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	var groupRepo identity.GroupRepository
 	var sessionRepo auth.SessionRepository
 	var tokenRepo auth.TokenRepository
+	var idpRepo auth.IdentityProviderRepository
+	var auditRepo auth.AuditLogRepository
 
 	switch appCfg.Storage.Mode {
 	case "memory":
@@ -100,40 +103,47 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		tokenRepo = memAuthRepo
 	case "postgres":
 		logger.Info(context.Background(), "Using PostgreSQL storage backend")
+		// Postgres Connection
 		db, err := postgresql.NewConnection(appCfg.Postgres)
 		if err != nil {
 			return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 		}
+
+		// Postgres Repositories
+		// Postgres Repositories
 		pgIdRepo := postgresql.NewPostgresIdentityRepository(db)
 		idRepo = pgIdRepo
 		groupRepo = pgIdRepo
-		return nil, fmt.Errorf("postgres repositories for auth and policy are not yet implemented")
+		idpRepo, auditRepo = postgresql.NewPostgresAuthRepository(db)
+		policyRepo := postgresql.NewPostgresPolicyRepository(db)
+
+		// Redis Connection
+		redisMetrics := metrics.NewRedisMetrics(prometheus.DefaultRegisterer)
+		redisClient, err := redis.NewRedisClient(&appCfg.Redis, redisMetrics)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to redis: %w", err)
+		}
+
+		// Redis Repositories
+		sessionManager := redis.NewSessionManager(
+			redisClient,
+			appCfg.Security.Session,
+			logger.GetZapLogger(),
+			&redis.GoogleUUIDGenerator{},
+			&redis.RealClock{},
+			redisMetrics,
+		)
+		sessionRepo = redis.NewRedisSessionRepository(redisClient, sessionManager)
+		tokenRepo = redis.NewRedisTokenRepository(redisClient)
 	default:
 		return nil, fmt.Errorf("invalid storage mode: %s", appCfg.Storage.Mode)
 	}
 
 	// Authorization Service Setup
-	policyData, err := os.ReadFile("configs/policy/basic.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to read policy file: %w", err)
-	}
-	var policyCfg PolicyConfig
-	if err := yaml.Unmarshal(policyData, &policyCfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal policy data: %w", err)
-	}
 	// Audit Service Setup
-	auditCfg, err := config.LoadAuditConfig("configs/audit/pipeline.jules.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to load audit config: %w", err)
-	}
-	zapLogger, _ := zap.NewProduction()
-	auditPipeline, err := config.NewPipelineFromConfig(auditCfg, zapLogger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create audit pipeline: %w", err)
-	}
-	auditService := audit_service.NewService(auditPipeline)
+	auditService := audit_service.NewService(auditRepo)
 
-	evaluator := authorization.NewDefaultEvaluator(policyCfg.Rules)
+	evaluator := authorization.NewDefaultEvaluator(policyRepo)
 	authzService := authorization.NewService(evaluator, auditService)
 
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
@@ -142,7 +152,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	riskEngine := &adaptive.RiskEngine{}
 	mfaManager := &mfa.MFAManager{}
 
-	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, nil, cryptoManager, logger, riskEngine, mfaManager)
+	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, idpRepo, cryptoManager, logger, riskEngine, mfaManager)
 	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
 
 	authAppService := auth_service.NewApplicationService(authDomainService, auditService, logger, auth_service.Config{

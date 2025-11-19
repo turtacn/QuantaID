@@ -1,7 +1,9 @@
 package types
 
 import (
+	"encoding/json"
 	"github.com/golang-jwt/jwt/v4"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -106,11 +108,13 @@ type IdentityProvider struct {
 	// Enabled indicates whether this provider is active.
 	Enabled bool `json:"enabled" gorm:"not null;default:true"`
 	// Configuration stores the settings required to connect to the provider (e.g., client ID, secret).
-	Configuration map[string]interface{} `json:"configuration" gorm:"type:jsonb"`
+	Config json.RawMessage `json:"config" gorm:"type:jsonb"`
 	// CreatedAt is the timestamp when the provider was created.
 	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
 	// UpdatedAt is the timestamp of the last update.
 	UpdatedAt time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
+	// DeletedAt is the timestamp of the last update.
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 // ConnectorConfig holds the configuration for a specific connector instance.

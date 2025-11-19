@@ -304,3 +304,13 @@ func (rc *redisClient) ZRem(ctx context.Context, key string, members ...interfac
 func (rc *redisClient) ZRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
 	return rc.client.ZRange(ctx, key, start, stop).Result()
 }
+
+// SetEx sets a key with an expiration.
+func (rc *redisClient) SetEx(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	return rc.client.SetEx(ctx, key, value, expiration)
+}
+
+// Exists checks if a key exists.
+func (rc *redisClient) Exists(ctx context.Context, keys ...string) (int64, error) {
+	return rc.client.Exists(ctx, keys...).Result()
+}
