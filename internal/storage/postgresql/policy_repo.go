@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"errors"
+
 	"github.com/turtacn/QuantaID/internal/domain/policy"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"gorm.io/gorm"

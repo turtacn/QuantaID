@@ -102,7 +102,10 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		sessionRepo = memAuthRepo
 		tokenRepo = memAuthRepo
 	case "postgres":
-		logger.Info(context.Background(), "Using PostgreSQL storage backend")
+		logger.Info(context.Background(), "Using PostgreSQL storage backend",
+			zap.String("host", appCfg.Postgres.Host),
+			zap.String("dbname", appCfg.Postgres.DbName),
+		)
 		// Postgres Connection
 		db, err := postgresql.NewConnection(appCfg.Postgres)
 		if err != nil {

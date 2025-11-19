@@ -34,6 +34,24 @@ logger:
     # Compress rotated log files
     compress: true
 
+# Storage configuration
+storage:
+  # Storage mode can be "memory" or "postgres"
+  mode: "postgres"
+
+# PostgreSQL configuration for identity, policy, and audit storage
+postgres:
+  host: "localhost"
+  port: 5432
+  user: "quantaid"
+  password: "quantaid-password"
+  dbname: "quantaid_dev"
+  sslmode: "disable" # Use "require" or "verify-full" in production
+  # Connection pool settings
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: "1h"
+
 # Redis configuration for session and token storage
 redis:
   # Redis server host

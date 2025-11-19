@@ -3,6 +3,8 @@ package postgresql
 import (
 	"context"
 	"errors"
+
+	"github.com/lib/pq"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"gorm.io/gorm"
@@ -23,7 +25,14 @@ func NewPostgresAuthRepository(db *gorm.DB) (auth.IdentityProviderRepository, au
 
 // CreateProvider adds a new identity provider to the database.
 func (r *PostgresAuthRepository) CreateProvider(ctx context.Context, provider *types.IdentityProvider) error {
-	return r.db.WithContext(ctx).Create(provider).Error
+	if err := r.db.WithContext(ctx).Create(provider).Error; err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code.Name() == "unique_violation" {
+			return types.ErrConflict.WithDetails(map[string]string{"field": pqErr.Constraint})
+		}
+		return err
+	}
+	return nil
 }
 
 // GetProviderByID retrieves an identity provider by its ID from the database.

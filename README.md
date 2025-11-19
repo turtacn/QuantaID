@@ -103,6 +103,26 @@ QuantaID is designed to be easy to set up for development.
 ### Running for Development
 The server is configured to use an in-memory database by default, so you can run it without any external dependencies.
 
+### Persistence Modes
+
+QuantaID supports two persistence modes for its data storage: `memory` and `postgres`. The mode can be configured in the `configs/server.yaml` file using the `storage.mode` key.
+
+-   **memory**: This is the default mode. Data is stored in-memory and will be lost when the server restarts. This mode is useful for quick local testing and development.
+-   **postgres**: In this mode, QuantaID uses a PostgreSQL database for persistent storage and Redis for session and token management. This is the recommended mode for production environments.
+
+To use the `postgres` mode, you'll need a running PostgreSQL and Redis instance. We've provided a Docker Compose setup for a convenient local development environment.
+
+**Running with Docker Compose:**
+
+1.  **Start the infrastructure:**
+    ```bash
+    docker-compose -f deployments/docker-compose/infrastructure.yaml up -d
+    ```
+    This will start a PostgreSQL container on port 5432 and a Redis container on port 6379.
+
+2.  **Configure QuantaID:**
+    Ensure your `configs/server.yaml` is configured to use the `postgres` mode and that the connection details match the ones in the Docker Compose file.
+
 1.  **Clone the repository:**
     ```bash
     git clone https://github.com/turtacn/QuantaID.git
