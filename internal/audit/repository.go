@@ -18,6 +18,9 @@ type AuditRepository interface {
 	// Query retrieves audit events based on a set of filters and pagination options.
 	// The implementation should handle complex queries on indexed fields.
 	Query(ctx context.Context, filter QueryFilter) ([]*AuditEvent, error)
+
+	// DeleteBefore deletes all audit events created before the specified time.
+	DeleteBefore(ctx context.Context, cutoff time.Time) error
 }
 
 // QueryFilter defines the criteria for querying audit logs.

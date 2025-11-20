@@ -44,7 +44,6 @@ func (m *mockIdentityRepository) FindAccountsCreatedBefore(ctx context.Context, 
 	return m.expiredAccounts, nil
 }
 
-
 // --- Compliance Checker Tests ---
 func TestCheckGDPRDataRetention_Pass(t *testing.T) {
 	mockIdentityRepo := &mockIdentityRepository{expiredAccounts: []UserAccount{}}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/services/sync"
 	"github.com/turtacn/QuantaID/internal/storage/memory"
 	"github.com/turtacn/QuantaID/pkg/types"
@@ -79,7 +78,7 @@ func Test_FullSync_CreatesNewUsers(t *testing.T) {
 	assert.Equal(t, 0, stats.Disabled)
 	assert.Equal(t, 0, stats.Errors)
 
-	users, err := userRepo.ListUsers(ctx, identity.PaginationQuery{PageSize: 10, Offset: 0})
+	users, _, err := userRepo.ListUsers(ctx, types.UserFilter{PageSize: 10, Page: 1})
 	assert.NoError(t, err)
 	assert.Len(t, users, 2)
 

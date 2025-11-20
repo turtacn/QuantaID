@@ -102,6 +102,11 @@ session:
   # Maximum number of concurrent sessions per user (0 for unlimited)
   max_sessions_per_user: 5
 
+# Audit log configuration
+audit:
+  # Number of days to retain audit logs (0 for forever)
+  retention_days: 90
+
 # Observability configuration
 observability:
   # Enable Prometheus metrics endpoint

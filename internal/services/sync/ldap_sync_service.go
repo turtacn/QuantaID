@@ -75,7 +75,7 @@ func (s *LDAPSyncService) FullSync(ctx context.Context) (*SyncStats, error) {
 		ldapUserMap[user.Username] = user
 	}
 
-	localUsers, err := s.userRepo.ListUsers(ctx, identity.PaginationQuery{PageSize: 10000, Offset: 0}) // Note: In production, we need a better pagination strategy
+	localUsers, _, err := s.userRepo.ListUsers(ctx, types.UserFilter{PageSize: 10000, Page: 1}) // Note: In production, we need a better pagination strategy
 	if err != nil {
 		s.logger.Error("Failed to list local users", zap.Error(err))
 		return nil, fmt.Errorf("failed to list local users: %w", err)

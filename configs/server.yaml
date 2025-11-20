@@ -3,3 +3,9 @@ storage:
 
 http:
   listen: ":8080"
+
+audit:
+  retention_days: 90
+
+metrics:
+  enabled: true

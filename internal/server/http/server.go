@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gorm.io/gorm"
+	"github.com/turtacn/QuantaID/internal/api/admin"
 	i_audit "github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/auth/adaptive"
 	"github.com/turtacn/QuantaID/internal/auth/mfa"
@@ -39,6 +40,7 @@ type Server struct {
 	httpServer *http.Server
 	Router     *mux.Router
 	logger     utils.Logger
+	Services   Services
 }
 
 // Config holds the configuration required for the HTTP server.
@@ -58,10 +60,11 @@ type Services struct {
 	CryptoManager         *utils.CryptoManager
 	IdentityDomainService identity.IService
 	DevCenterService      *platform.DevCenterService
+	AuditLogger           *i_audit.AuditLogger
 }
 
 // NewServer creates a new HTTP server instance.
-func NewServer(config Config, logger utils.Logger, services Services) *Server {
+func NewServer(config Config, logger utils.Logger, services Services, appCfg *utils.Config) *Server {
 	router := mux.NewRouter()
 	server := &Server{
 		Router: router,
@@ -72,8 +75,9 @@ func NewServer(config Config, logger utils.Logger, services Services) *Server {
 			ReadTimeout:  config.ReadTimeout,
 			WriteTimeout: config.WriteTimeout,
 		},
+		Services: services,
 	}
-	server.registerRoutes(services)
+	server.registerRoutes(services, appCfg)
 	return server
 }
 
@@ -162,6 +166,10 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	appService := application.NewApplicationService(postgresql.NewPostgresApplicationRepository(db), logger, cryptoManager)
 	devCenterSvc := platform.NewDevCenterService(appService, nil, authzService, nil)
 
+	// Audit Logger
+	auditRepoForLogger := postgresql.NewPostgresAuditLogRepository(db)
+	auditLogger := i_audit.NewAuditLogger(auditRepoForLogger, logger.(*utils.ZapLogger).Logger, 100, 5*time.Second, 1000)
+
 	services := Services{
 		IdentityService:       identityAppService,
 		AuthService:           authAppService,
@@ -169,23 +177,30 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		CryptoManager:         cryptoManager,
 		IdentityDomainService: identityDomainService,
 		DevCenterService:      devCenterSvc,
+		AuditLogger:           auditLogger,
 	}
 
-	return NewServer(httpCfg, logger, services), nil
+	return NewServer(httpCfg, logger, services, appCfg), nil
 }
 
 // registerRoutes sets up the API routes, their handlers, and associated middleware.
-func (s *Server) registerRoutes(services Services) {
+func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 	authHandlers := handlers.NewAuthHandlers(services.AuthService, s.logger)
 	identityHandlers := handlers.NewIdentityHandlers(services.IdentityService, s.logger)
+	adminUserHandlers := admin.NewAdminUserHandler(services.IdentityDomainService, services.AuditLogger)
 
 	loggingMiddleware := middleware.NewLoggingMiddleware(s.logger)
-	metricsMiddleware := metrics.NewHTTPMetricsMiddleware(prometheus.DefaultRegisterer)
+	auditorMiddleware := middleware.AuditorMiddleware(services.AuditLogger)
 	authMiddleware := middleware.NewAuthMiddleware(services.CryptoManager, s.logger, services.IdentityDomainService)
 	authzUserReadMiddleware := middleware.NewAuthorizationMiddleware(services.AuthzService, policy.Action("users.read"), "user")
+	authzUserUpdateMiddleware := middleware.NewAuthorizationMiddleware(services.AuthzService, policy.Action("user:update"), "user")
 
 	s.Router.Use(loggingMiddleware.Execute)
-	s.Router.Use(metricsMiddleware.Execute)
+	if appCfg.Metrics.Enabled {
+		metricsMiddleware := middleware.NewMetricsMiddleware(prometheus.DefaultRegisterer)
+		s.Router.Use(metricsMiddleware.Execute)
+	}
+	s.Router.Use(auditorMiddleware)
 
 	s.Router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
@@ -197,6 +212,13 @@ func (s *Server) registerRoutes(services Services) {
 	getUserHandler := http.HandlerFunc(identityHandlers.GetUser)
 	protectedGetUserRoute := authMiddleware.Execute(authzUserReadMiddleware.Execute(getUserHandler))
 	apiV1.Handle("/users/{id}", protectedGetUserRoute).Methods("GET")
+
+	// Admin routes for user management
+	adminRouter := apiV1.PathPrefix("/admin").Subrouter()
+	adminRouter.Use(authMiddleware.Execute, authzUserUpdateMiddleware.Execute)
+	adminRouter.HandleFunc("/users", adminUserHandlers.ListUsers).Methods("GET")
+	adminRouter.HandleFunc("/users/{userID}/ban", adminUserHandlers.BanUser).Methods("POST")
+	adminRouter.HandleFunc("/users/{userID}/unban", adminUserHandlers.UnbanUser).Methods("POST")
 
 	devcenterHandlers := handlers.NewDevCenterHandler(services.DevCenterService)
 	devcenterAdminMiddleware := middleware.NewAuthorizationMiddleware(services.AuthzService, policy.Action("devcenter.admin"), "devcenter")

@@ -46,10 +46,41 @@ func (r *PostgresIdentityRepository) DeleteUser(ctx context.Context, id string) 
 	return r.db.WithContext(ctx).Delete(&types.User{}, "id = ?", id).Error
 }
 
-func (r *PostgresIdentityRepository) ListUsers(ctx context.Context, pq identity.PaginationQuery) ([]*types.User, error) {
+func (r *PostgresIdentityRepository) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
 	var users []*types.User
-	err := r.db.WithContext(ctx).Offset(pq.Offset).Limit(pq.PageSize).Find(&users).Error
-	return users, err
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&types.User{})
+
+	if filter.Query != "" {
+		query = query.Where("username LIKE ? OR email LIKE ?", "%"+filter.Query+"%", "%"+filter.Query+"%")
+	}
+
+	if len(filter.Status) > 0 {
+		query = query.Where("status IN ?", filter.Status)
+	}
+
+	err := query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if filter.SortBy != "" {
+		order := filter.SortBy
+		if filter.SortOrder == "desc" {
+			order += " DESC"
+		}
+		query = query.Order(order)
+	}
+
+	offset := (filter.Page - 1) * filter.PageSize
+	err = query.Offset(offset).Limit(filter.PageSize).Find(&users).Error
+
+	return users, int(total), err
+}
+
+func (r *PostgresIdentityRepository) ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error {
+	return r.db.WithContext(ctx).Model(&types.User{}).Where("id = ?", userID).Update("status", newStatus).Error
 }
 
 func (r *PostgresIdentityRepository) FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error) {

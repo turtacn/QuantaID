@@ -100,6 +100,16 @@ func (s *service) GetUser(ctx context.Context, userID string) (*types.User, erro
 	return user, nil
 }
 
+// ListUsers retrieves a paginated list of users, with optional filtering.
+func (s *service) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
+	s.logger.Info(ctx, "Listing users with filter", zap.Any("filter", filter))
+	users, total, err := s.userRepo.ListUsers(ctx, filter)
+	if err != nil {
+		s.logger.Error(ctx, "Failed to list users", zap.Error(err))
+	}
+	return users, total, err
+}
+
 // GetUserByID retrieves a user by their unique ID.
 //
 // Parameters:

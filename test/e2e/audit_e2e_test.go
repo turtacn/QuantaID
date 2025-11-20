@@ -2,20 +2,22 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/turtacn/QuantaID/internal/audit"
-	"github.com/turtacn/QuantaID/internal/storage/postgres"
+	"github.com/turtacn/QuantaID/internal/storage/postgresql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/go-pg/pg/v10"
 	"go.uber.org/zap"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func setupTestDatabase(t *testing.T) *pg.DB {
+func setupTestDatabase(t *testing.T) *gorm.DB {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:13-alpine",
@@ -38,23 +40,12 @@ func setupTestDatabase(t *testing.T) *pg.DB {
 	port, err := postgresContainer.MappedPort(ctx, "5432")
 	require.NoError(t, err)
 
-	db := pg.Connect(&pg.Options{
-		Addr:     host + ":" + port.Port(),
-		User:     "test",
-		Password: "password",
-		Database: "testdb",
-	})
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, "test", "password", "testdb", port.Port())
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	require.NoError(t, err)
 
 	// Run migrations (simplified for test)
-	_, err = db.Exec(`
-		CREATE TABLE audit_logs (
-			id UUID PRIMARY KEY, timestamp TIMESTAMPTZ, event_type VARCHAR(50),
-			actor_id VARCHAR, actor_type VARCHAR, actor_name VARCHAR,
-			target_id VARCHAR, target_type VARCHAR, target_name VARCHAR,
-			action VARCHAR, result VARCHAR, metadata JSONB,
-			ip_address INET, user_agent TEXT, created_at TIMESTAMPTZ
-		);
-	`)
+	err = db.AutoMigrate(&audit.AuditEvent{})
 	require.NoError(t, err)
 
 	return db
@@ -66,7 +57,7 @@ func TestE2E_AuditLog_EndToEnd(t *testing.T) {
 	}
 
 	db := setupTestDatabase(t)
-	repo := postgres.NewAuditRepository(db)
+	repo := postgresql.NewPostgresAuditLogRepository(db)
 
 	// Create a real logger that writes to the test DB
 	// We use a small flush interval for the test to get results quickly

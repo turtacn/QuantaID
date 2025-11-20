@@ -2,38 +2,52 @@ package postgresql
 
 import (
 	"context"
+	"time"
 
-	"github.com/turtacn/QuantaID/pkg/types"
+	"github.com/turtacn/QuantaID/internal/audit"
 	"gorm.io/gorm"
 )
 
-// PostgresAuditLogRepository provides a GORM-based implementation of the auditlog-related repositories.
 type PostgresAuditLogRepository struct {
 	db *gorm.DB
 }
 
-// NewPostgresAuditLogRepository creates a new PostgreSQL auditlog repository.
 func NewPostgresAuditLogRepository(db *gorm.DB) *PostgresAuditLogRepository {
 	return &PostgresAuditLogRepository{db: db}
 }
 
-// --- AuditLogRepository Implementation ---
-
-// CreateLogEntry adds a new audit log entry to the database.
-func (r *PostgresAuditLogRepository) CreateLogEntry(ctx context.Context, entry *types.AuditLog) error {
-	return r.db.WithContext(ctx).Create(entry).Error
+func (r *PostgresAuditLogRepository) WriteSync(ctx context.Context, event *audit.AuditEvent) error {
+	return r.db.WithContext(ctx).Create(event).Error
 }
 
-// GetLogsForUser retrieves a paginated list of audit logs for a specific user.
-func (r *PostgresAuditLogRepository) GetLogsForUser(ctx context.Context, userID string, pq types.PaginationQuery) ([]*types.AuditLog, error) {
-	var logs []*types.AuditLog
-	err := r.db.WithContext(ctx).Where("actor_id = ?", userID).Offset(pq.Offset).Limit(pq.PageSize).Find(&logs).Error
-	return logs, err
+func (r *PostgresAuditLogRepository) WriteBatch(ctx context.Context, events []*audit.AuditEvent) error {
+	return r.db.WithContext(ctx).Create(&events).Error
 }
 
-// GetLogsByAction retrieves a paginated list of audit logs for a specific action.
-func (r *PostgresAuditLogRepository) GetLogsByAction(ctx context.Context, action string, pq types.PaginationQuery) ([]*types.AuditLog, error) {
-	var logs []*types.AuditLog
-	err := r.db.WithContext(ctx).Where("action = ?", action).Offset(pq.Offset).Limit(pq.PageSize).Find(&logs).Error
-	return logs, err
+func (r *PostgresAuditLogRepository) Query(ctx context.Context, filter audit.QueryFilter) ([]*audit.AuditEvent, error) {
+	var events []*audit.AuditEvent
+	query := r.db.WithContext(ctx)
+
+	if !filter.StartTimestamp.IsZero() {
+		query = query.Where("timestamp >= ?", filter.StartTimestamp)
+	}
+	if !filter.EndTimestamp.IsZero() {
+		query = query.Where("timestamp <= ?", filter.EndTimestamp)
+	}
+	if len(filter.EventTypes) > 0 {
+		query = query.Where("event_type IN ?", filter.EventTypes)
+	}
+	if filter.ActorID != "" {
+		query = query.Where("actor ->> 'id' = ?", filter.ActorID)
+	}
+	if filter.TargetID != "" {
+		query = query.Where("target ->> 'id' = ?", filter.TargetID)
+	}
+
+	err := query.Find(&events).Error
+	return events, err
+}
+
+func (r *PostgresAuditLogRepository) DeleteBefore(ctx context.Context, cutoff time.Time) error {
+	return r.db.WithContext(ctx).Where("timestamp < ?", cutoff).Delete(&audit.AuditEvent{}).Error
 }

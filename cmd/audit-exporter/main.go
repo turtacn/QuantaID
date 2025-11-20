@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/turtacn/QuantaID/internal/audit"
-	"github.com/turtacn/QuantaID/internal/storage/postgres"
-	"github.com/go-pg/pg/v10"
+	"github.com/turtacn/QuantaID/internal/storage/postgresql"
 	"github.com/urfave/cli/v2"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -50,7 +51,7 @@ func main() {
 }
 
 // connectDB initializes the database connection.
-func connectDB() (*pg.DB, error) {
+func connectDB() (*gorm.DB, error) {
 	// A simplified config loader for the CLI tool.
 	// In a real app, this would be more robust.
 	dbHost := os.Getenv("DB_HOST")
@@ -58,12 +59,11 @@ func connectDB() (*pg.DB, error) {
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
 
-	db := pg.Connect(&pg.Options{
-		Addr:     dbHost + ":5432",
-		User:     dbUser,
-		Password: dbPassword,
-		Database: dbName,
-	})
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=5432 sslmode=disable", dbHost, dbUser, dbPassword, dbName)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
 	return db, nil
 }
 
@@ -74,7 +74,7 @@ func exportAction(c *cli.Context) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	repo := postgres.NewAuditRepository(db)
+	repo := postgresql.NewPostgresAuditLogRepository(db)
 	generator := audit.NewReportGenerator(repo)
 
 	filter := audit.QueryFilter{}
@@ -120,7 +120,7 @@ func complianceReportAction(c *cli.Context) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	repo := postgres.NewAuditRepository(db)
+	repo := postgresql.NewPostgresAuditLogRepository(db)
 	standard := audit.ComplianceStandard(c.String("standard"))
 	format := audit.ReportFormat(c.String("format"))
 

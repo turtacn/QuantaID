@@ -45,3 +45,8 @@ func (m *MockIService) ChangeUserStatus(ctx context.Context, userID string, newS
 	args := m.Called(ctx, userID, newStatus)
 	return args.Error(0)
 }
+
+func (m *MockIService) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]*types.User), args.Int(1), args.Error(2)
+}

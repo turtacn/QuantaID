@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/metrics"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 )
@@ -40,6 +41,7 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 
 	authResult, err := h.authService.LoginWithPassword(r.Context(), req, auth.Config{})
 	if err != nil {
+		metrics.AuthLoginTotal.WithLabelValues("fail").Inc()
 		if appErr, ok := err.(*types.Error); ok {
 			WriteJSONError(w, appErr, appErr.HttpStatus)
 		} else {
@@ -53,6 +55,7 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	metrics.AuthLoginTotal.WithLabelValues("success").Inc()
 	WriteJSON(w, http.StatusOK, authResult.Token)
 }
 

@@ -107,6 +107,14 @@ var (
 		},
 		[]string{"provider", "reason"}, // e.g., "invalid_code", "timeout"
 	)
+
+	AuthLoginTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "auth_login_total",
+			Help: "Total number of login attempts.",
+		},
+		[]string{"status"},
+	)
 )
 
 // Middleware returns a Gin middleware for recording Prometheus metrics.

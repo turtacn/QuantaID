@@ -149,7 +149,7 @@ func (r *IdentityMemoryRepository) DeleteUser(ctx context.Context, id string) er
 	return nil
 }
 
-func (r *IdentityMemoryRepository) ListUsers(ctx context.Context, pq identity.PaginationQuery) ([]*types.User, error) {
+func (r *IdentityMemoryRepository) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -158,17 +158,29 @@ func (r *IdentityMemoryRepository) ListUsers(ctx context.Context, pq identity.Pa
 		users = append(users, user)
 	}
     // Note: Simple implementation without sorting. Pagination on a map is not deterministic.
-    start := pq.Offset
-    end := start + pq.PageSize
+    start := (filter.Page - 1) * filter.PageSize
+    end := start + filter.PageSize
 
     if start > len(users) {
-        return []*types.User{}, nil
+        return []*types.User{}, 0, nil
     }
     if end > len(users) {
         end = len(users)
     }
 
-	return users[start:end], nil
+	return users[start:end], len(users), nil
+}
+
+func (r *IdentityMemoryRepository) ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	user, ok := r.users[userID]
+	if !ok {
+		return fmt.Errorf("user with ID '%s' not found", userID)
+	}
+	user.Status = newStatus
+	return nil
 }
 
 func (r *IdentityMemoryRepository) FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error) {

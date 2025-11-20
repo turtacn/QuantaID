@@ -40,9 +40,9 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 3. 查询用户
-	users, err := h.userRepo.ListUsers(r.Context(), identity.PaginationQuery{
+	users, total, err := h.userRepo.ListUsers(r.Context(), types.UserFilter{
 		PageSize: size,
-		Offset:   page * size,
+		Page:     page,
 	})
 	if err != nil {
 		http.Error(w, "query failed", http.StatusInternalServerError)
@@ -55,7 +55,7 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		"data":  users,
 		"page":  page,
 		"size":  size,
-		// total is not returned by the new interface
+		"total": total,
 	})
 }
 

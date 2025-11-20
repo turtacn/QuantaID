@@ -24,4 +24,6 @@ type IService interface {
 	AddUserToGroup(ctx context.Context, userID, groupID string) error
 	// ChangeUserStatus updates the status of a user's account (e.g., active, locked).
 	ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error
+	// ListUsers retrieves a paginated list of users, with optional filtering.
+	ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error)
 }

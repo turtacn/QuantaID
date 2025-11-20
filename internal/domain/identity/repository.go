@@ -17,7 +17,8 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*types.User, error)
 	UpdateUser(ctx context.Context, user *types.User) error
 	DeleteUser(ctx context.Context, id string) error
-	ListUsers(ctx context.Context, pq PaginationQuery) ([]*types.User, error)
+	ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error)
+	ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error
 	FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error)
 	UpsertBatch(ctx context.Context, users []*types.User) error
 	CreateBatch(ctx context.Context, users []*types.User) error

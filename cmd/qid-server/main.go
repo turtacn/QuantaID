@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/server/http"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
@@ -48,6 +49,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Start audit log retention manager
+	retentionManager := audit.NewRetentionManager(server.Services.AuditLogger.GetRepo(), logger.(*utils.ZapLogger).Logger)
+	retentionManager.Start(context.Background(), appCfg.Audit.RetentionDays)
+
 	// Start server in a goroutine
 	go server.Start()
 
@@ -56,6 +61,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
+	retentionManager.Stop()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	server.Stop(ctx)

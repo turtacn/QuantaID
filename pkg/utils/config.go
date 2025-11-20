@@ -47,6 +47,16 @@ type Config struct {
 	Redis    RedisConfig    `mapstructure:"redis"`
 	Security SecurityConfig `mapstructure:"security"`
 	Storage  StorageConfig  `mapstructure:"storage"`
+	Audit    AuditConfig    `mapstructure:"audit"`
+	Metrics  MetricsConfig  `mapstructure:"metrics"`
+}
+
+type AuditConfig struct {
+	RetentionDays int `mapstructure:"retention_days"`
+}
+
+type MetricsConfig struct {
+	Enabled bool `mapstructure:"enabled"`
 }
 
 // ConfigManager is a wrapper around the Viper library that handles loading,

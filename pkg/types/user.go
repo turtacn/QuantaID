@@ -33,6 +33,16 @@ type User struct {
 	MergeHistory []MergeRecord `json:"mergeHistory,omitempty" gorm:"type:jsonb"`
 }
 
+// UserFilter defines the criteria for listing users.
+type UserFilter struct {
+	Query      string
+	Status     []UserStatus
+	Page       int
+	PageSize   int
+	SortBy     string
+	SortOrder  string
+}
+
 // MergeRecord represents a record of a merge operation.
 type MergeRecord struct {
 	SourceIDs []string  `json:"sourceIDs"`

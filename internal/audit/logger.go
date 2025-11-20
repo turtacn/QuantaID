@@ -109,3 +109,7 @@ func (al *AuditLogger) Shutdown() {
 	al.cancel()
 	al.wg.Wait()
 }
+
+func (al *AuditLogger) GetRepo() AuditRepository {
+	return al.repo
+}

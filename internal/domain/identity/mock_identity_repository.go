@@ -40,9 +40,14 @@ func (m *MockIdentityRepository) DeleteUser(ctx context.Context, id string) erro
 	return args.Error(0)
 }
 
-func (m *MockIdentityRepository) ListUsers(ctx context.Context, pq PaginationQuery) ([]*types.User, error) {
-	args := m.Called(ctx, pq)
-	return args.Get(0).([]*types.User), args.Error(1)
+func (m *MockIdentityRepository) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]*types.User), args.Int(1), args.Error(2)
+}
+
+func (m *MockIdentityRepository) ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error {
+	args := m.Called(ctx, userID, newStatus)
+	return args.Error(0)
 }
 
 func (m *MockIdentityRepository) FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error) {
