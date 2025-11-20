@@ -36,3 +36,28 @@ type PolicyTemplateRepository interface {
 	// ListTemplates retrieves all available policy templates.
 	ListTemplates(ctx context.Context) ([]*types.Policy, error)
 }
+
+// RBACRepository defines the interface for managing Roles, Permissions, and their assignments.
+type RBACRepository interface {
+	// Role management
+	CreateRole(ctx context.Context, role *Role) error
+	GetRoleByCode(ctx context.Context, code string) (*Role, error)
+	UpdateRole(ctx context.Context, role *Role) error
+	DeleteRole(ctx context.Context, roleID uint) error
+	ListRoles(ctx context.Context) ([]*Role, error)
+
+	// Permission management
+	CreatePermission(ctx context.Context, permission *Permission) error
+	GetPermission(ctx context.Context, resource, action string) (*Permission, error)
+	ListPermissions(ctx context.Context) ([]*Permission, error)
+
+	// Assignment management
+	AddPermissionToRole(ctx context.Context, roleID, permissionID uint) error
+	RemovePermissionFromRole(ctx context.Context, roleID, permissionID uint) error
+	AssignRoleToUser(ctx context.Context, userID string, roleID uint) error
+	UnassignRoleFromUser(ctx context.Context, userID string, roleID uint) error
+
+	// Query methods
+	GetRolesForUser(ctx context.Context, userID string) ([]*Role, error)
+	GetPermissionsForRole(ctx context.Context, roleID uint) ([]*Permission, error)
+}

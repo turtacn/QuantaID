@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/turtacn/QuantaID/internal/domain/policy"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"gorm.io/driver/postgres"
@@ -51,6 +52,9 @@ func AutoMigrate(db *gorm.DB) error {
 		&types.AuditLog{},
 		&types.MFAFactor{},
 		&types.MFAVerificationLog{},
+		&policy.Role{},
+		&policy.Permission{},
+		&policy.UserRole{},
 	)
 	if err != nil {
 		return fmt.Errorf("gorm auto-migration failed: %w", err)
