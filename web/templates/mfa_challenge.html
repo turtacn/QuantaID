@@ -1,0 +1,40 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<h2>Multi-Factor Authentication</h2>
+<p>Please complete the second factor to continue.</p>
+
+<form action="/auth/mfa" method="post">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+
+    <!-- TOTP Section -->
+    <div>
+        <label for="totp_code">Authenticator Code:</label>
+        <input type="text" id="totp_code" name="totp_code" autocomplete="one-time-code" pattern="[0-9]{6}" inputmode="numeric">
+    </div>
+    <br>
+    <button type="submit">Verify Code</button>
+</form>
+
+<hr>
+
+<!-- WebAuthn Section -->
+<div>
+    <p>Or sign in with your security key:</p>
+    <button id="webauthn-login-button">Use Security Key</button>
+</div>
+
+<!-- We will add the JS for this later -->
+<script src="/static/js/webauthn.js"></script>
+<script>
+    // Placeholder for WebAuthn logic
+    const loginButton = document.getElementById('webauthn-login-button');
+    if (loginButton) {
+        loginButton.addEventListener('click', async () => {
+            alert("WebAuthn login not implemented yet!");
+            // In the future, this will call a function from webauthn.js
+            // await loginWithWebAuthn();
+        });
+    }
+</script>
+{{end}}

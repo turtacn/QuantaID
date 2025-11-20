@@ -1,0 +1,30 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<h2>Login</h2>
+
+{{if .Data.Error}}
+<p class="error">{{.Data.Error}}</p>
+{{end}}
+
+<form action="/auth/login" method="post">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username"
+               value="{{if .Data.Username}}{{.Data.Username}}{{end}}" required>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+
+    <br>
+
+    <button type="submit">Login</button>
+</form>
+{{end}}

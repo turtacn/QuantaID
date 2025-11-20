@@ -1,0 +1,46 @@
+{{template "layout.html" .}}
+
+{{define "content"}}
+<h2>My Profile</h2>
+
+<div>
+    <p><strong>Username:</strong> {{.Data.Username}}</p>
+    <p><strong>Email:</strong> {{.Data.Email}}</p>
+</div>
+
+<hr>
+
+<h3>Multi-Factor Authentication</h3>
+
+<h4>Registered Devices</h4>
+<ul>
+    {{range .Data.MFAFactors}}
+    <li>{{.Type}} - {{.Identifier}}</li>
+    {{else}}
+    <li>No MFA devices registered.</li>
+    {{end}}
+</ul>
+
+<h4>Add New Device</h4>
+<form action="/profile/mfa/totp/add" method="post" style="display: inline;">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+    <button type="submit">Add Authenticator App (TOTP)</button>
+</form>
+
+<button id="add-webauthn-button">Add Security Key (WebAuthn)</button>
+
+
+<script src="/static/js/webauthn.js"></script>
+<script>
+    const addButton = document.getElementById('add-webauthn-button');
+    if (addButton) {
+        addButton.addEventListener('click', async () => {
+            // The username should be dynamically injected from the server-side template
+            // for the currently logged-in user.
+            const username = "{{.Data.Username}}";
+            await registerWebAuthn(username);
+        });
+    }
+</script>
+
+{{end}}

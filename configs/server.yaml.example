@@ -142,3 +142,10 @@ security:
     enabled_providers:
       - "totp"
       - "webauthn"
+
+# UI settings for user-facing pages (login, profile, etc.)
+ui:
+  # Base path for static assets (CSS, JS). Handled by Go's embed in this phase.
+  static_path: "web/static"
+  # Base path for HTML templates. Handled by Go's embed in this phase.
+  template_path: "web/templates"
