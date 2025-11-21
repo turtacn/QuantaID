@@ -13,6 +13,8 @@ import (
 type AuditLog struct {
 	// ID is the unique identifier for the audit log entry.
 	ID string `json:"id" gorm:"primaryKey"`
+	// UserID is the identifier of the user who performed the action.
+	UserID string `json:"userId" gorm:"index"`
 	// ActorID identifies the user or system principal that performed the action.
 	ActorID string `json:"actorId" gorm:"index"`
 	// Action is a string describing the action that was performed (e.g., "user.login", "policy.update").
@@ -25,6 +27,12 @@ type AuditLog struct {
 	Context JSONB `json:"context" gorm:"type:jsonb"`
 	// Timestamp is when the event occurred.
 	Timestamp time.Time `json:"timestamp"`
+	// CreatedAt is the timestamp of when the audit log was created.
+	CreatedAt time.Time `json:"createdAt"`
+	// IPAddress is the IP address of the user who performed the action.
+	IPAddress string `json:"ipAddress" gorm:"index"`
+	// UserAgent is the user agent of the user who performed the action.
+	UserAgent string `json:"userAgent"`
 }
 
 // PaginationQuery defines parameters for paginated list queries,

@@ -20,6 +20,30 @@ func (m *MockApplicationRepository) GetApplicationByClientID(ctx context.Context
 	return args.Get(0).(*types.Application), args.Error(1)
 }
 
+func (m *MockApplicationRepository) CreateApplication(ctx context.Context, app *types.Application) error {
+	return nil
+}
+
+func (m *MockApplicationRepository) GetApplicationByID(ctx context.Context, id string) (*types.Application, error) {
+	return nil, nil
+}
+
+func (m *MockApplicationRepository) GetApplicationByName(ctx context.Context, name string) (*types.Application, error) {
+	return nil, nil
+}
+
+func (m *MockApplicationRepository) UpdateApplication(ctx context.Context, app *types.Application) error {
+	return nil
+}
+
+func (m *MockApplicationRepository) DeleteApplication(ctx context.Context, id string) error {
+	return nil
+}
+
+func (m *MockApplicationRepository) ListApplications(ctx context.Context, pq types.PaginationQuery) ([]*types.Application, error) {
+	return nil, nil
+}
+
 func TestOAuthAdapter_HandleAuthRequest(t *testing.T) {
 	logger := utils.NewZapLoggerWrapper(zap.NewNop())
 	mockAppRepo := new(MockApplicationRepository)

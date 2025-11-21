@@ -80,50 +80,6 @@ func (m *MockMFARepository) CreateMFAVerificationLog(ctx context.Context, log *t
 	return args.Error(0)
 }
 
-type MockIdentityService struct {
-	mock.Mock
-}
-
-func (m *MockIdentityService) CreateUser(ctx context.Context, username, email, password string) (*types.User, error) {
-	args := m.Called(ctx, username, email, password)
-	return args.Get(0).(*types.User), args.Error(1)
-}
-
-func (m *MockIdentityService) GetUser(ctx context.Context, userID string) (*types.User, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).(*types.User), args.Error(1)
-}
-
-func (m *MockIdentityService) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	args := m.Called(ctx, username)
-	return args.Get(0).(*types.User), args.Error(1)
-}
-
-func (m *MockIdentityService) GetUserByID(ctx context.Context, id string) (*types.User, error) {
-	args := m.Called(ctx, id)
-	return args.Get(0).(*types.User), args.Error(1)
-}
-
-func (m *MockIdentityService) GetUserGroups(ctx context.Context, userID string) ([]*types.UserGroup, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]*types.UserGroup), args.Error(1)
-}
-
-func (m *MockIdentityService) AddUserToGroup(ctx context.Context, userID, groupID string) error {
-	args := m.Called(ctx, userID, groupID)
-	return args.Error(0)
-}
-
-func (m *MockIdentityService) ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error {
-	args := m.Called(ctx, userID, newStatus)
-	return args.Error(0)
-}
-
-func (m *MockIdentityService) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
-	args := m.Called(ctx, filter)
-	return args.Get(0).([]*types.User), args.Int(1), args.Error(2)
-}
-
 type MockSessionRepository struct {
 	mock.Mock
 }

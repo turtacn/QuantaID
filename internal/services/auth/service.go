@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/internal/storage/redis"
 	"github.com/turtacn/QuantaID/internal/services/audit"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/metrics"
@@ -124,4 +126,20 @@ func (s *ApplicationService) Logout(ctx context.Context, req LogoutRequest) *typ
 
 func (s *ApplicationService) VerifyMFAChallenge(ctx context.Context, req *types.VerifyMFARequest, serviceConfig auth.Config) (*types.AuthResult, error) {
 	return s.authDomain.VerifyMFAChallenge(ctx, req, serviceConfig)
+}
+
+func (s *ApplicationService) GetUserRepo() identity.UserRepository {
+	return s.authDomain.GetUserRepo()
+}
+
+func (s *ApplicationService) GetAppRepo() types.ApplicationRepository {
+	return s.authDomain.GetAppRepo()
+}
+
+func (s *ApplicationService) GetRedisClient() redis.RedisClientInterface {
+	return s.authDomain.GetRedisClient()
+}
+
+func (s *ApplicationService) GetCryptoManager() utils.CryptoManagerInterface {
+	return s.authDomain.GetCryptoManager()
 }

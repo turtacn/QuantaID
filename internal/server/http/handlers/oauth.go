@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
+	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/auth/protocols"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
@@ -16,10 +19,24 @@ type OAuthHandler struct {
 	logger       utils.Logger
 }
 
-// NewOAuthHandler creates a new OAuthHandler.
-func NewOAuthHandler(oauthAdapter *protocols.OAuthAdapter, logger utils.Logger) *OAuthHandler {
+// NewOAuthHandlers creates a new OAuthHandler.
+func NewOAuthHandlers(authService *auth_service.ApplicationService, identityService identity.IService, logger utils.Logger) *OAuthHandler {
+	logger.Info(context.Background(), "Creating new OAuth handlers",
+		zap.Any("authService", authService != nil),
+		zap.Any("identityService", identityService != nil),
+		zap.Any("userRepo", authService.GetUserRepo() != nil),
+		zap.Any("appRepo", authService.GetAppRepo() != nil),
+		zap.Any("redisClient", authService.GetRedisClient() != nil),
+		zap.Any("cryptoManager", authService.GetCryptoManager() != nil),
+	)
+	adapter := protocols.NewOAuthAdapter().(*protocols.OAuthAdapter)
+	adapter.SetUserRepo(authService.GetUserRepo())
+	adapter.SetAppRepo(authService.GetAppRepo())
+	adapter.SetRedis(authService.GetRedisClient())
+	adapter.SetOIDCAdapter(protocols.NewOIDCAdapter(authService.GetCryptoManager().(*utils.CryptoManager)))
+
 	return &OAuthHandler{
-		oauthAdapter: oauthAdapter,
+		oauthAdapter: adapter,
 		logger:       logger,
 	}
 }
@@ -75,4 +92,12 @@ func (h *OAuthHandler) Token(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *OAuthHandler) Discovery(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+func (h *OAuthHandler) JWKS(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
 }

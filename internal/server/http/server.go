@@ -30,6 +30,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/storage/memory"
 	"github.com/turtacn/QuantaID/internal/storage/postgresql"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
+	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -37,10 +38,12 @@ import (
 
 // Server encapsulates the HTTP server for the QuantaID API.
 type Server struct {
-	httpServer *http.Server
-	Router     *mux.Router
-	logger     utils.Logger
-	Services   Services
+	httpServer  *http.Server
+	Router      *mux.Router
+	logger      utils.Logger
+	Services    Services
+	db          *gorm.DB
+	redisClient redis.RedisClientInterface
 }
 
 // Config holds the configuration required for the HTTP server.
@@ -64,7 +67,7 @@ type Services struct {
 }
 
 // NewServer creates a new HTTP server instance.
-func NewServer(config Config, logger utils.Logger, services Services, appCfg *utils.Config) *Server {
+func NewServer(config Config, logger utils.Logger, services Services, appCfg *utils.Config, db *gorm.DB, redisClient redis.RedisClientInterface) *Server {
 	router := mux.NewRouter()
 	server := &Server{
 		Router: router,
@@ -75,7 +78,9 @@ func NewServer(config Config, logger utils.Logger, services Services, appCfg *ut
 			ReadTimeout:  config.ReadTimeout,
 			WriteTimeout: config.WriteTimeout,
 		},
-		Services: services,
+		Services:    services,
+		db:          db,
+		redisClient: redisClient,
 	}
 	server.registerRoutes(services, appCfg)
 	return server
@@ -89,6 +94,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	var tokenRepo auth.TokenRepository
 	var auditRepo auth.AuditLogRepository
 	var policyRepo policy.PolicyRepository
+	var appRepo types.ApplicationRepository
 	var db *gorm.DB
 	var err error
 	var redisClient redis.RedisClientInterface
@@ -119,6 +125,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		groupRepo = pgIdRepo
 		_, auditRepo = postgresql.NewPostgresAuthRepository(db)
 		policyRepo = postgresql.NewPostgresPolicyRepository(db)
+		appRepo = postgresql.NewPostgresApplicationRepository(db)
 
 		// Redis Connection
 		redisMetrics := metrics.NewRedisMetrics("quantid")
@@ -154,7 +161,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	mfaManager := &mfa.MFAManager{}
 	policyEngine := authorization.NewPolicyEngine(evaluator)
 
-	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, auditRepo, nil, cryptoManager, logger, riskEngine, policyEngine, mfaManager)
+	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, auditRepo, nil, cryptoManager, logger, riskEngine, policyEngine, mfaManager, appRepo, redisClient)
 	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
 
 	authAppService := auth_service.NewApplicationService(authDomainService, auditService, logger, auth_service.Config{
@@ -163,7 +170,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		SessionDuration:      time.Hour * 24,
 	}, tracer)
 
-	appService := application.NewApplicationService(postgresql.NewPostgresApplicationRepository(db), logger, cryptoManager)
+	appService := application.NewApplicationService(appRepo, logger, cryptoManager)
 	devCenterSvc := platform.NewDevCenterService(appService, nil, authzService, nil)
 
 	// Audit Logger
@@ -174,13 +181,14 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		IdentityService:       identityAppService,
 		AuthService:           authAppService,
 		AuthzService:          authzService,
+		AppService:            appService,
 		CryptoManager:         cryptoManager,
 		IdentityDomainService: identityDomainService,
 		DevCenterService:      devCenterSvc,
 		AuditLogger:           auditLogger,
 	}
 
-	return NewServer(httpCfg, logger, services, appCfg), nil
+	return NewServer(httpCfg, logger, services, appCfg, db, redisClient), nil
 }
 
 // registerRoutes sets up the API routes, their handlers, and associated middleware.
@@ -204,6 +212,12 @@ func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 
 	s.Router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
+	oauthHandlers := handlers.NewOAuthHandlers(services.AuthService, services.IdentityService, s.logger)
+	s.Router.HandleFunc("/oauth/authorize", oauthHandlers.Authorize).Methods("GET")
+	s.Router.HandleFunc("/oauth/token", oauthHandlers.Token).Methods("POST")
+	s.Router.HandleFunc("/.well-known/openid-configuration", oauthHandlers.Discovery).Methods("GET")
+	s.Router.HandleFunc("/.well-known/jwks.json", oauthHandlers.JWKS).Methods("GET")
+
 	apiV1 := s.Router.PathPrefix("/api/v1").Subrouter()
 	apiV1.HandleFunc("/auth/login", authHandlers.Login).Methods("POST")
 	apiV1.HandleFunc("/users", identityHandlers.CreateUser).Methods("POST")
@@ -226,10 +240,9 @@ func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 	devcenterRouter.Use(authMiddleware.Execute, devcenterAdminMiddleware.Execute)
 	devcenterHandlers.RegisterRoutes(devcenterRouter)
 
-	s.Router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}).Methods("GET")
+	// Health and readiness probes
+	s.Router.HandleFunc("/healthz", s.healthzHandler).Methods("GET")
+	s.Router.HandleFunc("/readyz", s.readyzHandler).Methods("GET")
 }
 
 // Start begins listening for and serving HTTP requests.
@@ -246,4 +259,42 @@ func (s *Server) Stop(ctx context.Context) {
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		s.logger.Error(ctx, "HTTP server graceful shutdown failed", zap.Error(err))
 	}
+}
+
+// healthzHandler is a liveness probe.
+func (s *Server) healthzHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("OK"))
+}
+
+// readyzHandler is a readiness probe.
+func (s *Server) readyzHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	// Check DB connection if it exists
+	if s.db != nil {
+		sqlDB, err := s.db.DB()
+		if err != nil {
+			http.Error(w, "failed to get database connection pool", http.StatusInternalServerError)
+			return
+		}
+		if err := sqlDB.PingContext(ctx); err != nil {
+			s.logger.Error(ctx, "database ping failed for readiness probe", zap.Error(err))
+			http.Error(w, "database unavailable", http.StatusServiceUnavailable)
+			return
+		}
+	}
+
+	// Check Redis connection if it exists
+	if s.redisClient != nil {
+		if err := s.redisClient.HealthCheck(ctx); err != nil {
+			s.logger.Error(ctx, "redis health check failed for readiness probe", zap.Error(err))
+			http.Error(w, "redis unavailable", http.StatusServiceUnavailable)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("OK"))
 }

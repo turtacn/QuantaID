@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"errors"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
@@ -54,11 +55,20 @@ func (s *service) CreateUser(ctx context.Context, username, email, password stri
 		return nil, types.ErrValidation.WithDetails(map[string]string{"field": "username/email/password", "error": "cannot be empty"})
 	}
 
-	if existing, _ := s.userRepo.GetUserByUsername(ctx, username); existing != nil {
+	_, err := s.userRepo.GetUserByUsername(ctx, username)
+	if err == nil {
 		return nil, types.ErrConflict.WithDetails(map[string]string{"field": "username", "value": username})
+	} else if !errors.Is(err, types.ErrUserNotFound) {
+		s.logger.Error(ctx, "failed to check for existing user by username", zap.Error(err))
+		return nil, types.ErrInternal.WithCause(err)
 	}
-	if existing, _ := s.userRepo.GetUserByEmail(ctx, email); existing != nil {
+
+	_, err = s.userRepo.GetUserByEmail(ctx, email)
+	if err == nil {
 		return nil, types.ErrConflict.WithDetails(map[string]string{"field": "email", "value": email})
+	} else if !errors.Is(err, types.ErrUserNotFound) {
+		s.logger.Error(ctx, "failed to check for existing user by email", zap.Error(err))
+		return nil, types.ErrInternal.WithCause(err)
 	}
 
 	hashedPassword, err := s.crypto.HashPassword(password)
@@ -214,3 +224,6 @@ func (s *service) ChangeUserStatus(ctx context.Context, userID string, newStatus
 	return nil
 }
 
+func (s *service) GetUserRepo() UserRepository {
+	return s.userRepo
+}

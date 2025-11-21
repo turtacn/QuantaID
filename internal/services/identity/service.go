@@ -29,8 +29,8 @@ type CreateUserRequest struct {
 }
 
 // CreateUser handles the user creation use case.
-func (s *ApplicationService) CreateUser(ctx context.Context, req CreateUserRequest) (*types.User, *types.Error) {
-	user, err := s.identityDomain.CreateUser(ctx, req.Username, req.Email, req.Password)
+func (s *ApplicationService) CreateUser(ctx context.Context, username, email, password string) (*types.User, error) {
+	user, err := s.identityDomain.CreateUser(ctx, username, email, password)
 	if err != nil {
 		if appErr, ok := err.(*types.Error); ok {
 			return nil, appErr
@@ -43,7 +43,7 @@ func (s *ApplicationService) CreateUser(ctx context.Context, req CreateUserReque
 }
 
 // GetUserByID handles the use case of retrieving a single user.
-func (s *ApplicationService) GetUserByID(ctx context.Context, userID string) (*types.User, *types.Error) {
+func (s *ApplicationService) GetUserByID(ctx context.Context, userID string) (*types.User, error) {
 	user, err := s.identityDomain.GetUser(ctx, userID)
 	if err != nil {
 		if appErr, ok := err.(*types.Error); ok {
@@ -63,8 +63,46 @@ type AddUserToGroupRequest struct {
 }
 
 // AddUserToGroup handles the use case of adding a user to a group.
-func (s *ApplicationService) AddUserToGroup(ctx context.Context, req AddUserToGroupRequest) *types.Error {
-	err := s.identityDomain.AddUserToGroup(ctx, req.UserID, req.GroupID)
+func (s *ApplicationService) AddUserToGroup(ctx context.Context, userID, groupID string) error {
+	err := s.identityDomain.AddUserToGroup(ctx, userID, groupID)
+	if err != nil {
+		if appErr, ok := err.(*types.Error); ok {
+			return appErr
+		}
+		return types.ErrInternal.WithCause(err)
+	}
+	return nil
+}
+
+func (s *ApplicationService) GetUser(ctx context.Context, userID string) (*types.User, error) {
+	return s.identityDomain.GetUser(ctx, userID)
+}
+
+func (s *ApplicationService) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	return s.identityDomain.GetUserByUsername(ctx, username)
+}
+
+func (s *ApplicationService) GetUserGroups(ctx context.Context, userID string) ([]*types.UserGroup, error) {
+	return s.identityDomain.GetUserGroups(ctx, userID)
+}
+
+func (s *ApplicationService) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
+	return s.identityDomain.ListUsers(ctx, filter)
+}
+
+func (s *ApplicationService) GetUserRepo() identity.UserRepository {
+	return s.identityDomain.GetUserRepo()
+}
+
+// ChangeUserStatusRequest defines the request structure for changing a user's status.
+type ChangeUserStatusRequest struct {
+	UserID    string           `json:"userId"`
+	NewStatus types.UserStatus `json:"newStatus"`
+}
+
+// ChangeUserStatus handles the use case of changing a user's status.
+func (s *ApplicationService) ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error {
+	err := s.identityDomain.ChangeUserStatus(ctx, userID, newStatus)
 	if err != nil {
 		if appErr, ok := err.(*types.Error); ok {
 			return appErr

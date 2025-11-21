@@ -54,3 +54,10 @@ func (r *PostgresApplicationRepository) ListApplications(ctx context.Context, pq
 	err := r.db.WithContext(ctx).Offset(pq.Offset).Limit(pq.PageSize).Find(&apps).Error
 	return apps, err
 }
+
+// GetApplicationByClientID retrieves an application by its client ID from the database.
+func (r *PostgresApplicationRepository) GetApplicationByClientID(ctx context.Context, clientID string) (*types.Application, error) {
+	var app types.Application
+	err := r.db.WithContext(ctx).First(&app, "id = ?", clientID).Error
+	return &app, err
+}

@@ -41,9 +41,13 @@ func (h *IdentityHandlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, appErr := h.identityService.CreateUser(r.Context(), req)
-	if appErr != nil {
-		WriteJSONError(w, appErr, appErr.HttpStatus)
+	user, err := h.identityService.CreateUser(r.Context(), req.Username, req.Email, req.Password)
+	if err != nil {
+		if appErr, ok := err.(*types.Error); ok {
+			WriteJSONError(w, appErr, appErr.HttpStatus)
+		} else {
+			WriteJSONError(w, types.ErrInternal.WithCause(err), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -61,9 +65,13 @@ func (h *IdentityHandlers) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, appErr := h.identityService.GetUserByID(r.Context(), userID)
-	if appErr != nil {
-		WriteJSONError(w, appErr, appErr.HttpStatus)
+	user, err := h.identityService.GetUserByID(r.Context(), userID)
+	if err != nil {
+		if appErr, ok := err.(*types.Error); ok {
+			WriteJSONError(w, appErr, appErr.HttpStatus)
+		} else {
+			WriteJSONError(w, types.ErrInternal.WithCause(err), http.StatusInternalServerError)
+		}
 		return
 	}
 

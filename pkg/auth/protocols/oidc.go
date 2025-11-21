@@ -24,7 +24,7 @@ type OIDCAdapter struct {
 }
 
 // NewOIDCAdapter is the factory function for this plugin.
-func NewOIDCAdapter() plugins.IPlugin {
+func NewOIDCAdapter(crypto *utils.CryptoManager) *OIDCAdapter {
 	return &OIDCAdapter{
 		BasePlugin: plugins.BasePlugin{
 			PluginName: "oidc_adapter",

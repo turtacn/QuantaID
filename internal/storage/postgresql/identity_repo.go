@@ -2,10 +2,11 @@ package postgresql
 
 import (
 	"context"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
+	"errors"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/types"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type PostgresIdentityRepository struct {
@@ -29,12 +30,24 @@ func (r *PostgresIdentityRepository) GetUserByID(ctx context.Context, id string)
 func (r *PostgresIdentityRepository) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
 	var user types.User
 	err := r.db.WithContext(ctx).First(&user, "username = ?", username).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, types.ErrUserNotFound
+		}
+		return nil, err
+	}
 	return &user, err
 }
 
 func (r *PostgresIdentityRepository) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
 	var user types.User
 	err := r.db.WithContext(ctx).First(&user, "email = ?", email).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, types.ErrUserNotFound
+		}
+		return nil, err
+	}
 	return &user, err
 }
 

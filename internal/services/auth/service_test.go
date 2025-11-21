@@ -11,6 +11,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/config"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"github.com/turtacn/QuantaID/tests/testutils"
@@ -29,7 +30,7 @@ func (m *MockPolicyEngine) Decide(level auth.RiskLevel, ac auth.AuthContext) str
 }
 
 func TestApplicationService_Login(t *testing.T) {
-	identityService := new(testutils.MockIdentityService)
+	identityService := new(identity.MockIService)
 	sessionRepo := new(testutils.MockSessionRepository)
 	tokenRepo := new(testutils.MockTokenRepository)
 	auditRepo := new(testutils.MockAuditLogRepository)
@@ -53,6 +54,8 @@ func TestApplicationService_Login(t *testing.T) {
 		riskEngine,
 		policyEngine,
 		mfaManager,
+		nil,
+		redisClient,
 	)
 	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger, &testutils.MockSink{})
 	auditService := audit.NewService(auditPipeline)

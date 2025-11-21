@@ -32,7 +32,7 @@ QuantaID revolutionizes enterprise identity management by providing a **lightwei
 
 ## ✨ Getting Started: 5-Minute Tutorial
 
-Get a feel for QuantaID by running the server and interacting with the API.
+For a complete guide on how to deploy and run QuantaID, please see the [Deployment Guide](docs/deployment_guide.md).
 
 ### 1. Run the Server
 

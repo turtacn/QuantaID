@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"github.com/turtacn/QuantaID/internal/domain/application"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 )
@@ -10,13 +9,13 @@ import (
 // ApplicationService provides application-level use cases for managing applications.
 // It acts as a facade over the application domain repository.
 type ApplicationService struct {
-	appRepo application.Repository
+	appRepo types.ApplicationRepository
 	logger  utils.Logger
 	crypto  *utils.CryptoManager
 }
 
 // NewApplicationService creates a new application service.
-func NewApplicationService(appRepo application.Repository, logger utils.Logger, crypto *utils.CryptoManager) *ApplicationService {
+func NewApplicationService(appRepo types.ApplicationRepository, logger utils.Logger, crypto *utils.CryptoManager) *ApplicationService {
 	return &ApplicationService{
 		appRepo: appRepo,
 		logger:  logger,

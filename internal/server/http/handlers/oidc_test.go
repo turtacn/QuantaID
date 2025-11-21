@@ -35,11 +35,12 @@ func init() {
 func TestOIDCHandler_Discovery(t *testing.T) {
 	// Arrange
 	logger := utils.NewNoopLogger()
-	adapter := protocols.NewOIDCAdapter()
+	crypto := utils.NewCryptoManager("test-secret")
+	adapter := protocols.NewOIDCAdapter(crypto)
 	adapter.Initialize(context.Background(), types.ConnectorConfig{
 		PrivateKey: testPrivateKey,
 	}, logger)
-	handler := NewOIDCHandler(adapter.(*protocols.OIDCAdapter), logger, "http://localhost:8080")
+	handler := NewOIDCHandler(adapter, logger, "http://localhost:8080")
 	req, err := http.NewRequest("GET", "/.well-known/openid-configuration", nil)
 	assert.NoError(t, err)
 	rr := httptest.NewRecorder()
@@ -59,11 +60,12 @@ func TestOIDCHandler_Discovery(t *testing.T) {
 func TestOIDCHandler_JWKS(t *testing.T) {
 	// Arrange
 	logger := utils.NewNoopLogger()
-	adapter := protocols.NewOIDCAdapter()
+	crypto := utils.NewCryptoManager("test-secret")
+	adapter := protocols.NewOIDCAdapter(crypto)
 	adapter.Initialize(context.Background(), types.ConnectorConfig{
 		PrivateKey: testPrivateKey,
 	}, logger)
-	handler := NewOIDCHandler(adapter.(*protocols.OIDCAdapter), logger, "http://localhost:8080")
+	handler := NewOIDCHandler(adapter, logger, "http://localhost:8080")
 	req, err := http.NewRequest("GET", "/.well-known/jwks.json", nil)
 	assert.NoError(t, err)
 	rr := httptest.NewRecorder()

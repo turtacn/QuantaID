@@ -26,4 +26,5 @@ type IService interface {
 	ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error
 	// ListUsers retrieves a paginated list of users, with optional filtering.
 	ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error)
+	GetUserRepo() UserRepository
 }

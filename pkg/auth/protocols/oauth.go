@@ -57,6 +57,9 @@ func (a *OAuthAdapter) Initialize(ctx context.Context, config types.ConnectorCon
 
 // HandleAuthRequest processes an incoming OAuth 2.1 authentication request.
 func (a *OAuthAdapter) HandleAuthRequest(ctx context.Context, request *types.AuthRequest) (*types.AuthResponse, error) {
+	if a.appRepo == nil {
+		panic("OAuthAdapter.appRepo is nil in HandleAuthRequest")
+	}
 	oauthRequest := request.Credentials
 	a.logger.Info(ctx, "handling auth request", zap.Any("request", oauthRequest))
 	if oauthRequest["response_type"] != "code" {

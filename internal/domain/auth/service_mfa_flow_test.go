@@ -41,7 +41,7 @@ func TestLoginWithPassword_NoMFAForLowRisk(t *testing.T) {
 	mockLogger := new(utils.MockLogger)
 	mockCrypto := new(utils.MockCryptoManager)
 
-	service := NewService(mockIdentityService, mockSessionRepo, mockTokenRepo, mockAuditRepo, nil, mockCrypto, mockLogger, mockRiskEngine, mockPolicyEngine, nil)
+	service := NewService(mockIdentityService, mockSessionRepo, mockTokenRepo, mockAuditRepo, nil, mockCrypto, mockLogger, mockRiskEngine, mockPolicyEngine, nil, nil, nil)
 
 	user := &types.User{ID: "user1", Username: "test", Password: "hashed_password", Status: types.UserStatusActive}
 	mockIdentityService.On("GetUserByUsername", mock.Anything, "test").Return(user, nil)
@@ -71,7 +71,7 @@ func TestLoginWithPassword_ReturnMFAChallengeForMediumRisk(t *testing.T) {
 	mockLogger := new(utils.MockLogger)
 	mockCrypto := new(utils.MockCryptoManager)
 
-	service := NewService(mockIdentityService, nil, nil, nil, nil, mockCrypto, mockLogger, mockRiskEngine, mockPolicyEngine, nil)
+	service := NewService(mockIdentityService, nil, nil, nil, nil, mockCrypto, mockLogger, mockRiskEngine, mockPolicyEngine, nil, nil, nil)
 
 	user := &types.User{ID: "user1", Username: "test", Password: "hashed_password", Status: types.UserStatusActive}
 	mockIdentityService.On("GetUserByUsername", mock.Anything, "test").Return(user, nil)
@@ -97,7 +97,7 @@ func TestVerifyMFAChallenge_SuccessCreatesSessionAndTokens(t *testing.T) {
 	mockLogger := new(utils.MockLogger)
 	mockCrypto := new(utils.MockCryptoManager)
 
-	service := NewService(mockIdentityService, mockSessionRepo, mockTokenRepo, mockAuditRepo, nil, mockCrypto, mockLogger, nil, nil, nil)
+	service := NewService(mockIdentityService, mockSessionRepo, mockTokenRepo, mockAuditRepo, nil, mockCrypto, mockLogger, nil, nil, nil, nil, nil)
 
 	user := &types.User{ID: "user1", Username: "test"}
 	mockIdentityService.On("GetUserByID", mock.Anything, "user1").Return(user, nil)

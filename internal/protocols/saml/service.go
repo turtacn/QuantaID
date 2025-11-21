@@ -7,8 +7,8 @@ import (
 	"net/url"
 
 	"github.com/crewjam/saml"
-	"github.com/turtacn/QuantaID/internal/domain/application"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 )
 
@@ -16,7 +16,7 @@ import (
 // and implements the necessary provider interfaces.
 type Service struct {
 	logger         utils.Logger
-	appRepo        application.Repository
+	appRepo        types.ApplicationRepository
 	identityDomain identity.IService
 	crypto         *utils.CryptoManager
 	IDP            *saml.IdentityProvider
@@ -25,7 +25,7 @@ type Service struct {
 // NewService creates a new SAML protocol service and configures the underlying IdP.
 func NewService(
 	logger utils.Logger,
-	appRepo application.Repository,
+	appRepo types.ApplicationRepository,
 	identityDomain identity.IService,
 	crypto *utils.CryptoManager,
 	idpKey *rsa.PrivateKey,

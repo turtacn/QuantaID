@@ -33,7 +33,13 @@ type Application struct {
 
 // ApplicationRepository defines the interface for application persistence.
 type ApplicationRepository interface {
+	CreateApplication(ctx context.Context, app *Application) error
+	GetApplicationByID(ctx context.Context, id string) (*Application, error)
 	GetApplicationByClientID(ctx context.Context, clientID string) (*Application, error)
+	GetApplicationByName(ctx context.Context, name string) (*Application, error)
+	UpdateApplication(ctx context.Context, app *Application) error
+	DeleteApplication(ctx context.Context, id string) error
+	ListApplications(ctx context.Context, pq PaginationQuery) ([]*Application, error)
 }
 
 // ApplicationStatus defines the possible states of an application.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/internal/storage/redis"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
@@ -23,6 +24,8 @@ type Service struct {
 	riskEngine        RiskEngine
 	policyEngine      PolicyEngine
 	mfaManager        *mfa.MFAManager
+	appRepo           types.ApplicationRepository
+	redisClient       redis.RedisClientInterface
 }
 
 // Config holds configuration for the auth service, specifically token and session lifetimes.
@@ -52,6 +55,8 @@ func NewService(
 	riskEngine RiskEngine,
 	policyEngine PolicyEngine,
 	mfaManager *mfa.MFAManager,
+	appRepo types.ApplicationRepository,
+	redisClient redis.RedisClientInterface,
 ) *Service {
 	return &Service{
 		identityService:   identityService,
@@ -64,7 +69,29 @@ func NewService(
 		riskEngine:        riskEngine,
 		policyEngine:      policyEngine,
 		mfaManager:        mfaManager,
+		appRepo:           appRepo,
+		redisClient:       redisClient,
 	}
+}
+
+// GetUserRepo returns the user repository.
+func (s *Service) GetUserRepo() identity.UserRepository {
+	return s.identityService.GetUserRepo()
+}
+
+// GetAppRepo returns the application repository.
+func (s *Service) GetAppRepo() types.ApplicationRepository {
+	return s.appRepo
+}
+
+// GetRedisClient returns the redis client.
+func (s *Service) GetRedisClient() redis.RedisClientInterface {
+	return s.redisClient
+}
+
+// GetCryptoManager returns the crypto manager.
+func (s *Service) GetCryptoManager() utils.CryptoManagerInterface {
+	return s.crypto
 }
 
 // LoginWithPassword handles the traditional username and password authentication flow.

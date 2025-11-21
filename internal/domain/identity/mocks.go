@@ -6,7 +6,6 @@ import (
 	"github.com/turtacn/QuantaID/pkg/types"
 )
 
-// MockIService is a mock implementation of the IService interface for testing.
 type MockIService struct {
 	mock.Mock
 }
@@ -21,13 +20,13 @@ func (m *MockIService) GetUser(ctx context.Context, userID string) (*types.User,
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
-func (m *MockIService) GetUserByID(ctx context.Context, userID string) (*types.User, error) {
-	args := m.Called(ctx, userID)
+func (m *MockIService) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	args := m.Called(ctx, username)
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
-func (m *MockIService) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	args := m.Called(ctx, username)
+func (m *MockIService) GetUserByID(ctx context.Context, id string) (*types.User, error) {
+	args := m.Called(ctx, id)
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
@@ -49,4 +48,8 @@ func (m *MockIService) ChangeUserStatus(ctx context.Context, userID string, newS
 func (m *MockIService) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).([]*types.User), args.Int(1), args.Error(2)
+}
+
+func (m *MockIService) GetUserRepo() UserRepository {
+	return nil
 }
