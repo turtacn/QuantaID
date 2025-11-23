@@ -107,3 +107,23 @@ func (w *RedisClientWrapper) HealthCheck(ctx context.Context) error {
 func (w *RedisClientWrapper) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
 	return w.client.SetNX(ctx, key, value, expiration)
 }
+
+// HMSet sets the specified fields to their respective values in the hash stored at key.
+func (w *RedisClientWrapper) HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd {
+	return w.client.HMSet(ctx, key, values...)
+}
+
+// HGetAll returns all fields and values of the hash stored at key.
+func (w *RedisClientWrapper) HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd {
+	return w.client.HGetAll(ctx, key)
+}
+
+// Expire sets a timeout on key.
+func (w *RedisClientWrapper) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+	return w.client.Expire(ctx, key, expiration)
+}
+
+// SIsMember checks if a member exists in a set.
+func (w *RedisClientWrapper) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
+	return w.client.SIsMember(ctx, key, member)
+}

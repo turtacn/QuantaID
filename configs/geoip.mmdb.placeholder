@@ -1,0 +1,3 @@
+# This file is a placeholder for the MaxMind GeoLite2 City database.
+# In a real deployment, you would download the actual .mmdb file here.
+# For testing purposes, the code should handle the absence of this file gracefully or use a mock.

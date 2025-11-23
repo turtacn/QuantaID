@@ -323,3 +323,18 @@ func (rc *redisClient) SIsMember(ctx context.Context, key string, member interfa
 func (rc *redisClient) Exists(ctx context.Context, keys ...string) (int64, error) {
 	return rc.client.Exists(ctx, keys...).Result()
 }
+
+// HMSet sets the specified fields to their respective values in the hash stored at key.
+func (rc *redisClient) HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd {
+	return rc.client.HMSet(ctx, key, values...)
+}
+
+// HGetAll returns all fields and values of the hash stored at key.
+func (rc *redisClient) HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd {
+	return rc.client.HGetAll(ctx, key)
+}
+
+// Expire sets a timeout on key.
+func (rc *redisClient) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+	return rc.client.Expire(ctx, key, expiration)
+}

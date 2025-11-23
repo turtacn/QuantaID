@@ -29,6 +29,11 @@ type RedisClientInterface interface {
 	SetEx(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Exists(ctx context.Context, keys ...string) (int64, error)
 	SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd
+
+	// Added for GeoManager
+	HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd
+	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
+	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
 }
 
 // UUIDGenerator generates a new UUID.
