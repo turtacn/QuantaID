@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/turtacn/QuantaID/internal/storage/postgresql/types"
 	"time"
 )
 
@@ -12,9 +13,9 @@ type User struct {
 	// Username is the unique name used for logging in.
 	Username string `json:"username" gorm:"uniqueIndex;not null"`
 	// Email is the user's email address, also used for communication and recovery.
-	Email string `json:"email" gorm:"uniqueIndex"`
+	Email types.EncryptedString `json:"email" gorm:"uniqueIndex"`
 	// Phone is the user's phone number.
-	Phone string `json:"phone,omitempty" gorm:"index"`
+	Phone types.EncryptedString `json:"phone,omitempty" gorm:"index"`
 	// Password is the hashed password of the user. It is not exposed in API responses.
 	Password string `json:"-" gorm:"not null"`
 	// Status indicates the current state of the user's account.

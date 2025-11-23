@@ -60,9 +60,14 @@ type Config struct {
 	Redis        RedisConfig        `mapstructure:"redis"`
 	Security     SecurityConfig     `mapstructure:"security"`
 	Storage      StorageConfig      `mapstructure:"storage"`
+	DataEncryption DataEncryptionConfig `mapstructure:"data_encryption"`
 	Audit        AuditConfig        `mapstructure:"audit"`
 	Metrics      MetricsConfig      `mapstructure:"metrics"`
 	Notification NotificationConfig `mapstructure:"notification"`
+}
+
+type DataEncryptionConfig struct {
+	Key string `mapstructure:"key"`
 }
 
 type AuditConfig struct {

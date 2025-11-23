@@ -10,6 +10,8 @@ import (
 
 	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/server/http"
+	"github.com/turtacn/QuantaID/internal/storage/postgresql/types"
+	"github.com/turtacn/QuantaID/pkg/kms/local"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
 )
@@ -36,6 +38,20 @@ func main() {
 
 	// Initialize CryptoManager
 	cryptoManager := utils.NewCryptoManager("your-jwt-secret") // Use a real secret from config in production
+
+	// Initialize Data Encryption (KMS)
+	if appCfg.DataEncryption.Key != "" {
+		kmsProvider, err := local.New(appCfg.DataEncryption.Key)
+		if err != nil {
+			logger.Error(context.Background(), "Failed to initialize KMS", zap.Error(err))
+			os.Exit(1)
+		}
+		types.SetGlobalKMS(kmsProvider)
+	} else {
+		// Warn if no key is provided, but allow running if FLE is not used (or for initial setup)
+		// However, types.EncryptedString will fail if used.
+		logger.Warn(context.Background(), "Data Encryption Key not configured. Encrypted fields will cause errors.")
+	}
 
 	// Create server with config
 	httpCfg := http.Config{
