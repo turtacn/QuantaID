@@ -24,7 +24,20 @@ type IService interface {
 	AddUserToGroup(ctx context.Context, userID, groupID string) error
 	// ChangeUserStatus updates the status of a user's account (e.g., active, locked).
 	ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error
+	// UpdateUser updates an existing user's details.
+	UpdateUser(ctx context.Context, user *types.User) error
+	// DeleteUser deletes a user by their unique ID.
+	DeleteUser(ctx context.Context, userID string) error
 	// ListUsers retrieves a paginated list of users, with optional filtering.
 	ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error)
 	GetUserRepo() UserRepository
+	// GetUserByExternalID retrieves a user by their external ID.
+	GetUserByExternalID(ctx context.Context, externalID string) (*types.User, error)
+
+	// Group Management
+	CreateGroup(ctx context.Context, group *types.UserGroup) error
+	GetGroup(ctx context.Context, groupID string) (*types.UserGroup, error)
+	UpdateGroup(ctx context.Context, group *types.UserGroup) error
+	DeleteGroup(ctx context.Context, groupID string) error
+	ListGroups(ctx context.Context, offset, limit int) ([]*types.UserGroup, error)
 }

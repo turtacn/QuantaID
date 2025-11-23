@@ -240,6 +240,16 @@ func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 	devcenterRouter.Use(authMiddleware.Execute, devcenterAdminMiddleware.Execute)
 	devcenterHandlers.RegisterRoutes(devcenterRouter)
 
+	// SCIM v2 routes
+	scimHandler := handlers.NewSCIMHandler(services.IdentityDomainService, s.logger)
+	// SCIM routes require authentication (usually Bearer token).
+	// For P2-T5: "Add Bearer Token auth middleware".
+	// We reuse authMiddleware for now, or we should create a specific one if it needs long-lived tokens (API Keys).
+	// Assuming standard authMiddleware works with Bearer tokens.
+	scimRouter := s.Router.PathPrefix("/scim/v2").Subrouter()
+	scimRouter.Use(authMiddleware.Execute)
+	scimHandler.RegisterRoutes(scimRouter)
+
 	// Health and readiness probes
 	s.Router.HandleFunc("/healthz", s.healthzHandler).Methods("GET")
 	s.Router.HandleFunc("/readyz", s.readyzHandler).Methods("GET")

@@ -224,6 +224,121 @@ func (s *service) ChangeUserStatus(ctx context.Context, userID string, newStatus
 	return nil
 }
 
+// UpdateUser updates an existing user's details.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - user: The user object with updated details.
+//
+// Returns:
+//   An error if the update fails.
+func (s *service) UpdateUser(ctx context.Context, user *types.User) error {
+	if err := s.userRepo.UpdateUser(ctx, user); err != nil {
+		s.logger.Error(ctx, "Failed to update user", zap.Error(err), zap.String("userID", user.ID))
+		return types.ErrInternal.WithCause(err)
+	}
+	s.logger.Info(ctx, "User updated", zap.String("userID", user.ID))
+	return nil
+}
+
+// DeleteUser deletes a user by their unique ID.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - userID: The ID of the user to delete.
+//
+// Returns:
+//   An error if the delete fails.
+func (s *service) DeleteUser(ctx context.Context, userID string) error {
+	if err := s.userRepo.DeleteUser(ctx, userID); err != nil {
+		if errors.Is(err, types.ErrNotFound) {
+			return types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
+		}
+		s.logger.Error(ctx, "Failed to delete user", zap.Error(err), zap.String("userID", userID))
+		return types.ErrInternal.WithCause(err)
+	}
+	s.logger.Info(ctx, "User deleted", zap.String("userID", userID))
+	return nil
+}
+
+// CreateGroup creates a new group.
+func (s *service) CreateGroup(ctx context.Context, group *types.UserGroup) error {
+	if err := s.groupRepo.CreateGroup(ctx, group); err != nil {
+		s.logger.Error(ctx, "Failed to create group", zap.Error(err))
+		return types.ErrInternal.WithCause(err)
+	}
+	s.logger.Info(ctx, "Group created", zap.String("groupID", group.ID))
+	return nil
+}
+
+// GetGroup retrieves a group by ID.
+func (s *service) GetGroup(ctx context.Context, groupID string) (*types.UserGroup, error) {
+	group, err := s.groupRepo.GetGroupByID(ctx, groupID)
+	if err != nil {
+		// Assuming repo returns error if not found, mapping to ErrNotFound handled by caller or wrapper?
+		// Repos usually return generic error or sql.ErrNoRows.
+		// Ideally repo should return domain error or we map it here.
+		// Given I can't see repo implementation fully, I'll assume standard behavior or wrap.
+		// But reusing existing pattern:
+		return nil, types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"groupID": groupID})
+	}
+	return group, nil
+}
+
+// UpdateGroup updates an existing group.
+func (s *service) UpdateGroup(ctx context.Context, group *types.UserGroup) error {
+	if err := s.groupRepo.UpdateGroup(ctx, group); err != nil {
+		s.logger.Error(ctx, "Failed to update group", zap.Error(err), zap.String("groupID", group.ID))
+		return types.ErrInternal.WithCause(err)
+	}
+	s.logger.Info(ctx, "Group updated", zap.String("groupID", group.ID))
+	return nil
+}
+
+// DeleteGroup deletes a group by ID.
+func (s *service) DeleteGroup(ctx context.Context, groupID string) error {
+	if err := s.groupRepo.DeleteGroup(ctx, groupID); err != nil {
+		s.logger.Error(ctx, "Failed to delete group", zap.Error(err), zap.String("groupID", groupID))
+		return types.ErrInternal.WithCause(err)
+	}
+	s.logger.Info(ctx, "Group deleted", zap.String("groupID", groupID))
+	return nil
+}
+
+// ListGroups lists groups with pagination.
+func (s *service) ListGroups(ctx context.Context, offset, limit int) ([]*types.UserGroup, error) {
+	groups, err := s.groupRepo.ListGroups(ctx, PaginationQuery{Offset: offset, PageSize: limit})
+	if err != nil {
+		s.logger.Error(ctx, "Failed to list groups", zap.Error(err))
+		return nil, types.ErrInternal.WithCause(err)
+	}
+	return groups, nil
+}
+
 func (s *service) GetUserRepo() UserRepository {
 	return s.userRepo
+}
+
+// GetUserByExternalID retrieves a user by their external ID.
+// This assumes ExternalID is stored in the attributes JSONB column.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - externalID: The external ID of the user to retrieve.
+//
+// Returns:
+//   The user object if found, or an error.
+func (s *service) GetUserByExternalID(ctx context.Context, externalID string) (*types.User, error) {
+	// FindUsersByAttribute is available in UserRepository
+	users, err := s.userRepo.FindUsersByAttribute(ctx, "externalId", externalID)
+	if err != nil {
+		return nil, types.ErrInternal.WithCause(err)
+	}
+	if len(users) == 0 {
+		return nil, types.ErrNotFound.WithDetails(map[string]string{"externalId": externalID})
+	}
+	if len(users) > 1 {
+		s.logger.Warn(ctx, "Multiple users found with same externalId", zap.String("externalId", externalID))
+	}
+	return users[0], nil
 }

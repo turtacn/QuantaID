@@ -104,6 +104,26 @@ func (cm *CryptoManager) HashPassword(password string) (string, error) {
 	return string(bytes), nil
 }
 
+// GenerateRandomString generates a cryptographically secure random string of specified length.
+// It uses a predefined set of characters including uppercase, lowercase, digits, and special symbols.
+func GenerateRandomString(length int) (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+"
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	for i, b := range bytes {
+		bytes[i] = charset[b%byte(len(charset))]
+	}
+	return string(bytes), nil
+}
+
+// GenerateUUID generates a new version 4 UUID as a string.
+// Used when CryptoManager instance is not available (e.g., simple helpers)
+func GenerateUUID() string {
+	return uuid.New().String()
+}
+
 // CheckPasswordHash compares a plain-text password with a bcrypt hash to see if they match.
 //
 // Parameters:
