@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/turtacn/QuantaID/internal/config"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
+	"github.com/turtacn/QuantaID/pkg/notification/smtp"
 	"go.uber.org/zap"
 	"strings"
 )
@@ -41,14 +42,27 @@ type StorageConfig struct {
 	Mode string `mapstructure:"mode"` // "postgres" / "memory"
 }
 
+// NotificationConfig holds configuration for notifications
+type NotificationConfig struct {
+	SMTP smtp.SMTPConfig `mapstructure:"smtp"`
+	SMS  SMSConfig       `mapstructure:"sms"`
+}
+
+// SMSConfig holds configuration for SMS (Placeholder for now as per instructions)
+type SMSConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Provider string `mapstructure:"provider"`
+}
+
 // Config holds all configuration for the application.
 type Config struct {
-	Postgres PostgresConfig `mapstructure:"postgres"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	Security SecurityConfig `mapstructure:"security"`
-	Storage  StorageConfig  `mapstructure:"storage"`
-	Audit    AuditConfig    `mapstructure:"audit"`
-	Metrics  MetricsConfig  `mapstructure:"metrics"`
+	Postgres     PostgresConfig     `mapstructure:"postgres"`
+	Redis        RedisConfig        `mapstructure:"redis"`
+	Security     SecurityConfig     `mapstructure:"security"`
+	Storage      StorageConfig      `mapstructure:"storage"`
+	Audit        AuditConfig        `mapstructure:"audit"`
+	Metrics      MetricsConfig      `mapstructure:"metrics"`
+	Notification NotificationConfig `mapstructure:"notification"`
 }
 
 type AuditConfig struct {
