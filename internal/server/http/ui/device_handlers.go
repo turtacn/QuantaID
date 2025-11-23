@@ -7,7 +7,6 @@ import (
 	"github.com/mssola/user_agent"
 	"github.com/turtacn/QuantaID/internal/server/middleware"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
-	"github.com/turtacn/QuantaID/pkg/types"
 	"go.uber.org/zap"
 )
 

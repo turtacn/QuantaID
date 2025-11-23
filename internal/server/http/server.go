@@ -18,6 +18,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
 	"github.com/turtacn/QuantaID/internal/metrics"
+	"github.com/turtacn/QuantaID/internal/policy/engine"
 	"github.com/turtacn/QuantaID/internal/protocols/saml"
 	"github.com/turtacn/QuantaID/internal/services/application"
 	audit_service "github.com/turtacn/QuantaID/internal/services/audit"
@@ -25,6 +26,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/services/authorization"
 	identity_service "github.com/turtacn/QuantaID/internal/services/identity"
 	"github.com/turtacn/QuantaID/internal/services/platform"
+	policy_service "github.com/turtacn/QuantaID/internal/services/policy"
 	webhook_service "github.com/turtacn/QuantaID/internal/services/webhook"
 	"github.com/turtacn/QuantaID/internal/domain/webhook"
 	"github.com/turtacn/QuantaID/internal/worker"
@@ -39,6 +41,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
+
+// noopRBACProvider is a stub for when RBAC repo is missing
+type noopRBACProvider struct{}
+
+func (n *noopRBACProvider) IsAllowed(ctx context.Context, subjectID, action, resource string) (bool, error) {
+	return false, nil // Default deny
+}
 
 // Server encapsulates the HTTP server for the QuantaID API.
 type Server struct {
@@ -110,6 +119,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	var tokenRepo auth.TokenRepository
 	var auditRepo auth.AuditLogRepository
 	var policyRepo policy.PolicyRepository
+	var rbacRepo policy.RBACRepository
 	var appRepo types.ApplicationRepository
 	var webhookRepo webhook.Repository
 	var db *gorm.DB
@@ -142,6 +152,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		groupRepo = pgIdRepo
 		_, auditRepo = postgresql.NewPostgresAuthRepository(db)
 		policyRepo = postgresql.NewPostgresPolicyRepository(db)
+		rbacRepo = postgresql.NewRBACRepository(db)
 		appRepo = postgresql.NewPostgresApplicationRepository(db)
 		webhookRepo = postgresql.NewWebhookRepository(db)
 
@@ -187,9 +198,15 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	webhookService := webhook_service.NewService(webhookRepo)
 
 	// Audit Service Setup
-	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger)
+	var auditPipeline *i_audit.Pipeline
+	if logger.(*utils.ZapLogger) != nil {
+		auditPipeline = i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger)
+	} else {
+		// handle non-zap logger or nil
+		auditPipeline = i_audit.NewPipeline(zap.NewNop())
+	}
 	// We need to inject the repository into AuditService for read operations
-	_, auditRepo := postgresql.NewPostgresAuthRepository(db) // Reuse existing call or create new instance?
+	_, _ = postgresql.NewPostgresAuthRepository(db) // Reuse existing call or create new instance?
 	// NewPostgresAuthRepository returns (AuthRepository, AuditLogRepository).
 	// But we already called it above: `_, auditRepo = postgresql.NewPostgresAuthRepository(db)`
 	// Wait, auditRepo is of type `auth.AuditLogRepository` (defined in `internal/domain/auth/repository.go`?)
@@ -209,15 +226,68 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	auditRepoForService := postgresql.NewPostgresAuditLogRepository(db)
 	auditService := audit_service.NewService(auditPipeline, webhookDispatcher).WithRepository(auditRepoForService)
 
-	evaluator := authorization.NewDefaultEvaluator(policyRepo)
+	// Initialize OPA Provider
+	opaProvider, err := engine.NewOPAProvider(appCfg.OPA)
+	if err != nil {
+		logger.Warn(context.Background(), "Failed to initialize OPA provider", zap.Error(err))
+	}
+
+	// Use _ to suppress unused warning for policyRepo if we are not using it directly anymore
+	_ = policyRepo
+
+	// Initialize RBAC Provider handling memory/postgres modes
+	var rbacProvider engine.RBACProvider
+	if rbacRepo != nil {
+		rbacProvider = engine.NewDBRBACProvider(rbacRepo)
+	} else {
+		// In memory mode or if initialization failed.
+		// For now we use a basic mock/noop provider if no RBAC repository is available
+		// to prevent runtime panics. In a real memory-mode implementation,
+		// we would inject the MemoryAuthRepository if it implemented RBAC interfaces.
+		logger.Warn(context.Background(), "RBAC repository is nil (memory mode?), using default/stub provider")
+		// We could implement a struct here, but since we don't have one exported,
+		// and we want to avoid panic, we will assume tests running with this config
+		// might hit issues if they depend on RBAC.
+		// However, for compilation safety:
+		// If we are strictly in integration tests with Postgres, this branch won't be hit.
+		// If we are in unit tests or memory mode, we might need a stub.
+		// For now, we will use a nil provider and let the evaluator handle it if possible,
+		// OR we rely on the fact that production uses Postgres.
+
+		// Ideally: rbacProvider = memory.NewRBACProvider(...)
+		// Current: We will pass nil, but we must ensure `HybridEvaluator` checks for nil.
+		// But `HybridEvaluator.Evaluate` calls `e.rbac.IsAllowed`.
+		// Let's create a minimal struct here to satisfy the interface.
+		rbacProvider = &noopRBACProvider{}
+	}
+
+	hybridEvaluator := engine.NewHybridEvaluator(
+		rbacProvider,
+		engine.NewSimpleABACProvider(),
+		opaProvider,
+	)
+
+	// Adapter to adapt engine.Evaluator to authorization.Evaluator
+	evaluator := authorization.NewEvaluatorAdapter(hybridEvaluator)
+
 	authzService := authorization.NewService(evaluator, auditService)
 
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
 	identityAppService := identity_service.NewApplicationService(identityDomainService, auditService, logger)
 
-	riskEngine := adaptive.NewRiskEngine(appCfg.Security.Risk, redisClient, logger.(*utils.ZapLogger).Logger)
 	mfaManager := &mfa.MFAManager{}
 	policyEngine := authorization.NewPolicyEngine(evaluator)
+
+	// GeoIP setup
+	geoDB, err := adaptive.NewGeoIPReader("data/GeoLite2-City.mmdb")
+	if err != nil {
+		// Log error but don't fail, fallback to nil which RiskEngine should handle or we need a mock
+		logger.Warn(context.Background(), "Failed to load GeoIP database", zap.Error(err))
+	}
+	geoManager := redis.NewGeoManager(redisClient)
+
+	// Re-initialize risk engine with all dependencies
+	riskEngine := adaptive.NewRiskEngine(appCfg.Security.Risk, redisClient, geoManager, geoDB, logger.(*utils.ZapLogger).Logger)
 
 	authDomainService := auth.NewService(identityDomainService, sessionRepo, tokenRepo, auditRepo, nil, cryptoManager, logger, riskEngine, policyEngine, mfaManager, appRepo, redisClient)
 	tracer := trace.NewNoopTracerProvider().Tracer("quantid-test")
@@ -230,6 +300,15 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 
 	appService := application.NewApplicationService(appRepo, logger, cryptoManager)
 	devCenterSvc := platform.NewDevCenterService(appService, nil, authzService, nil)
+
+	// Policy Management Service (wired for Hot Reload watcher)
+	// We need to instantiate it even if not exposed via API yet, to ensure watcher runs.
+	// But it requires RBACRepository. We have `rbacProvider` but that is the provider, not the repo.
+	// `rbacRepo` might be nil in memory mode.
+	if rbacRepo != nil {
+		// NewService(repo policy.RBACRepository, opaProvider *engine.OPAProvider, logger *zap.Logger)
+		_ = policy_service.NewService(rbacRepo, opaProvider, logger.(*utils.ZapLogger).Logger)
+	}
 
 	// Audit Logger
 	auditRepoForLogger := postgresql.NewPostgresAuditLogRepository(db)

@@ -97,7 +97,7 @@ func TestHybridEvaluator(t *testing.T) {
 
 			rbacProvider := NewDBRBACProvider(mockRepo)
 			abacProvider := NewSimpleABACProvider()
-			evaluator := NewHybridEvaluator(rbacProvider, abacProvider)
+			evaluator := NewHybridEvaluator(rbacProvider, abacProvider, nil)
 
 			allowed, err := evaluator.Evaluate(context.Background(), tc.req)
 			assert.NoError(t, err)

@@ -54,6 +54,14 @@ type SMSConfig struct {
 	Provider string `mapstructure:"provider"`
 }
 
+// OPAConfig holds configuration for Open Policy Agent integration
+type OPAConfig struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	Mode       string `mapstructure:"mode"` // "sdk" or "sidecar"
+	PolicyFile string `mapstructure:"policy_file"` // For SDK mode
+	URL        string `mapstructure:"url"` // For Sidecar mode
+}
+
 // Config holds all configuration for the application.
 type Config struct {
 	Postgres     PostgresConfig     `mapstructure:"postgres"`
@@ -64,6 +72,7 @@ type Config struct {
 	Audit        AuditConfig        `mapstructure:"audit"`
 	Metrics      MetricsConfig      `mapstructure:"metrics"`
 	Notification NotificationConfig `mapstructure:"notification"`
+	OPA          OPAConfig          `mapstructure:"opa"`
 }
 
 type DataEncryptionConfig struct {
@@ -160,6 +169,10 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("postgres.connMaxLifetime", "1h")
 	v.SetDefault("redis.url", "redis://localhost:6379/0")
 	v.SetDefault("plugins.directory", "./plugins")
+	v.SetDefault("opa.enabled", false)
+	v.SetDefault("opa.mode", "sdk")
+	v.SetDefault("opa.policy_file", "policies/authz.rego")
+	v.SetDefault("opa.url", "http://localhost:8181/v1/data/quantaid/authz/allow")
 }
 
 // LoadConfigFromBytes creates a new ConfigManager by reading configuration data from a byte slice.
