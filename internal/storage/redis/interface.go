@@ -34,6 +34,10 @@ type RedisClientInterface interface {
 	HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd
 	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
 	Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd
+
+	// Modified to return results directly for easier mocking
+	GeoAdd(ctx context.Context, key string, geoLocation ...*redis.GeoLocation) (int64, error)
+	GeoPos(ctx context.Context, key string, members ...string) ([]*redis.GeoPos, error)
 }
 
 // UUIDGenerator generates a new UUID.

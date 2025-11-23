@@ -155,6 +155,15 @@ security:
       - "totp"
       - "webauthn"
 
+# WebAuthn configuration
+webauthn:
+  # Relying Party ID (usually the domain name)
+  rp_id: "localhost"
+  # Relying Party Origin (scheme + host + port)
+  origin: "http://localhost:8080"
+  # Relying Party Display Name
+  rp_display_name: "QuantaID"
+
 # UI settings for user-facing pages (login, profile, etc.)
 ui:
   # Base path for static assets (CSS, JS). Handled by Go's embed in this phase.

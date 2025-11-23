@@ -62,6 +62,12 @@ type OPAConfig struct {
 	URL        string `mapstructure:"url"` // For Sidecar mode
 }
 
+type WebAuthnConfig struct {
+	RPID          string `mapstructure:"rp_id"`
+	Origin        string `mapstructure:"origin"`
+	RPDisplayName string `mapstructure:"rp_display_name"`
+}
+
 // Config holds all configuration for the application.
 type Config struct {
 	Postgres     PostgresConfig     `mapstructure:"postgres"`
@@ -73,6 +79,7 @@ type Config struct {
 	Metrics      MetricsConfig      `mapstructure:"metrics"`
 	Notification NotificationConfig `mapstructure:"notification"`
 	OPA          OPAConfig          `mapstructure:"opa"`
+	WebAuthn     WebAuthnConfig     `mapstructure:"webauthn"`
 }
 
 type DataEncryptionConfig struct {

@@ -83,6 +83,7 @@ type Services struct {
 	RecoveryService       *auth.RecoveryService
 	SessionManager        *redis.SessionManager
 	Renderer              *ui.Renderer
+	WebAuthnProvider      *mfa.WebAuthnProvider
 }
 
 // NewServer creates a new HTTP server instance.
@@ -275,7 +276,26 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
 	identityAppService := identity_service.NewApplicationService(identityDomainService, auditService, logger)
 
+	// Initialize MFA Repository (needed for WebAuthn)
+	mfaRepo := postgresql.NewPostgresMFARepository(db)
+
+	// Initialize WebAuthn Provider
+	webAuthnConfig := mfa.WebAuthnConfig{
+		RPID:          appCfg.WebAuthn.RPID,
+		RPDisplayName: appCfg.WebAuthn.RPDisplayName,
+		RPOrigin:      appCfg.WebAuthn.Origin,
+	}
+	webAuthnProvider, err := mfa.NewWebAuthnProvider(webAuthnConfig, mfaRepo)
+	if err != nil {
+		logger.Error(context.Background(), "Failed to initialize WebAuthn provider", zap.Error(err))
+		// Continue without WebAuthn? Or fail? Given it's a core feature now, maybe fail.
+		// But NewWebAuthnProvider might fail on config only.
+	}
+
 	mfaManager := &mfa.MFAManager{}
+	if webAuthnProvider != nil {
+		mfaManager.RegisterProvider("webauthn", webAuthnProvider)
+	}
 	policyEngine := authorization.NewPolicyEngine(evaluator)
 
 	// GeoIP setup
@@ -342,6 +362,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		RecoveryService:       recoveryService,
 		SessionManager:        sessionManager,
 		Renderer:              renderer,
+		WebAuthnProvider:      webAuthnProvider,
 	}
 
 	return NewServer(httpCfg, logger, services, appCfg, db, redisClient), nil
@@ -433,6 +454,23 @@ func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 	portalRouter.HandleFunc("/devices", deviceHandler.ListDevices).Methods("GET")
 	portalRouter.HandleFunc("/devices/revoke/{id}", deviceHandler.RevokeDevice).Methods("POST")
 	portalRouter.HandleFunc("/security-log", securityLogHandler.ShowSecurityLog).Methods("GET")
+
+	// WebAuthn Routes
+	if services.WebAuthnProvider != nil {
+		webauthnHandler := handlers.NewWebAuthnHandler(services.WebAuthnProvider, services.IdentityDomainService.GetUserRepo(), s.redisClient)
+
+		// Registration endpoints (Require Auth)
+		// Note: Usually we register a new passkey for an existing user session.
+		webauthnRegRouter := apiV1.PathPrefix("/webauthn/register").Subrouter()
+		webauthnRegRouter.Use(authMiddleware.Execute)
+		webauthnRegRouter.HandleFunc("/begin", webauthnHandler.BeginRegistration).Methods("POST")
+		webauthnRegRouter.HandleFunc("/finish", webauthnHandler.FinishRegistration).Methods("POST")
+
+		// Login endpoints (Public)
+		// Login flow starts without session.
+		apiV1.HandleFunc("/webauthn/login/begin", webauthnHandler.BeginLogin).Methods("POST")
+		apiV1.HandleFunc("/webauthn/login/finish", webauthnHandler.FinishLogin).Methods("POST")
+	}
 
 	// Health and readiness probes
 	s.Router.HandleFunc("/healthz", s.healthzHandler).Methods("GET")

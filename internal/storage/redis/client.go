@@ -338,3 +338,13 @@ func (rc *redisClient) HGetAll(ctx context.Context, key string) *redis.MapString
 func (rc *redisClient) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
 	return rc.client.Expire(ctx, key, expiration)
 }
+
+// GeoAdd adds the specified geospatial items (latitude, longitude, name) to the specified key.
+func (rc *redisClient) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.GeoLocation) (int64, error) {
+	return rc.client.GeoAdd(ctx, key, geoLocation...).Result()
+}
+
+// GeoPos returns the positions (longitude,latitude) of all the specified members of the geospatial index represented by the sorted set at key.
+func (rc *redisClient) GeoPos(ctx context.Context, key string, members ...string) ([]*redis.GeoPos, error) {
+	return rc.client.GeoPos(ctx, key, members...).Result()
+}

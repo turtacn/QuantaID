@@ -1,105 +1,106 @@
-package strategies_test
+package strategies
 
 import (
 	"context"
-	"strconv"
+	"fmt"
 	"testing"
 	"time"
 
-	github_redis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/turtacn/QuantaID/internal/auth/adaptive/strategies"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
+	goredis "github.com/redis/go-redis/v9"
 )
 
-// MockRedisClient is a mock for RedisClientInterface
-type MockRedisClient struct {
-	mock.Mock
-}
+// MockGeoManager is a mock for redis.GeoManager
+// Since GeoManager is a struct, we should ideally interface it or mock the underlying Redis client.
+// However, ImpossibleTravelStrategy depends on *redis.GeoManager struct.
+// For this unit test, we can mock the behavior by mocking the underlying RedisClientInterface used by GeoManager.
+// BUT, GeoManager logic is now complex (GeoAdd + ZAdd).
+// It's better to verify the CALCULATION logic in ImpossibleTravelStrategy by mocking the return of GetLastLoginLocation.
+// Since GetLastLoginLocation is a method on the struct, we can't easily mock it unless we make an interface for GeoManager.
+//
+// Refactoring Strategy to use an interface would be best practice.
+// But based on the task, we are testing the Strategy.
+// Let's create a "Testable" version or use the MockRedisClient to drive the GeoManager.
 
-func (m *MockRedisClient) Client() *github_redis.Client { return nil }
-func (m *MockRedisClient) Close() error                 { return nil }
-func (m *MockRedisClient) HealthCheck(ctx context.Context) error { return nil }
-func (m *MockRedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error { return nil }
-func (m *MockRedisClient) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *github_redis.BoolCmd { return nil }
-func (m *MockRedisClient) Get(ctx context.Context, key string) (string, error) { return "", nil }
-func (m *MockRedisClient) MGet(ctx context.Context, keys ...string) ([]interface{}, error) { return nil, nil }
-func (m *MockRedisClient) Del(ctx context.Context, keys ...string) error { return nil }
-func (m *MockRedisClient) SAdd(ctx context.Context, key string, members ...interface{}) error { return nil }
-func (m *MockRedisClient) SCard(ctx context.Context, key string) (int64, error) { return 0, nil }
-func (m *MockRedisClient) SRem(ctx context.Context, key string, members ...interface{}) error { return nil }
-func (m *MockRedisClient) SMembers(ctx context.Context, key string) ([]string, error) { return nil, nil }
-func (m *MockRedisClient) ZAdd(ctx context.Context, key string, members ...github_redis.Z) error { return nil }
-func (m *MockRedisClient) ZCard(ctx context.Context, key string) (int64, error) { return 0, nil }
-func (m *MockRedisClient) ZRemRangeByRank(ctx context.Context, key string, start, stop int64) (int64, error) { return 0, nil }
-func (m *MockRedisClient) ZRem(ctx context.Context, key string, members ...interface{}) (int64, error) { return 0, nil }
-func (m *MockRedisClient) ZRange(ctx context.Context, key string, start, stop int64) ([]string, error) { return nil, nil }
-func (m *MockRedisClient) SetEx(ctx context.Context, key string, value interface{}, expiration time.Duration) *github_redis.StatusCmd { return nil }
-func (m *MockRedisClient) Exists(ctx context.Context, keys ...string) (int64, error) { return 0, nil }
-func (m *MockRedisClient) SIsMember(ctx context.Context, key string, member interface{}) *github_redis.BoolCmd { return nil }
-
-// Relevant mocks for GeoManager
-func (m *MockRedisClient) HMSet(ctx context.Context, key string, values ...interface{}) *github_redis.BoolCmd {
-	args := m.Called(ctx, key, values)
-	return args.Get(0).(*github_redis.BoolCmd)
-}
-
-func (m *MockRedisClient) HGetAll(ctx context.Context, key string) *github_redis.MapStringStringCmd {
-	args := m.Called(ctx, key)
-	return args.Get(0).(*github_redis.MapStringStringCmd)
-}
-
-func (m *MockRedisClient) Expire(ctx context.Context, key string, expiration time.Duration) *github_redis.BoolCmd {
-	args := m.Called(ctx, key, expiration)
-	return args.Get(0).(*github_redis.BoolCmd)
-}
-
-func TestImpossibleTravel_CalculateRisk(t *testing.T) {
-	// Beijing
-	lat1, lon1 := 39.9042, 116.4074
-	// Shanghai
-	lat2, lon2 := 31.2304, 121.4737
-
-	// We'll mock the internal behavior of GeoManager by mocking the Redis client it uses.
-	mockRedis := new(MockRedisClient)
+func TestSpeedCalculation(t *testing.T) {
+	// Setup
+	mockRedis := new(redis.MockRedisClient)
 	geoManager := redis.NewGeoManager(mockRedis)
-	strategy := strategies.NewImpossibleTravelStrategy(geoManager)
+	strategy := NewImpossibleTravelStrategy(geoManager)
 
-	// Scenario 1: Teleport (Impossible)
-	// Same time, different location
-	ctx := context.Background()
-	timestamp := time.Now()
+	userID := "user123"
+	now := time.Now()
 
-	// Setup mock return for GetLastLoginGeo
-	cmd := github_redis.NewMapStringStringCmd(ctx)
-	cmd.SetVal(map[string]string{
-		"lat": strconv.FormatFloat(lat1, 'f', 6, 64),
-		"lon": strconv.FormatFloat(lon1, 'f', 6, 64),
-		"timestamp": strconv.FormatInt(timestamp.Unix(), 10),
-	})
+	// Case 1: Beijing -> Shanghai (approx 1200km) in 1 hour
+	// Beijing: 39.9042, 116.4074
+	// Shanghai: 31.2304, 121.4737
+	// Expected: High Risk (> 800km/h)
 
-	mockRedis.On("HGetAll", ctx, "user:geo:user1").Return(cmd)
+	// We need to mock what GeoManager calls.
+	// GeoManager.GetLastLoginLocation calls:
+	// 1. ZRange(timelineKey, -1, -1) -> ["timestamp"]
+	// 2. GeoPos(geoKey, "timestamp") -> [pos]
 
-	// User at Shanghai now, was at Beijing same time
-	risk, err := strategy.CalculateRisk(ctx, "user1", lat2, lon2)
+	lastTime := now.Add(-1 * time.Hour)
+	lastTsStr := fmt.Sprintf("%d", lastTime.Unix())
+
+	// Mock ZRange
+	mockRedis.On("ZRange", context.Background(), "user:geo:timeline:"+userID, int64(-1), int64(-1)).
+		Return([]string{lastTsStr}, nil)
+
+	// Mock GeoPos
+	mockRedis.On("GeoPos", context.Background(), "user:geo:"+userID, []string{lastTsStr}).
+		Return([]*goredis.GeoPos{
+			{Latitude: 39.9042, Longitude: 116.4074},
+		}, nil)
+
+	risk, err := strategy.CalculateRisk(context.Background(), userID, 31.2304, 121.4737) // Shanghai
 	assert.NoError(t, err)
-	assert.Equal(t, 1.0, risk) // Should be high risk (teleport)
+	assert.Equal(t, 1.0, risk, "Speed 1200km/h should be high risk")
 
-	// Scenario 2: Reasonable Travel
-	// 5 hours later
-	timestamp2 := timestamp.Add(-5 * time.Hour) // Last login was 5 hours ago
+	// Case 2: Beijing -> Shanghai in 5 hours
+	// Speed: 240 km/h -> Low Risk
 
-	cmd2 := github_redis.NewMapStringStringCmd(ctx)
-	cmd2.SetVal(map[string]string{
-		"lat": strconv.FormatFloat(lat1, 'f', 6, 64),
-		"lon": strconv.FormatFloat(lon1, 'f', 6, 64),
-		"timestamp": strconv.FormatInt(timestamp2.Unix(), 10),
-	})
+	// Reset mocks or use new ones? The mock object records calls.
+	// Easier to make a new setup for cleaner test.
+}
 
-	mockRedis.On("HGetAll", ctx, "user:geo:user2").Return(cmd2)
+func TestSpeedCalculation_LowRisk(t *testing.T) {
+	mockRedis := new(redis.MockRedisClient)
+	geoManager := redis.NewGeoManager(mockRedis)
+	strategy := NewImpossibleTravelStrategy(geoManager)
 
-	risk2, err2 := strategy.CalculateRisk(ctx, "user2", lat2, lon2)
-	assert.NoError(t, err2)
-	assert.Equal(t, 0.0, risk2) // Should be low risk
+	userID := "user123"
+	now := time.Now()
+
+	lastTime := now.Add(-5 * time.Hour)
+	lastTsStr := fmt.Sprintf("%d", lastTime.Unix())
+
+	mockRedis.On("ZRange", context.Background(), "user:geo:timeline:"+userID, int64(-1), int64(-1)).
+		Return([]string{lastTsStr}, nil)
+
+	mockRedis.On("GeoPos", context.Background(), "user:geo:"+userID, []string{lastTsStr}).
+		Return([]*goredis.GeoPos{
+			{Latitude: 39.9042, Longitude: 116.4074},
+		}, nil)
+
+	risk, err := strategy.CalculateRisk(context.Background(), userID, 31.2304, 121.4737) // Shanghai
+	assert.NoError(t, err)
+	assert.Equal(t, 0.0, risk, "Speed 240km/h should be low risk")
+}
+
+func TestCalculateRisk_NoHistory(t *testing.T) {
+	mockRedis := new(redis.MockRedisClient)
+	geoManager := redis.NewGeoManager(mockRedis)
+	strategy := NewImpossibleTravelStrategy(geoManager)
+
+	userID := "newuser"
+
+	mockRedis.On("ZRange", context.Background(), "user:geo:timeline:"+userID, int64(-1), int64(-1)).
+		Return([]string{}, nil) // No history found
+
+	risk, err := strategy.CalculateRisk(context.Background(), userID, 31.2304, 121.4737)
+	assert.NoError(t, err)
+	assert.Equal(t, 0.0, risk, "No history should result in 0 risk")
 }

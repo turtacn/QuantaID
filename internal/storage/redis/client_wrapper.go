@@ -127,3 +127,13 @@ func (w *RedisClientWrapper) Expire(ctx context.Context, key string, expiration 
 func (w *RedisClientWrapper) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
 	return w.client.SIsMember(ctx, key, member)
 }
+
+// GeoAdd adds the specified geospatial items (latitude, longitude, name) to the specified key.
+func (w *RedisClientWrapper) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.GeoLocation) (int64, error) {
+	return w.client.GeoAdd(ctx, key, geoLocation...).Result()
+}
+
+// GeoPos returns the positions (longitude,latitude) of all the specified members of the geospatial index represented by the sorted set at key.
+func (w *RedisClientWrapper) GeoPos(ctx context.Context, key string, members ...string) ([]*redis.GeoPos, error) {
+	return w.client.GeoPos(ctx, key, members...).Result()
+}

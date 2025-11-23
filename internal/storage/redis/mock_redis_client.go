@@ -110,3 +110,32 @@ func (m *MockRedisClient) SIsMember(ctx context.Context, key string, member inte
 	args := m.Called(ctx, key, member)
 	return args.Get(0).(*redis.BoolCmd)
 }
+
+func (m *MockRedisClient) HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd {
+	args := m.Called(ctx, key, values)
+	return args.Get(0).(*redis.BoolCmd)
+}
+
+func (m *MockRedisClient) HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd {
+	args := m.Called(ctx, key)
+	return args.Get(0).(*redis.MapStringStringCmd)
+}
+
+func (m *MockRedisClient) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+	args := m.Called(ctx, key, expiration)
+	return args.Get(0).(*redis.BoolCmd)
+}
+
+func (m *MockRedisClient) GeoAdd(ctx context.Context, key string, geoLocation ...*redis.GeoLocation) (int64, error) {
+	args := m.Called(ctx, key, geoLocation)
+	return int64(args.Int(0)), args.Error(1)
+}
+
+func (m *MockRedisClient) GeoPos(ctx context.Context, key string, members ...string) ([]*redis.GeoPos, error) {
+	args := m.Called(ctx, key, members)
+	// Safely cast to []*redis.GeoPos
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*redis.GeoPos), args.Error(1)
+}

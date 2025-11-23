@@ -18,6 +18,7 @@ type MFAFactor struct {
 	Secret       string         `gorm:"type:text" json:"secret"`
 	PhoneNumber  string         `gorm:"type:varchar(20)" json:"phone_number"`
 	BackupCodes  datatypes.JSON `gorm:"type:jsonb" json:"-"`
+	Metadata     datatypes.JSON `gorm:"type:jsonb" json:"metadata,omitempty"`
 	LastUsedAt   *time.Time     `gorm:"type:timestamp" json:"last_used_at"`
 	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updated_at"`

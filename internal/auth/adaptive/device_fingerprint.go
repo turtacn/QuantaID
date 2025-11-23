@@ -14,17 +14,21 @@ type DeviceFingerprint struct {
 }
 
 type FingerprintData struct {
-	UserAgent        string            `json:"user_agent"`
-	ScreenResolution string            `json:"screen_resolution"`
-	Timezone         int               `json:"timezone"`
-	Language         string            `json:"language"`
-	Platform         string            `json:"platform"`
-	Plugins          []string          `json:"plugins"`
-	CanvasHash       string            `json:"canvas_hash"`
-	WebGLHash        string            `json:"webgl_hash"`
-	AudioHash        string            `json:"audio_hash"`
-	Fonts            []string          `json:"fonts"`
-	CustomData       map[string]string `json:"custom_data"`
+	UserAgent         string            `json:"user_agent"`
+	ScreenResolution  string            `json:"screen_resolution"`
+	Timezone          int               `json:"timezone"`
+	Language          string            `json:"language"`
+	Platform          string            `json:"platform"`
+	Plugins           []string          `json:"plugins"`
+	CanvasHash        string            `json:"canvas_hash"`
+	WebGLHash         string            `json:"webgl_hash"`
+	AudioHash         string            `json:"audio_hash"`
+	Fonts             []string          `json:"fonts"`
+	ClientHintsMobile string            `json:"ch_mobile"`
+	ClientHintsPlat   string            `json:"ch_platform"`
+	ClientHintsArch   string            `json:"ch_arch"`
+	ClientHintsModel  string            `json:"ch_model"`
+	CustomData        map[string]string `json:"custom_data"`
 }
 
 func (df *DeviceFingerprint) Generate(data *FingerprintData) string {
@@ -39,6 +43,10 @@ func (df *DeviceFingerprint) Generate(data *FingerprintData) string {
 		data.WebGLHash,
 		data.AudioHash,
 		strings.Join(data.Fonts, ","),
+		data.ClientHintsMobile,
+		data.ClientHintsPlat,
+		data.ClientHintsArch,
+		data.ClientHintsModel,
 	}
 
 	combined := strings.Join(features, "|")
