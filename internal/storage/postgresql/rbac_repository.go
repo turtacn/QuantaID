@@ -106,6 +106,18 @@ func (r *rbacRepository) GetRolesForUser(ctx context.Context, userID string) ([]
 	return roles, err
 }
 
+func (r *rbacRepository) GetPermissionsForUser(ctx context.Context, userID string) ([]*policy.Permission, error) {
+	var permissions []*policy.Permission
+	err := r.db.WithContext(ctx).
+		Table("permissions").
+		Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
+		Joins("JOIN user_roles ON user_roles.role_id = role_permissions.role_id").
+		Where("user_roles.user_id = ?", userID).
+		Distinct().
+		Find(&permissions).Error
+	return permissions, err
+}
+
 func (r *rbacRepository) GetPermissionsForRole(ctx context.Context, roleID uint) ([]*policy.Permission, error) {
 	var role policy.Role
 	err := r.db.WithContext(ctx).

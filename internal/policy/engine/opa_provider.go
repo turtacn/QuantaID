@@ -60,20 +60,19 @@ func NewOPAProvider(cfg utils.OPAConfig) (*OPAProvider, error) {
 	return p, nil
 }
 
-// loadPolicy loads or reloads the Rego policy for SDK mode.
-func (p *OPAProvider) loadPolicy(ctx context.Context) error {
-	policyContent, err := os.ReadFile(p.config.PolicyFile)
+// LoadPolicy loads or reloads the Rego policy for SDK mode from the specified path.
+func (p *OPAProvider) LoadPolicy(ctx context.Context, path string) error {
+	policyContent, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read policy file: %w", err)
 	}
 
-	// We assume the query is "data.quantaid.authz.allow" based on the provided rego file.
-	// In a more generic implementation, the query string might be configurable.
-	queryStr := "data.quantaid.authz.allow"
+	// Query the whole package to get both 'allow' and 'deny' rules
+	queryStr := "data.quantaid.authz"
 
 	r := rego.New(
 		rego.Query(queryStr),
-		rego.Module(p.config.PolicyFile, string(policyContent)),
+		rego.Module(path, string(policyContent)),
 	)
 
 	query, err := r.PrepareForEval(ctx)
@@ -87,29 +86,42 @@ func (p *OPAProvider) loadPolicy(ctx context.Context) error {
 	return nil
 }
 
+// loadPolicy is an internal helper that uses the config path
+func (p *OPAProvider) loadPolicy(ctx context.Context) error {
+	return p.LoadPolicy(ctx, p.config.PolicyFile)
+}
+
 // Reload reloads the policy from the file.
 func (p *OPAProvider) Reload(ctx context.Context) error {
 	return p.loadPolicy(ctx)
 }
 
+// OPAResult holds the result of OPA evaluation
+type OPAResult struct {
+	Allow bool
+	Deny  bool
+}
+
 // Evaluate checks if the request is allowed by the OPA policy.
-func (p *OPAProvider) Evaluate(ctx context.Context, req EvaluationRequest) (bool, error) {
+// It returns a boolean for 'allow' (explicitly allowed), a boolean for 'deny' (explicitly denied), and an error.
+func (p *OPAProvider) Evaluate(ctx context.Context, req EvaluationRequest) (bool, bool, error) {
 	if !p.config.Enabled {
-		return true, nil // If OPA is disabled, we don't block
+		return false, false, nil // If OPA is disabled, it neither allows nor denies
 	}
 
 	input := map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":    req.SubjectID,
-			"roles": req.Context["roles"], // Assuming roles are passed in context or we need to fetch them
+			"roles": req.Context["roles"],
 			// Add other user attributes as needed
 		},
 		"resource": map[string]interface{}{
-			"id":   req.Resource, // This might need parsing if resource is structured
+			"id":   req.Resource,
 			"type": req.Context["resource_type"],
 		},
 		"action": req.Action,
-		"env":    req.Context["env"], // Time, IP, etc.
+		"context": req.Context, // Pass raw context as well for flexibility
+		"env":    req.Context["env"], // Preserve legacy env field
 	}
 
 	// Handle SDK Mode
@@ -120,19 +132,22 @@ func (p *OPAProvider) Evaluate(ctx context.Context, req EvaluationRequest) (bool
 
 		rs, err := query.Eval(ctx, rego.EvalInput(input))
 		if err != nil {
-			return false, fmt.Errorf("opa eval error: %w", err)
+			return false, false, fmt.Errorf("opa eval error: %w", err)
 		}
 
 		if len(rs) == 0 || len(rs[0].Expressions) == 0 {
-			return false, nil // Undefined result usually means deny
+			return false, false, nil
 		}
 
-		allowed, ok := rs[0].Expressions[0].Value.(bool)
+		resultMap, ok := rs[0].Expressions[0].Value.(map[string]interface{})
 		if !ok {
-			return false, fmt.Errorf("unexpected result type from opa")
+			return false, false, fmt.Errorf("unexpected result type from opa: expected map")
 		}
 
-		return allowed, nil
+		allow, _ := resultMap["allow"].(bool)
+		deny, _ := resultMap["deny"].(bool)
+
+		return allow, deny, nil
 	}
 
 	// Handle Sidecar Mode
@@ -140,44 +155,47 @@ func (p *OPAProvider) Evaluate(ctx context.Context, req EvaluationRequest) (bool
 		return p.evaluateSidecar(ctx, input)
 	}
 
-	return false, fmt.Errorf("unknown opa mode: %s", p.config.Mode)
+	return false, false, fmt.Errorf("unknown opa mode: %s", p.config.Mode)
 }
 
 // evaluateSidecar queries an external OPA server.
-func (p *OPAProvider) evaluateSidecar(ctx context.Context, input interface{}) (bool, error) {
+func (p *OPAProvider) evaluateSidecar(ctx context.Context, input interface{}) (bool, bool, error) {
 	reqBody := map[string]interface{}{
 		"input": input,
 	}
 
 	jsonBody, err := json.Marshal(reqBody)
 	if err != nil {
-		return false, fmt.Errorf("failed to marshal input: %w", err)
+		return false, false, fmt.Errorf("failed to marshal input: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", p.config.URL, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
+		return false, false, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("opa sidecar request failed: %w", err)
+		return false, false, fmt.Errorf("opa sidecar request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("opa sidecar returned status: %d", resp.StatusCode)
+		return false, false, fmt.Errorf("opa sidecar returned status: %d", resp.StatusCode)
 	}
 
-	// OPA returns {"result": true/false} for a boolean query
+	// Expecting result to be a map with allow/deny
 	var result struct {
-		Result bool `json:"result"`
+		Result map[string]interface{} `json:"result"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return false, fmt.Errorf("failed to decode response: %w", err)
+		return false, false, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return result.Result, nil
+	allow, _ := result.Result["allow"].(bool)
+	deny, _ := result.Result["deny"].(bool)
+
+	return allow, deny, nil
 }

@@ -59,5 +59,6 @@ type RBACRepository interface {
 
 	// Query methods
 	GetRolesForUser(ctx context.Context, userID string) ([]*Role, error)
+	GetPermissionsForUser(ctx context.Context, userID string) ([]*Permission, error)
 	GetPermissionsForRole(ctx context.Context, roleID uint) ([]*Permission, error)
 }

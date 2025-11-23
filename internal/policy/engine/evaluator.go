@@ -34,44 +34,41 @@ func NewHybridEvaluator(rbac RBACProvider, abac ABACProvider, opa *OPAProvider) 
 	}
 }
 
-// Evaluate performs the policy evaluation.
-// 1. It first checks for a definitive "allow" from the RBAC provider.
-// 2. If RBAC allows, it then checks for any "deny" rules from the ABAC provider.
-// 3. Finally, if OPA is configured, it checks against OPA policies.
+// Evaluate performs the policy evaluation using a hybrid logic:
+// 1. RBAC Check: Baseline permissions.
+// 2. OPA Check: Can override RBAC deny (allow) or enforce explicit deny (deny).
+// Logic: (RBAC_Allow || OPA_Allow) && !OPA_Deny
 func (e *HybridEvaluator) Evaluate(ctx context.Context, req EvaluationRequest) (bool, error) {
-	// RBAC check (fast path)
-	allowedByRBAC, err := e.rbac.IsAllowed(ctx, req.SubjectID, req.Action, req.Resource)
+	// 1. RBAC Check
+	rbacAllowed, err := e.rbac.IsAllowed(ctx, req.SubjectID, req.Action, req.Resource)
 	if err != nil {
 		return false, err
 	}
-	if !allowedByRBAC {
-		return false, nil // Denied by RBAC
-	}
 
-	// ABAC check (slower path, only if RBAC allows)
-	// Here you could load specific ABAC policies related to the resource/action
-	// For now, we'll just pass the context to a generic ABAC provider
-	abacDecision, err := e.abac.Evaluate(ctx, req.Context)
-	if err != nil {
-		return false, err
-	}
-	if !abacDecision {
-		return false, nil // Denied by ABAC
-	}
-
-	// OPA check (Fine-grained external policy)
+	// 2. OPA Check
+	var opaAllowed, opaDenied bool
 	if e.opa != nil {
-		opaDecision, err := e.opa.Evaluate(ctx, req)
+		opaAllowed, opaDenied, err = e.opa.Evaluate(ctx, req)
 		if err != nil {
 			// Fail Close: If OPA fails, we deny access
 			return false, fmt.Errorf("OPA evaluation failed: %w", err)
 		}
-		if !opaDecision {
-			return false, nil // Denied by OPA
-		}
 	}
 
-	return true, nil
+	// 3. Decision Logic
+
+	// If OPA explicitly denies, then access is forbidden regardless of RBAC
+	if opaDenied {
+		return false, nil
+	}
+
+	// If OPA explicitly allows, then access is granted (overrides RBAC deny)
+	if opaAllowed {
+		return true, nil
+	}
+
+	// Otherwise, fall back to RBAC decision
+	return rbacAllowed, nil
 }
 
 // RBACProvider is the interface for the RBAC component of the policy engine.

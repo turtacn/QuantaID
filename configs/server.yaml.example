@@ -34,6 +34,18 @@ logger:
     # Compress rotated log files
     compress: true
 
+# Policy engine configuration
+policy:
+  opa:
+    # Enable OPA engine
+    enabled: true
+    # Mode: "sdk" (in-process) or "sidecar" (remote)
+    mode: "sdk"
+    # Path to the Rego policy file (for SDK mode)
+    file_path: "internal/policy/rego/main.rego"
+    # URL of the OPA server (for Sidecar mode)
+    url: "http://localhost:8181/v1/data/quantaid/authz"
+
 # Storage configuration
 storage:
   # Storage mode can be "memory" or "postgres"
