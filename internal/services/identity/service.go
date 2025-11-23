@@ -2,7 +2,9 @@ package identity
 
 import (
 	"context"
+
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/internal/services/audit"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 )
@@ -10,13 +12,15 @@ import (
 // ApplicationService provides application-level use cases for identity management.
 type ApplicationService struct {
 	identityDomain identity.IService
+	auditService   *audit.Service
 	logger         utils.Logger
 }
 
 // NewApplicationService creates a new identity application service.
-func NewApplicationService(identityDomain identity.IService, logger utils.Logger) *ApplicationService {
+func NewApplicationService(identityDomain identity.IService, auditService *audit.Service, logger utils.Logger) *ApplicationService {
 	return &ApplicationService{
 		identityDomain: identityDomain,
+		auditService:   auditService,
 		logger:         logger,
 	}
 }
@@ -36,6 +40,10 @@ func (s *ApplicationService) CreateUser(ctx context.Context, username, email, pa
 			return nil, appErr
 		}
 		return nil, types.ErrInternal.WithCause(err)
+	}
+
+	if s.auditService != nil {
+		s.auditService.RecordUserCreated(ctx, user, "unknown", "") // IP and TraceID might be needed from Context
 	}
 
 	user.Password = "" // Never expose password hash
@@ -72,6 +80,40 @@ func (s *ApplicationService) AddUserToGroup(ctx context.Context, userID, groupID
 		return types.ErrInternal.WithCause(err)
 	}
 	return nil
+}
+
+// Implement missing interface methods by delegating to identityDomain
+
+func (s *ApplicationService) UpdateUser(ctx context.Context, user *types.User) error {
+	return s.identityDomain.UpdateUser(ctx, user)
+}
+
+func (s *ApplicationService) DeleteUser(ctx context.Context, userID string) error {
+	return s.identityDomain.DeleteUser(ctx, userID)
+}
+
+func (s *ApplicationService) GetUserByExternalID(ctx context.Context, externalID string) (*types.User, error) {
+	return s.identityDomain.GetUserByExternalID(ctx, externalID)
+}
+
+func (s *ApplicationService) CreateGroup(ctx context.Context, group *types.UserGroup) error {
+	return s.identityDomain.CreateGroup(ctx, group)
+}
+
+func (s *ApplicationService) GetGroup(ctx context.Context, groupID string) (*types.UserGroup, error) {
+	return s.identityDomain.GetGroup(ctx, groupID)
+}
+
+func (s *ApplicationService) UpdateGroup(ctx context.Context, group *types.UserGroup) error {
+	return s.identityDomain.UpdateGroup(ctx, group)
+}
+
+func (s *ApplicationService) DeleteGroup(ctx context.Context, groupID string) error {
+	return s.identityDomain.DeleteGroup(ctx, groupID)
+}
+
+func (s *ApplicationService) ListGroups(ctx context.Context, offset, limit int) ([]*types.UserGroup, error) {
+	return s.identityDomain.ListGroups(ctx, offset, limit)
 }
 
 func (s *ApplicationService) GetUser(ctx context.Context, userID string) (*types.User, error) {

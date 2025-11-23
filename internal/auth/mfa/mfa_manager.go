@@ -65,10 +65,10 @@ func (m *MFAManager) Challenge(ctx context.Context, user *types.User, providerNa
 			return nil, fmt.Errorf("otp provider not configured")
 		}
 
-		target := user.Email
+		target := string(user.Email)
 		method := "email"
 		if providerName == "sms" {
-			target = user.Phone
+			target = string(user.Phone)
 			method = "sms"
 		}
 

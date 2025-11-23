@@ -25,6 +25,9 @@ import (
 	"github.com/turtacn/QuantaID/internal/services/authorization"
 	identity_service "github.com/turtacn/QuantaID/internal/services/identity"
 	"github.com/turtacn/QuantaID/internal/services/platform"
+	webhook_service "github.com/turtacn/QuantaID/internal/services/webhook"
+	"github.com/turtacn/QuantaID/internal/domain/webhook"
+	"github.com/turtacn/QuantaID/internal/worker"
 	"github.com/turtacn/QuantaID/internal/server/http/handlers"
 	"github.com/turtacn/QuantaID/internal/server/middleware"
 	"github.com/turtacn/QuantaID/internal/storage/memory"
@@ -64,6 +67,8 @@ type Services struct {
 	IdentityDomainService identity.IService
 	DevCenterService      *platform.DevCenterService
 	AuditLogger           *i_audit.AuditLogger
+	WebhookService        *webhook_service.Service
+	WebhookWorker         *worker.WebhookSender
 }
 
 // NewServer creates a new HTTP server instance.
@@ -82,6 +87,12 @@ func NewServer(config Config, logger utils.Logger, services Services, appCfg *ut
 		db:          db,
 		redisClient: redisClient,
 	}
+
+	// Start Webhook Worker
+	if services.WebhookWorker != nil {
+		services.WebhookWorker.Start(context.Background())
+	}
+
 	server.registerRoutes(services, appCfg)
 	return server
 }
@@ -95,6 +106,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	var auditRepo auth.AuditLogRepository
 	var policyRepo policy.PolicyRepository
 	var appRepo types.ApplicationRepository
+	var webhookRepo webhook.Repository
 	var db *gorm.DB
 	var err error
 	var redisClient redis.RedisClientInterface
@@ -126,6 +138,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		_, auditRepo = postgresql.NewPostgresAuthRepository(db)
 		policyRepo = postgresql.NewPostgresPolicyRepository(db)
 		appRepo = postgresql.NewPostgresApplicationRepository(db)
+		webhookRepo = postgresql.NewWebhookRepository(db)
 
 		// Redis Connection
 		redisMetrics := metrics.NewRedisMetrics("quantid")
@@ -147,15 +160,20 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		return nil, fmt.Errorf("invalid storage mode: %s", appCfg.Storage.Mode)
 	}
 
+	// Webhook Worker Setup
+	webhookWorker := worker.NewWebhookSender(webhookRepo, logger, 100)
+	webhookDispatcher := webhook_service.NewDispatcher(webhookRepo, webhookWorker, logger)
+	webhookService := webhook_service.NewService(webhookRepo)
+
 	// Audit Service Setup
 	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger)
-	auditService := audit_service.NewService(auditPipeline)
+	auditService := audit_service.NewService(auditPipeline, webhookDispatcher)
 
 	evaluator := authorization.NewDefaultEvaluator(policyRepo)
 	authzService := authorization.NewService(evaluator, auditService)
 
 	identityDomainService := identity.NewService(idRepo, groupRepo, cryptoManager, logger)
-	identityAppService := identity_service.NewApplicationService(identityDomainService, logger)
+	identityAppService := identity_service.NewApplicationService(identityDomainService, auditService, logger)
 
 	riskEngine := adaptive.NewRiskEngine(appCfg.Security.Risk, redisClient, logger.(*utils.ZapLogger).Logger)
 	mfaManager := &mfa.MFAManager{}
@@ -186,6 +204,8 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		IdentityDomainService: identityDomainService,
 		DevCenterService:      devCenterSvc,
 		AuditLogger:           auditLogger,
+		WebhookService:        webhookService,
+		WebhookWorker:         webhookWorker,
 	}
 
 	return NewServer(httpCfg, logger, services, appCfg, db, redisClient), nil
@@ -249,6 +269,14 @@ func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 	scimRouter := s.Router.PathPrefix("/scim/v2").Subrouter()
 	scimRouter.Use(authMiddleware.Execute)
 	scimHandler.RegisterRoutes(scimRouter)
+
+	// Webhook Management
+	webhookHandler := admin.NewWebhookHandler(services.WebhookService, s.logger)
+	webhookRouter := adminRouter.PathPrefix("/webhooks").Subrouter()
+	webhookRouter.HandleFunc("", webhookHandler.CreateSubscription).Methods("POST")
+	webhookRouter.HandleFunc("", webhookHandler.ListSubscriptions).Methods("GET")
+	webhookRouter.HandleFunc("/{id}", webhookHandler.DeleteSubscription).Methods("DELETE")
+	webhookRouter.HandleFunc("/{id}/rotate-secret", webhookHandler.RotateSecret).Methods("POST")
 
 	// Health and readiness probes
 	s.Router.HandleFunc("/healthz", s.healthzHandler).Methods("GET")

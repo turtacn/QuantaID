@@ -3,7 +3,7 @@ package ldap
 import (
 	"context"
 	"fmt"
-	"github.com/turtacn/QuantaID/pkg/types"
+	pkg_types "github.com/turtacn/QuantaID/pkg/types"
 	"strings"
 	"time"
 )
@@ -27,8 +27,8 @@ const (
 )
 
 type Conflict struct {
-	Existing *types.User
-	New      *types.User
+	Existing *pkg_types.User
+	New      *pkg_types.User
 }
 
 func NewDeduplicator(rules []DeduplicationRule, conflictMgr *ConflictManager) *Deduplicator {
@@ -43,7 +43,7 @@ type ConflictManager struct {
 	// In a real implementation, this would interact with the database.
 }
 
-func (cm *ConflictManager) ResolveConflict(existing, newUser *types.User) (resolution struct{ Action string; MergeStrategy string }) {
+func (cm *ConflictManager) ResolveConflict(existing, newUser *pkg_types.User) (resolution struct{ Action string; MergeStrategy string }) {
 	// A real implementation would use the configured conflict resolution strategy.
 	// For now, we'll just keep the existing user.
 	return struct {
@@ -57,8 +57,8 @@ func (cm *ConflictManager) SaveConflicts(ctx context.Context, conflicts []*Confl
 	return nil
 }
 
-func (d *Deduplicator) Process(ctx context.Context, users []*types.User) ([]*types.User, error) {
-	dedupMap := make(map[string]*types.User)
+func (d *Deduplicator) Process(ctx context.Context, users []*pkg_types.User) ([]*pkg_types.User, error) {
+	dedupMap := make(map[string]*pkg_types.User)
 	conflicts := []*Conflict{}
 
 	for _, user := range users {
@@ -88,7 +88,7 @@ func (d *Deduplicator) Process(ctx context.Context, users []*types.User) ([]*typ
 		d.conflictMgr.SaveConflicts(ctx, conflicts)
 	}
 
-	result := make([]*types.User, 0, len(dedupMap))
+	result := make([]*pkg_types.User, 0, len(dedupMap))
 	for _, identity := range dedupMap {
 		result = append(result, identity)
 	}
@@ -96,7 +96,7 @@ func (d *Deduplicator) Process(ctx context.Context, users []*types.User) ([]*typ
 	return result, nil
 }
 
-func (d *Deduplicator) generateDeduplicationKey(user *types.User) string {
+func (d *Deduplicator) generateDeduplicationKey(user *pkg_types.User) string {
 	for _, rule := range d.rules {
 		var keyParts []string
 		for _, field := range rule.MatchFields {
@@ -114,15 +114,15 @@ func (d *Deduplicator) generateDeduplicationKey(user *types.User) string {
 	return ""
 }
 
-func (d *Deduplicator) mergeIdentities(a, b *types.User, strategy string) *types.User {
-	merged := &types.User{}
+func (d *Deduplicator) mergeIdentities(a, b *pkg_types.User, strategy string) *pkg_types.User {
+	merged := &pkg_types.User{}
 
 	merged.Username = coalesce(a.Username, b.Username)
-	merged.Email = coalesce(a.Email, b.Email)
+	merged.Email = pkg_types.EncryptedString(coalesce(string(a.Email), string(b.Email)))
 
 	merged.Attributes = mergeJSON(a.Attributes, b.Attributes, strategy)
 
-	merged.MergeHistory = append(a.MergeHistory, types.MergeRecord{
+	merged.MergeHistory = append(a.MergeHistory, pkg_types.MergeRecord{
 		SourceIDs: []string{a.ID, b.ID},
 		MergedAt:  time.Now(),
 		Strategy:  strategy,

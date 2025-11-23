@@ -4,18 +4,28 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/turtacn/QuantaID/internal/audit"
+	"github.com/turtacn/QuantaID/internal/services/webhook"
+	"github.com/turtacn/QuantaID/pkg/types"
 	"time"
 )
 
 // Service provides a standardized way to record audit events.
 // It uses the audit pipeline to dispatch events to configured sinks.
 type Service struct {
-	pipeline *audit.Pipeline
+	pipeline          *audit.Pipeline
+	webhookDispatcher *webhook.Dispatcher
 }
 
 // NewService creates a new audit service.
-func NewService(p *audit.Pipeline) *Service {
-	return &Service{pipeline: p}
+func NewService(p *audit.Pipeline, wd *webhook.Dispatcher) *Service {
+	return &Service{pipeline: p, webhookDispatcher: wd}
+}
+
+func (s *Service) dispatchWebhook(ctx context.Context, eventType string, payload interface{}) {
+	if s.webhookDispatcher != nil {
+		// Use a detached context to ensure webhook delivery isn't cancelled by the request context
+		go s.webhookDispatcher.Dispatch(context.Background(), eventType, payload)
+	}
 }
 
 // generateAuditID creates a new unique ID for an audit event.
@@ -37,6 +47,7 @@ func (s *Service) RecordLoginSuccess(ctx context.Context, userID, ip, traceID st
 		Details:   details,
 	}
 	s.pipeline.Emit(ctx, event)
+	s.dispatchWebhook(ctx, "login.success", event)
 }
 
 // RecordLoginFailed records a failed user login attempt.
@@ -58,6 +69,27 @@ func (s *Service) RecordLoginFailed(ctx context.Context, userID, ip, traceID str
 		Details:   details,
 	}
 	s.pipeline.Emit(ctx, event)
+	s.dispatchWebhook(ctx, "login.failed", event)
+}
+
+// RecordUserCreated records a user creation event.
+func (s *Service) RecordUserCreated(ctx context.Context, user *types.User, ip, traceID string) {
+	event := &audit.AuditEvent{
+		ID:        generateAuditID(),
+		Timestamp: time.Now().UTC(),
+		Category:  "identity",
+		Action:    "user.created",
+		UserID:    user.ID,
+		IP:        ip,
+		Result:    "success",
+		TraceID:   traceID,
+		Details: map[string]any{
+			"username": user.Username,
+			"email":    string(user.Email),
+		},
+	}
+	s.pipeline.Emit(ctx, event)
+	s.dispatchWebhook(ctx, "user.created", event)
 }
 
 // RecordPolicyDecision records the outcome of a policy evaluation.

@@ -74,7 +74,7 @@ func (h *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	// 创建用户逻辑...
 	user := &types.User{
 		Username: req.Username,
-		Email:    req.Email,
+		Email:    types.EncryptedString(req.Email),
 	}
 
 	if err := h.userRepo.CreateUser(r.Context(), user); err != nil {

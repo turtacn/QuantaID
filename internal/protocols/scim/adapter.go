@@ -4,19 +4,19 @@ import (
 	"time"
 
 	"github.com/turtacn/QuantaID/pkg/scim"
-	"github.com/turtacn/QuantaID/pkg/types"
+	pkg_types "github.com/turtacn/QuantaID/pkg/types"
 )
 
 // ToDomainUser converts a SCIM User to a domain User
-func ToDomainUser(sUser *scim.User) *types.User {
-	u := &types.User{
+func ToDomainUser(sUser *scim.User) *pkg_types.User {
+	u := &pkg_types.User{
 		Username: sUser.UserName,
-		Status:   types.UserStatusActive,
+		Status:   pkg_types.UserStatusActive,
 		Attributes: make(map[string]interface{}),
 	}
 
 	if !sUser.Active {
-		u.Status = types.UserStatusInactive
+		u.Status = pkg_types.UserStatusInactive
 	}
 
 	// Map ExternalID
@@ -27,14 +27,14 @@ func ToDomainUser(sUser *scim.User) *types.User {
 	// Map Email (primary or first)
 	for _, email := range sUser.Emails {
 		if email.Primary || u.Email == "" {
-			u.Email = email.Value
+			u.Email = pkg_types.EncryptedString(email.Value)
 		}
 	}
 
 	// Map Phone
 	for _, phone := range sUser.PhoneNumbers {
 		if phone.Primary || u.Phone == "" {
-			u.Phone = phone.Value
+			u.Phone = pkg_types.EncryptedString(phone.Value)
 		}
 	}
 
@@ -57,7 +57,7 @@ func ToDomainUser(sUser *scim.User) *types.User {
 }
 
 // ToSCIMUser converts a domain User to a SCIM User
-func ToSCIMUser(user *types.User) *scim.User {
+func ToSCIMUser(user *pkg_types.User) *scim.User {
 	sUser := &scim.User{
 		Resource: scim.Resource{
 			Schemas: []string{scim.SchemaUser},
@@ -70,7 +70,7 @@ func ToSCIMUser(user *types.User) *scim.User {
 			},
 		},
 		UserName: user.Username,
-		Active:   user.Status == types.UserStatusActive,
+		Active:   user.Status == pkg_types.UserStatusActive,
 	}
 
 	// Map Attributes back
@@ -84,7 +84,7 @@ func ToSCIMUser(user *types.User) *scim.User {
 	if user.Email != "" {
 		sUser.Emails = []scim.Email{
 			{
-				Value:   user.Email,
+				Value:   string(user.Email),
 				Type:    "work",
 				Primary: true,
 			},
@@ -95,7 +95,7 @@ func ToSCIMUser(user *types.User) *scim.User {
 	if user.Phone != "" {
 		sUser.PhoneNumbers = []scim.Phone{
 			{
-				Value:   user.Phone,
+				Value:   string(user.Phone),
 				Type:    "work",
 				Primary: true,
 			},
@@ -123,8 +123,8 @@ func ToSCIMUser(user *types.User) *scim.User {
 }
 
 // ToDomainGroup converts a SCIM Group to a domain UserGroup
-func ToDomainGroup(sGroup *scim.Group) *types.UserGroup {
-	g := &types.UserGroup{
+func ToDomainGroup(sGroup *scim.Group) *pkg_types.UserGroup {
+	g := &pkg_types.UserGroup{
 		Name: sGroup.DisplayName,
 		Metadata: make(map[string]interface{}),
 	}
@@ -140,7 +140,7 @@ func ToDomainGroup(sGroup *scim.Group) *types.UserGroup {
 }
 
 // ToSCIMGroup converts a domain UserGroup to a SCIM Group
-func ToSCIMGroup(group *types.UserGroup) *scim.Group {
+func ToSCIMGroup(group *pkg_types.UserGroup) *scim.Group {
 	sGroup := &scim.Group{
 		Resource: scim.Resource{
 			Schemas: []string{scim.SchemaGroup},

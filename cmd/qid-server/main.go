@@ -10,8 +10,8 @@ import (
 
 	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/server/http"
-	"github.com/turtacn/QuantaID/internal/storage/postgresql/types"
 	"github.com/turtacn/QuantaID/pkg/kms/local"
+	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
 )

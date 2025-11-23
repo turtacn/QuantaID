@@ -72,7 +72,7 @@ func (h *SCIMHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdUser, err := h.identitySvc.CreateUser(r.Context(), dUser.Username, dUser.Email, password)
+	createdUser, err := h.identitySvc.CreateUser(r.Context(), dUser.Username, string(dUser.Email), password)
 	if err != nil {
 		if errors.Is(err, types.ErrConflict) {
 			h.writeError(w, http.StatusConflict, "uniqueness", "User already exists")

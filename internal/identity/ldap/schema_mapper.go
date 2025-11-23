@@ -3,7 +3,7 @@ package ldap
 import (
 	"fmt"
 	"github.com/go-ldap/ldap/v3"
-	"github.com/turtacn/QuantaID/pkg/types"
+	pkg_types "github.com/turtacn/QuantaID/pkg/types"
 	"strings"
 )
 
@@ -28,10 +28,10 @@ func NewSchemaMapper(config SchemaMapConfig) *SchemaMapper {
 	return &SchemaMapper{config: config}
 }
 
-func (sm *SchemaMapper) MapEntry(entry *ldap.Entry) (*types.User, error) {
-	user := &types.User{
+func (sm *SchemaMapper) MapEntry(entry *ldap.Entry) (*pkg_types.User, error) {
+	user := &pkg_types.User{
 		Attributes: make(map[string]interface{}),
-		Status:     types.UserStatusActive, // Default to active for new users from LDAP
+		Status:     pkg_types.UserStatusActive, // Default to active for new users from LDAP
 	}
 
 	for _, mapping := range sm.config.Mappings {
@@ -68,18 +68,18 @@ func (sm *SchemaMapper) applyTransform(value, transform string) string {
 	}
 }
 
-func (sm *SchemaMapper) setField(user *types.User, field, value string) {
+func (sm *SchemaMapper) setField(user *pkg_types.User, field, value string) {
 	switch field {
 	case "username":
 		user.Username = value
 	case "email":
-		user.Email = value
+		user.Email = pkg_types.EncryptedString(value)
 	case "userAccountControl":
 		// Handle the UserAccountControl attribute to map to user status
 		// This is a simplified example. A real implementation would be more robust.
 		if val, err := sm.parseUserAccountControl(value); err == nil {
 			if (val & 2) != 0 { // ADS_UF_ACCOUNTDISABLE
-				user.Status = types.UserStatusInactive
+				user.Status = pkg_types.UserStatusInactive
 			}
 		}
 	default:

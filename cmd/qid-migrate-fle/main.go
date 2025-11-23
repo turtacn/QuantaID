@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/turtacn/QuantaID/internal/storage/postgresql/types"
 	"github.com/turtacn/QuantaID/pkg/kms/local"
+	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"

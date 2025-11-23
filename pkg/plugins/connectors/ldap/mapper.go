@@ -2,7 +2,7 @@ package ldap
 
 import (
 	"github.com/go-ldap/ldap/v3"
-	"github.com/turtacn/QuantaID/pkg/types"
+	pkg_types "github.com/turtacn/QuantaID/pkg/types"
 )
 
 type Mapper struct {
@@ -21,10 +21,10 @@ func (m *Mapper) GetAttributeList() []string {
 	return attrs
 }
 
-func (m *Mapper) MapEntryToUser(entry *ldap.Entry) (*types.User, error) {
-	user := &types.User{
+func (m *Mapper) MapEntryToUser(entry *ldap.Entry) (*pkg_types.User, error) {
+	user := &pkg_types.User{
 		Username:   entry.GetAttributeValue(m.attrMapping["username"]),
-		Email:      entry.GetAttributeValue(m.attrMapping["email"]),
+		Email:      pkg_types.EncryptedString(entry.GetAttributeValue(m.attrMapping["email"])),
 		Attributes: make(map[string]interface{}),
 	}
 
@@ -32,7 +32,7 @@ func (m *Mapper) MapEntryToUser(entry *ldap.Entry) (*types.User, error) {
 		user.Attributes["displayName"] = entry.GetAttributeValue(val)
 	}
 	if val, ok := m.attrMapping["phone"]; ok {
-		user.Phone = entry.GetAttributeValue(val)
+		user.Phone = pkg_types.EncryptedString(entry.GetAttributeValue(val))
 	}
 
 	for _, attr := range entry.Attributes {

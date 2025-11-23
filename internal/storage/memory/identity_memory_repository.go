@@ -119,7 +119,7 @@ func (r *IdentityMemoryRepository) GetUserByEmail(ctx context.Context, email str
 	defer r.mu.RUnlock()
 
 	for _, user := range r.users {
-		if user.Email == email {
+		if string(user.Email) == email {
 			return user, nil
 		}
 	}
@@ -184,28 +184,28 @@ func (r *IdentityMemoryRepository) ChangeUserStatus(ctx context.Context, userID 
 }
 
 func (r *IdentityMemoryRepository) FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error) {
-    // This is a simplified implementation. A real-world scenario might require more complex reflection.
-    r.mu.RLock()
-    defer r.mu.RUnlock()
+	// This is a simplified implementation. A real-world scenario might require more complex reflection.
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-    var foundUsers []*types.User
-    for _, user := range r.users {
-        match := false
-        switch attribute {
-        case "email":
-            if email, ok := value.(string); ok && user.Email == email {
-                match = true
-            }
-        case "username":
-            if username, ok := value.(string); ok && user.Username == username {
-                match = true
-            }
-        }
-        if match {
-            foundUsers = append(foundUsers, user)
-        }
-    }
-    return foundUsers, nil
+	var foundUsers []*types.User
+	for _, user := range r.users {
+		match := false
+		switch attribute {
+		case "email":
+			if email, ok := value.(string); ok && string(user.Email) == email {
+				match = true
+			}
+		case "username":
+			if username, ok := value.(string); ok && user.Username == username {
+				match = true
+			}
+		}
+		if match {
+			foundUsers = append(foundUsers, user)
+		}
+	}
+	return foundUsers, nil
 }
 
 
@@ -361,7 +361,9 @@ func (r *IdentityMemoryRepository) UpsertBatch(ctx context.Context, users []*typ
 			existingUser.Attributes = user.Attributes
 			existingUser.Status = user.Status
 		} else {
-			user.ID = uuid.New().String()
+			if user.ID == "" {
+				user.ID = uuid.New().String()
+			}
 			r.users[user.ID] = user
 		}
 	}

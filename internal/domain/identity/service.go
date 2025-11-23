@@ -3,7 +3,7 @@ package identity
 import (
 	"context"
 	"errors"
-	"github.com/turtacn/QuantaID/pkg/types"
+	pkg_types "github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"go.uber.org/zap"
 )
@@ -50,44 +50,44 @@ func NewService(userRepo UserRepository, groupRepo GroupRepository, crypto *util
 //
 // Returns:
 //   The newly created user object, or an error if the creation fails.
-func (s *service) CreateUser(ctx context.Context, username, email, password string) (*types.User, error) {
+func (s *service) CreateUser(ctx context.Context, username, email, password string) (*pkg_types.User, error) {
 	if username == "" || email == "" || password == "" {
-		return nil, types.ErrValidation.WithDetails(map[string]string{"field": "username/email/password", "error": "cannot be empty"})
+		return nil, pkg_types.ErrValidation.WithDetails(map[string]string{"field": "username/email/password", "error": "cannot be empty"})
 	}
 
 	_, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err == nil {
-		return nil, types.ErrConflict.WithDetails(map[string]string{"field": "username", "value": username})
-	} else if !errors.Is(err, types.ErrUserNotFound) {
+		return nil, pkg_types.ErrConflict.WithDetails(map[string]string{"field": "username", "value": username})
+	} else if !errors.Is(err, pkg_types.ErrUserNotFound) {
 		s.logger.Error(ctx, "failed to check for existing user by username", zap.Error(err))
-		return nil, types.ErrInternal.WithCause(err)
+		return nil, pkg_types.ErrInternal.WithCause(err)
 	}
 
 	_, err = s.userRepo.GetUserByEmail(ctx, email)
 	if err == nil {
-		return nil, types.ErrConflict.WithDetails(map[string]string{"field": "email", "value": email})
-	} else if !errors.Is(err, types.ErrUserNotFound) {
+		return nil, pkg_types.ErrConflict.WithDetails(map[string]string{"field": "email", "value": email})
+	} else if !errors.Is(err, pkg_types.ErrUserNotFound) {
 		s.logger.Error(ctx, "failed to check for existing user by email", zap.Error(err))
-		return nil, types.ErrInternal.WithCause(err)
+		return nil, pkg_types.ErrInternal.WithCause(err)
 	}
 
 	hashedPassword, err := s.crypto.HashPassword(password)
 	if err != nil {
 		s.logger.Error(ctx, "Failed to hash password", zap.Error(err))
-		return nil, types.ErrInternal.WithCause(err)
+		return nil, pkg_types.ErrInternal.WithCause(err)
 	}
 
-	user := &types.User{
+	user := &pkg_types.User{
 		ID:       s.crypto.GenerateUUID(),
 		Username: username,
-		Email:    email,
+		Email:    pkg_types.EncryptedString(email),
 		Password: hashedPassword,
-		Status:   types.UserStatusActive,
+		Status:   pkg_types.UserStatusActive,
 	}
 
 	if err := s.userRepo.CreateUser(ctx, user); err != nil {
 		s.logger.Error(ctx, "Failed to create user in repository", zap.Error(err))
-		return nil, types.ErrInternal.WithCause(err)
+		return nil, pkg_types.ErrInternal.WithCause(err)
 	}
 
 	s.logger.Info(ctx, "User created successfully", zap.String("userID", user.ID), zap.String("username", user.Username))
@@ -102,16 +102,16 @@ func (s *service) CreateUser(ctx context.Context, username, email, password stri
 //
 // Returns:
 //   The user object if found, or an error.
-func (s *service) GetUser(ctx context.Context, userID string) (*types.User, error) {
+func (s *service) GetUser(ctx context.Context, userID string) (*pkg_types.User, error) {
 	user, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
-		return nil, types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
+		return nil, pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
 	}
 	return user, nil
 }
 
 // ListUsers retrieves a paginated list of users, with optional filtering.
-func (s *service) ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error) {
+func (s *service) ListUsers(ctx context.Context, filter pkg_types.UserFilter) ([]*pkg_types.User, int, error) {
 	s.logger.Info(ctx, "Listing users with filter", zap.Any("filter", filter))
 	users, total, err := s.userRepo.ListUsers(ctx, filter)
 	if err != nil {
@@ -128,10 +128,10 @@ func (s *service) ListUsers(ctx context.Context, filter types.UserFilter) ([]*ty
 //
 // Returns:
 //   The user object if found, or an error.
-func (s *service) GetUserByID(ctx context.Context, userID string) (*types.User, error) {
+func (s *service) GetUserByID(ctx context.Context, userID string) (*pkg_types.User, error) {
 	user, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
-		return nil, types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
+		return nil, pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
 	}
 	return user, nil
 }
@@ -144,10 +144,10 @@ func (s *service) GetUserByID(ctx context.Context, userID string) (*types.User, 
 //
 // Returns:
 //   The user object if found, or an error.
-func (s *service) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+func (s *service) GetUserByUsername(ctx context.Context, username string) (*pkg_types.User, error) {
 	user, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
-		return nil, types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"username": username})
+		return nil, pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"username": username})
 	}
 	return user, nil
 }
@@ -160,11 +160,11 @@ func (s *service) GetUserByUsername(ctx context.Context, username string) (*type
 //
 // Returns:
 //   A slice of user groups, or an error.
-func (s *service) GetUserGroups(ctx context.Context, userID string) ([]*types.UserGroup, error) {
+func (s *service) GetUserGroups(ctx context.Context, userID string) ([]*pkg_types.UserGroup, error) {
 	groups, err := s.groupRepo.GetUserGroups(ctx, userID)
 	if err != nil {
 		s.logger.Error(ctx, "Failed to get user groups from repository", zap.Error(err), zap.String("userID", userID))
-		return nil, types.ErrInternal.WithCause(err)
+		return nil, pkg_types.ErrInternal.WithCause(err)
 	}
 	return groups, nil
 }
@@ -182,17 +182,17 @@ func (s *service) GetUserGroups(ctx context.Context, userID string) ([]*types.Us
 func (s *service) AddUserToGroup(ctx context.Context, userID, groupID string) error {
 	_, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
-		return types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"user_id": userID})
+		return pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"user_id": userID})
 	}
 	_, err = s.groupRepo.GetGroupByID(ctx, groupID)
 	if err != nil {
-		return types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"group_id": groupID})
+		return pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"group_id": groupID})
 	}
 
 	err = s.groupRepo.AddUserToGroup(ctx, userID, groupID)
 	if err != nil {
 		s.logger.Error(ctx, "Failed to add user to group", zap.Error(err), zap.String("userID", userID), zap.String("groupID", groupID))
-		return types.ErrInternal.WithCause(err)
+		return pkg_types.ErrInternal.WithCause(err)
 	}
 
 	s.logger.Info(ctx, "User added to group", zap.String("userID", userID), zap.String("groupID", groupID))
@@ -208,16 +208,16 @@ func (s *service) AddUserToGroup(ctx context.Context, userID, groupID string) er
 //
 // Returns:
 //   An error if the user is not found or if the update fails.
-func (s *service) ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error {
+func (s *service) ChangeUserStatus(ctx context.Context, userID string, newStatus pkg_types.UserStatus) error {
 	user, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
-		return types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
+		return pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
 	}
 
 	user.Status = newStatus
 	if err := s.userRepo.UpdateUser(ctx, user); err != nil {
 		s.logger.Error(ctx, "Failed to update user status", zap.Error(err), zap.String("userID", userID))
-		return types.ErrInternal.WithCause(err)
+		return pkg_types.ErrInternal.WithCause(err)
 	}
 
 	s.logger.Info(ctx, "User status changed", zap.String("userID", userID), zap.String("newStatus", string(newStatus)))
@@ -232,10 +232,10 @@ func (s *service) ChangeUserStatus(ctx context.Context, userID string, newStatus
 //
 // Returns:
 //   An error if the update fails.
-func (s *service) UpdateUser(ctx context.Context, user *types.User) error {
+func (s *service) UpdateUser(ctx context.Context, user *pkg_types.User) error {
 	if err := s.userRepo.UpdateUser(ctx, user); err != nil {
 		s.logger.Error(ctx, "Failed to update user", zap.Error(err), zap.String("userID", user.ID))
-		return types.ErrInternal.WithCause(err)
+		return pkg_types.ErrInternal.WithCause(err)
 	}
 	s.logger.Info(ctx, "User updated", zap.String("userID", user.ID))
 	return nil
@@ -251,28 +251,28 @@ func (s *service) UpdateUser(ctx context.Context, user *types.User) error {
 //   An error if the delete fails.
 func (s *service) DeleteUser(ctx context.Context, userID string) error {
 	if err := s.userRepo.DeleteUser(ctx, userID); err != nil {
-		if errors.Is(err, types.ErrNotFound) {
-			return types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
+		if errors.Is(err, pkg_types.ErrNotFound) {
+			return pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"userID": userID})
 		}
 		s.logger.Error(ctx, "Failed to delete user", zap.Error(err), zap.String("userID", userID))
-		return types.ErrInternal.WithCause(err)
+		return pkg_types.ErrInternal.WithCause(err)
 	}
 	s.logger.Info(ctx, "User deleted", zap.String("userID", userID))
 	return nil
 }
 
 // CreateGroup creates a new group.
-func (s *service) CreateGroup(ctx context.Context, group *types.UserGroup) error {
+func (s *service) CreateGroup(ctx context.Context, group *pkg_types.UserGroup) error {
 	if err := s.groupRepo.CreateGroup(ctx, group); err != nil {
 		s.logger.Error(ctx, "Failed to create group", zap.Error(err))
-		return types.ErrInternal.WithCause(err)
+		return pkg_types.ErrInternal.WithCause(err)
 	}
 	s.logger.Info(ctx, "Group created", zap.String("groupID", group.ID))
 	return nil
 }
 
 // GetGroup retrieves a group by ID.
-func (s *service) GetGroup(ctx context.Context, groupID string) (*types.UserGroup, error) {
+func (s *service) GetGroup(ctx context.Context, groupID string) (*pkg_types.UserGroup, error) {
 	group, err := s.groupRepo.GetGroupByID(ctx, groupID)
 	if err != nil {
 		// Assuming repo returns error if not found, mapping to ErrNotFound handled by caller or wrapper?
@@ -280,16 +280,16 @@ func (s *service) GetGroup(ctx context.Context, groupID string) (*types.UserGrou
 		// Ideally repo should return domain error or we map it here.
 		// Given I can't see repo implementation fully, I'll assume standard behavior or wrap.
 		// But reusing existing pattern:
-		return nil, types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"groupID": groupID})
+		return nil, pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"groupID": groupID})
 	}
 	return group, nil
 }
 
 // UpdateGroup updates an existing group.
-func (s *service) UpdateGroup(ctx context.Context, group *types.UserGroup) error {
+func (s *service) UpdateGroup(ctx context.Context, group *pkg_types.UserGroup) error {
 	if err := s.groupRepo.UpdateGroup(ctx, group); err != nil {
 		s.logger.Error(ctx, "Failed to update group", zap.Error(err), zap.String("groupID", group.ID))
-		return types.ErrInternal.WithCause(err)
+		return pkg_types.ErrInternal.WithCause(err)
 	}
 	s.logger.Info(ctx, "Group updated", zap.String("groupID", group.ID))
 	return nil
@@ -299,18 +299,18 @@ func (s *service) UpdateGroup(ctx context.Context, group *types.UserGroup) error
 func (s *service) DeleteGroup(ctx context.Context, groupID string) error {
 	if err := s.groupRepo.DeleteGroup(ctx, groupID); err != nil {
 		s.logger.Error(ctx, "Failed to delete group", zap.Error(err), zap.String("groupID", groupID))
-		return types.ErrInternal.WithCause(err)
+		return pkg_types.ErrInternal.WithCause(err)
 	}
 	s.logger.Info(ctx, "Group deleted", zap.String("groupID", groupID))
 	return nil
 }
 
 // ListGroups lists groups with pagination.
-func (s *service) ListGroups(ctx context.Context, offset, limit int) ([]*types.UserGroup, error) {
+func (s *service) ListGroups(ctx context.Context, offset, limit int) ([]*pkg_types.UserGroup, error) {
 	groups, err := s.groupRepo.ListGroups(ctx, PaginationQuery{Offset: offset, PageSize: limit})
 	if err != nil {
 		s.logger.Error(ctx, "Failed to list groups", zap.Error(err))
-		return nil, types.ErrInternal.WithCause(err)
+		return nil, pkg_types.ErrInternal.WithCause(err)
 	}
 	return groups, nil
 }
@@ -328,14 +328,14 @@ func (s *service) GetUserRepo() UserRepository {
 //
 // Returns:
 //   The user object if found, or an error.
-func (s *service) GetUserByExternalID(ctx context.Context, externalID string) (*types.User, error) {
+func (s *service) GetUserByExternalID(ctx context.Context, externalID string) (*pkg_types.User, error) {
 	// FindUsersByAttribute is available in UserRepository
 	users, err := s.userRepo.FindUsersByAttribute(ctx, "externalId", externalID)
 	if err != nil {
-		return nil, types.ErrInternal.WithCause(err)
+		return nil, pkg_types.ErrInternal.WithCause(err)
 	}
 	if len(users) == 0 {
-		return nil, types.ErrNotFound.WithDetails(map[string]string{"externalId": externalID})
+		return nil, pkg_types.ErrNotFound.WithDetails(map[string]string{"externalId": externalID})
 	}
 	if len(users) > 1 {
 		s.logger.Warn(ctx, "Multiple users found with same externalId", zap.String("externalId", externalID))
