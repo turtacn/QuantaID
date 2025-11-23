@@ -20,6 +20,7 @@ type UserRepository interface {
 	ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error)
 	ChangeUserStatus(ctx context.Context, userID string, newStatus types.UserStatus) error
 	FindUsersByAttribute(ctx context.Context, attribute string, value interface{}) ([]*types.User, error)
+	GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*types.User, error)
 	UpsertBatch(ctx context.Context, users []*types.User) error
 	CreateBatch(ctx context.Context, users []*types.User) error
 	UpdateBatch(ctx context.Context, users []*types.User) error

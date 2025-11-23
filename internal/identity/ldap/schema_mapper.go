@@ -74,6 +74,8 @@ func (sm *SchemaMapper) setField(user *pkg_types.User, field, value string) {
 		user.Username = value
 	case "email":
 		user.Email = pkg_types.EncryptedString(value)
+	case "phone":
+		user.Phone = pkg_types.EncryptedString(value)
 	case "userAccountControl":
 		// Handle the UserAccountControl attribute to map to user status
 		// This is a simplified example. A real implementation would be more robust.

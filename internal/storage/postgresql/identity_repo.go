@@ -103,9 +103,13 @@ func (r *PostgresIdentityRepository) FindUsersByAttribute(ctx context.Context, a
 }
 
 func (r *PostgresIdentityRepository) UpsertBatch(ctx context.Context, users []*types.User) error {
+	if len(users) == 0 {
+		return nil
+	}
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "email"}},
-		DoUpdates: clause.AssignmentColumns([]string{"username", "attributes", "status"}),
+		Columns:   []clause.Column{{Name: "external_id"}, {Name: "source_type"}},
+		// Removed merge_history to prevent wiping it during batch updates.
+		DoUpdates: clause.AssignmentColumns([]string{"username", "email", "phone", "attributes", "updated_at", "last_login_at"}),
 	}).Create(&users).Error
 }
 
@@ -173,9 +177,20 @@ func (r *PostgresIdentityRepository) DeleteBatch(ctx context.Context, userIDs []
 }
 
 func (r *PostgresIdentityRepository) FindUsersBySource(ctx context.Context, sourceID string) ([]*types.User, error) {
-	// This is a placeholder implementation. In a real scenario, you'd have a way
-	// to associate users with a source. For now, we return all users.
 	var users []*types.User
-	err := r.db.WithContext(ctx).Find(&users).Error
+	// Assuming SourceType stores the SourceID or identifying string
+	err := r.db.WithContext(ctx).Where("source_type = ?", sourceID).Find(&users).Error
 	return users, err
+}
+
+func (r *PostgresIdentityRepository) GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*types.User, error) {
+	var user types.User
+	err := r.db.WithContext(ctx).First(&user, "external_id = ? AND source_type = ?", externalID, sourceID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, types.ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &user, nil
 }

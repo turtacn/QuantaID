@@ -319,26 +319,21 @@ func (s *service) GetUserRepo() UserRepository {
 	return s.userRepo
 }
 
-// GetUserByExternalID retrieves a user by their external ID.
-// This assumes ExternalID is stored in the attributes JSONB column.
+// GetUserByExternalID retrieves a user by their external ID and source.
 //
 // Parameters:
 //   - ctx: The context for the request.
 //   - externalID: The external ID of the user to retrieve.
+//   - sourceID: The source ID of the user.
 //
 // Returns:
 //   The user object if found, or an error.
-func (s *service) GetUserByExternalID(ctx context.Context, externalID string) (*pkg_types.User, error) {
-	// FindUsersByAttribute is available in UserRepository
-	users, err := s.userRepo.FindUsersByAttribute(ctx, "externalId", externalID)
+func (s *service) GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*pkg_types.User, error) {
+	user, err := s.userRepo.GetUserByExternalID(ctx, externalID, sourceID)
 	if err != nil {
-		return nil, pkg_types.ErrInternal.WithCause(err)
+		// Repo usually returns generic error or sql.ErrNoRows.
+		// If implementation returns domain error, fine.
+		return nil, pkg_types.ErrNotFound.WithCause(err).WithDetails(map[string]string{"externalId": externalID, "sourceId": sourceID})
 	}
-	if len(users) == 0 {
-		return nil, pkg_types.ErrNotFound.WithDetails(map[string]string{"externalId": externalID})
-	}
-	if len(users) > 1 {
-		s.logger.Warn(ctx, "Multiple users found with same externalId", zap.String("externalId", externalID))
-	}
-	return users[0], nil
+	return user, nil
 }

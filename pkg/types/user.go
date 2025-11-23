@@ -31,6 +31,10 @@ type User struct {
 	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
 	// MergeHistory records the history of merges for this user.
 	MergeHistory []MergeRecord `json:"mergeHistory,omitempty" gorm:"type:jsonb"`
+	// ExternalID is the unique identifier from the external identity source.
+	ExternalID string `json:"externalId,omitempty" gorm:"uniqueIndex:idx_source_external"`
+	// SourceType indicates the origin of the user (e.g., "ldap", "oidc").
+	SourceType string `json:"sourceType,omitempty" gorm:"uniqueIndex:idx_source_external"`
 }
 
 // UserFilter defines the criteria for listing users.

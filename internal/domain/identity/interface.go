@@ -31,8 +31,8 @@ type IService interface {
 	// ListUsers retrieves a paginated list of users, with optional filtering.
 	ListUsers(ctx context.Context, filter types.UserFilter) ([]*types.User, int, error)
 	GetUserRepo() UserRepository
-	// GetUserByExternalID retrieves a user by their external ID.
-	GetUserByExternalID(ctx context.Context, externalID string) (*types.User, error)
+	// GetUserByExternalID retrieves a user by their external ID and source.
+	GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*types.User, error)
 
 	// Group Management
 	CreateGroup(ctx context.Context, group *types.UserGroup) error
