@@ -3,7 +3,7 @@
 {{define "content"}}
 <h2>Login</h2>
 
-{{if .Data.Error}}
+{{if and .Data .Data.Error}}
 <p class="error">{{.Data.Error}}</p>
 {{end}}
 
@@ -13,7 +13,7 @@
     <div>
         <label for="username">Username:</label>
         <input type="text" id="username" name="username"
-               value="{{if .Data.Username}}{{.Data.Username}}{{end}}" required>
+               value="{{if and .Data .Data.Username}}{{.Data.Username}}{{end}}" required>
     </div>
 
     <br>

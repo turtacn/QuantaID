@@ -201,6 +201,11 @@ func (m *MockRedisClient) Get(ctx context.Context, key string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockRedisClient) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
+	args := m.Called(ctx, keys)
+	return args.Get(0).([]interface{}), args.Error(1)
+}
+
 func (m *MockRedisClient) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
 	args := m.Called(ctx, key, member)
 	return args.Get(0).(*redis.BoolCmd)

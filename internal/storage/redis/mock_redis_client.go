@@ -41,6 +41,11 @@ func (m *MockRedisClient) Get(ctx context.Context, key string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockRedisClient) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
+	args := m.Called(ctx, keys)
+	return args.Get(0).([]interface{}), args.Error(1)
+}
+
 func (m *MockRedisClient) Del(ctx context.Context, keys ...string) error {
 	args := m.Called(ctx, keys)
 	return args.Error(0)

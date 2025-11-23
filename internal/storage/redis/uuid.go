@@ -9,3 +9,6 @@ type GoogleUUIDGenerator struct{}
 func (g *GoogleUUIDGenerator) New() string {
 	return uuid.New().String()
 }
+
+// UUIDv4Generator is an alias for GoogleUUIDGenerator for compatibility
+type UUIDv4Generator = GoogleUUIDGenerator

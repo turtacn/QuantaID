@@ -255,6 +255,11 @@ func (rc *redisClient) Get(ctx context.Context, key string) (string, error) {
 	return rc.client.Get(ctx, key).Result()
 }
 
+// MGet retrieves multiple values from Redis.
+func (rc *redisClient) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
+	return rc.client.MGet(ctx, keys...).Result()
+}
+
 // Del deletes a value from Redis.
 func (rc *redisClient) Del(ctx context.Context, keys ...string) error {
 	return rc.client.Del(ctx, keys...).Err()

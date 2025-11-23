@@ -22,7 +22,11 @@ type Metrics struct {
 }
 
 // NewMetrics creates a new Metrics struct and registers the Prometheus collectors.
+// For testing, reg can be nil, in which case default registry or no registry is used.
 func NewMetrics(namespace string, reg prometheus.Registerer) *Metrics {
+	if reg == nil {
+		reg = prometheus.NewRegistry()
+	}
 	m := &Metrics{
 		Commands: prometheus.NewCounterVec(
 			prometheus.CounterOpts{

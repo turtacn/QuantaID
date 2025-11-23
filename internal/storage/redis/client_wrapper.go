@@ -28,6 +28,11 @@ func (w *RedisClientWrapper) Get(ctx context.Context, key string) (string, error
 	return w.client.Get(ctx, key).Result()
 }
 
+// MGet retrieves multiple values from Redis.
+func (w *RedisClientWrapper) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
+	return w.client.MGet(ctx, keys...).Result()
+}
+
 // Del deletes a value from Redis.
 func (w *RedisClientWrapper) Del(ctx context.Context, keys ...string) error {
 	return w.client.Del(ctx, keys...).Err()

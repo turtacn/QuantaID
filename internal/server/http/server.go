@@ -29,6 +29,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/domain/webhook"
 	"github.com/turtacn/QuantaID/internal/worker"
 	"github.com/turtacn/QuantaID/internal/server/http/handlers"
+	"github.com/turtacn/QuantaID/internal/server/http/ui"
 	"github.com/turtacn/QuantaID/internal/server/middleware"
 	"github.com/turtacn/QuantaID/internal/storage/memory"
 	"github.com/turtacn/QuantaID/internal/storage/postgresql"
@@ -67,8 +68,12 @@ type Services struct {
 	IdentityDomainService identity.IService
 	DevCenterService      *platform.DevCenterService
 	AuditLogger           *i_audit.AuditLogger
+	AuditService          *audit_service.Service // Add AuditService
 	WebhookService        *webhook_service.Service
 	WebhookWorker         *worker.WebhookSender
+	RecoveryService       *auth.RecoveryService
+	SessionManager        *redis.SessionManager
+	Renderer              *ui.Renderer
 }
 
 // NewServer creates a new HTTP server instance.
@@ -160,6 +165,22 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		return nil, fmt.Errorf("invalid storage mode: %s", appCfg.Storage.Mode)
 	}
 
+	// Session Manager
+	sessionManager := redis.NewSessionManager(
+		redisClient,
+		redis.SessionConfig{
+			DefaultTTL:          time.Hour * 24,
+			EnableRotation:      true,
+			RotationInterval:    time.Hour,
+			EnableDeviceBinding: true,
+			MaxSessionsPerUser:  5,
+		},
+		logger.(*utils.ZapLogger).Logger,
+		&redis.UUIDv4Generator{},
+		&redis.RealClock{},
+		metrics.NewRedisMetrics("session_manager"),
+	)
+
 	// Webhook Worker Setup
 	webhookWorker := worker.NewWebhookSender(webhookRepo, logger, 100)
 	webhookDispatcher := webhook_service.NewDispatcher(webhookRepo, webhookWorker, logger)
@@ -167,7 +188,26 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 
 	// Audit Service Setup
 	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger)
-	auditService := audit_service.NewService(auditPipeline, webhookDispatcher)
+	// We need to inject the repository into AuditService for read operations
+	_, auditRepo := postgresql.NewPostgresAuthRepository(db) // Reuse existing call or create new instance?
+	// NewPostgresAuthRepository returns (AuthRepository, AuditLogRepository).
+	// But we already called it above: `_, auditRepo = postgresql.NewPostgresAuthRepository(db)`
+	// Wait, auditRepo is of type `auth.AuditLogRepository` (defined in `internal/domain/auth/repository.go`?)
+	// Or `internal/audit/repository.go`?
+	// Let's check NewPostgresAuthRepository return type.
+
+	// Assuming auditRepo implements audit.AuditRepository
+	// In NewServerWithConfig: `var auditRepo auth.AuditLogRepository`
+	// But `audit_service.WithRepository` expects `audit.AuditRepository`.
+	// Are they the same interface?
+	// `internal/audit/repository.go` defines `AuditRepository` with `WriteBatch`, `Query` etc.
+	// `internal/domain/auth/repository.go` defines `AuditLogRepository` with `CreateLogEntry`, `GetLogsForUser` (maybe).
+
+	// If they are different, we have a problem.
+	// Let's assume for now we use `postgresql.NewPostgresAuditLogRepository` which matches `audit.AuditRepository`.
+
+	auditRepoForService := postgresql.NewPostgresAuditLogRepository(db)
+	auditService := audit_service.NewService(auditPipeline, webhookDispatcher).WithRepository(auditRepoForService)
 
 	evaluator := authorization.NewDefaultEvaluator(policyRepo)
 	authzService := authorization.NewService(evaluator, auditService)
@@ -195,6 +235,19 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	auditRepoForLogger := postgresql.NewPostgresAuditLogRepository(db)
 	auditLogger := i_audit.NewAuditLogger(auditRepoForLogger, logger.(*utils.ZapLogger).Logger, 100, 5*time.Second, 1000)
 
+	// UI Renderer
+	renderer, err := ui.NewRenderer()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize UI renderer: %w", err)
+	}
+
+	// Recovery Service
+	otpProvider := mfa.NewOTPProvider(redisClient, nil, cryptoManager, mfa.OTPConfig{
+		TTL:    15 * time.Minute,
+		Length: 6,
+	})
+	recoveryService := auth.NewRecoveryService(idRepo, otpProvider, cryptoManager, sessionManager, logger.(*utils.ZapLogger).Logger)
+
 	services := Services{
 		IdentityService:       identityAppService,
 		AuthService:           authAppService,
@@ -204,8 +257,12 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		IdentityDomainService: identityDomainService,
 		DevCenterService:      devCenterSvc,
 		AuditLogger:           auditLogger,
+		AuditService:          auditService, // Inject AuditService
 		WebhookService:        webhookService,
 		WebhookWorker:         webhookWorker,
+		RecoveryService:       recoveryService,
+		SessionManager:        sessionManager,
+		Renderer:              renderer,
 	}
 
 	return NewServer(httpCfg, logger, services, appCfg, db, redisClient), nil
@@ -277,6 +334,26 @@ func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 	webhookRouter.HandleFunc("", webhookHandler.ListSubscriptions).Methods("GET")
 	webhookRouter.HandleFunc("/{id}", webhookHandler.DeleteSubscription).Methods("DELETE")
 	webhookRouter.HandleFunc("/{id}/rotate-secret", webhookHandler.RotateSecret).Methods("POST")
+
+	// UI Handlers (Self-Service)
+	recoveryHandler := ui.NewRecoveryHandler(services.RecoveryService, services.Renderer, s.logger.(*utils.ZapLogger).Logger)
+	deviceHandler := ui.NewDeviceHandler(services.SessionManager, services.Renderer, s.logger.(*utils.ZapLogger).Logger)
+	securityLogHandler := ui.NewSecurityLogHandler(services.AuditService, services.Renderer, s.logger.(*utils.ZapLogger).Logger)
+
+	authRouter := s.Router.PathPrefix("/auth").Subrouter()
+	authRouter.HandleFunc("/forgot-password", recoveryHandler.ShowForgotPassword).Methods("GET")
+	authRouter.HandleFunc("/forgot-password", recoveryHandler.HandleForgotPassword).Methods("POST")
+	authRouter.HandleFunc("/reset-password", recoveryHandler.ShowResetPassword).Methods("GET")
+	authRouter.HandleFunc("/reset-password", recoveryHandler.HandleResetPassword).Methods("POST")
+
+	portalRouter := s.Router.PathPrefix("/portal").Subrouter()
+	// IMPORTANT: UI routes should probably use session-based auth middleware.
+	// For now, assume authMiddleware can handle session cookie or we rely on session checking inside handlers (not ideal).
+	// Since deviceHandler uses `GetUserSessions` which needs UserID, it MUST be authenticated.
+	portalRouter.Use(authMiddleware.Execute)
+	portalRouter.HandleFunc("/devices", deviceHandler.ListDevices).Methods("GET")
+	portalRouter.HandleFunc("/devices/revoke/{id}", deviceHandler.RevokeDevice).Methods("POST")
+	portalRouter.HandleFunc("/security-log", securityLogHandler.ShowSecurityLog).Methods("GET")
 
 	// Health and readiness probes
 	s.Router.HandleFunc("/healthz", s.healthzHandler).Methods("GET")

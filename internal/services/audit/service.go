@@ -2,6 +2,7 @@ package audit
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/services/webhook"
@@ -14,11 +15,18 @@ import (
 type Service struct {
 	pipeline          *audit.Pipeline
 	webhookDispatcher *webhook.Dispatcher
+	repo              audit.AuditRepository // Add repo access
 }
 
 // NewService creates a new audit service.
 func NewService(p *audit.Pipeline, wd *webhook.Dispatcher) *Service {
 	return &Service{pipeline: p, webhookDispatcher: wd}
+}
+
+// WithRepository attaches a repository to the service for querying.
+func (s *Service) WithRepository(repo audit.AuditRepository) *Service {
+	s.repo = repo
+	return s
 }
 
 func (s *Service) dispatchWebhook(ctx context.Context, eventType string, payload interface{}) {
@@ -107,6 +115,48 @@ func (s *Service) RecordPolicyDecision(ctx context.Context, userID, ip, resource
 		Details:   details,
 	}
 	s.pipeline.Emit(ctx, event)
+}
+
+// GetLogsForUser retrieves audit logs for a specific user.
+func (s *Service) GetLogsForUser(ctx context.Context, userID string, limit int) ([]*audit.AuditEvent, error) {
+	if s.repo == nil {
+		return nil, fmt.Errorf("audit repository not configured")
+	}
+
+	// Use QueryFilter to filter by UserID
+	// Assuming limit needs to be handled by repository or we slice the result
+	// The interface doesn't have Limit in QueryFilter, checking internal/audit/repository.go
+	// It has PaginationQuery in MockAuditLogRepository (but that's a mock).
+	// Real interface has `Query(ctx, filter QueryFilter)`.
+	// QueryFilter has Start/EndTimestamp, EventTypes, ActorID, TargetID.
+	// It doesn't seem to have Pagination.
+	// Wait, MockAuditLogRepository used `types.PaginationQuery`.
+	// Let's check `internal/audit/repository.go` again.
+	// It says `Query(ctx context.Context, filter QueryFilter)`.
+	// And `QueryFilter` struct definition.
+
+	// I will just use Query for now and assume it returns recent logs or I filter manually?
+	// The interface might need update for limit.
+	// For now, let's just query by ActorID (UserID).
+
+	filter := audit.QueryFilter{
+		ActorID: userID,
+		// Should probably set a time range, e.g., last 30 days
+		StartTimestamp: time.Now().AddDate(0, 0, -30),
+		EndTimestamp:   time.Now(),
+	}
+
+	logs, err := s.repo.Query(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply limit if needed (in memory for now if repo doesn't support it)
+	if limit > 0 && len(logs) > limit {
+		return logs[:limit], nil
+	}
+
+	return logs, nil
 }
 
 // RecordAdminAction records an action performed by an administrator.

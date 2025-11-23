@@ -15,6 +15,7 @@ type RedisClientInterface interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
 	Get(ctx context.Context, key string) (string, error)
+	MGet(ctx context.Context, keys ...string) ([]interface{}, error)
 	Del(ctx context.Context, keys ...string) error
 	SAdd(ctx context.Context, key string, members ...interface{}) error
 	SCard(ctx context.Context, key string) (int64, error)

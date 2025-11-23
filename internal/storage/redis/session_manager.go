@@ -260,3 +260,107 @@ func (sm *SessionManager) RotateSession(ctx context.Context, oldSessionID string
 
 	return newSession, nil
 }
+
+// GetUserSessions retrieves all active sessions for a user.
+func (sm *SessionManager) GetUserSessions(ctx context.Context, userID string) ([]*types.UserSession, error) {
+	userSessionsKey := fmt.Sprintf("user_sessions:%s", userID)
+
+	// 1. Get all session IDs for the user
+	start := sm.clock.Now()
+	sessionIDs, err := sm.client.ZRange(ctx, userSessionsKey, 0, -1)
+	sm.metrics.Commands.WithLabelValues("zrange").Inc()
+	sm.metrics.CommandLatency.WithLabelValues("zrange").Observe(time.Since(start).Seconds())
+	if err != nil {
+		sm.metrics.Errors.WithLabelValues("zrange").Inc()
+		return nil, fmt.Errorf("could not retrieve session IDs: %w", err)
+	}
+
+	if len(sessionIDs) == 0 {
+		return []*types.UserSession{}, nil
+	}
+
+	// 2. MGet all session details
+	var keys []string
+	for _, id := range sessionIDs {
+		keys = append(keys, fmt.Sprintf("session:%s", id))
+	}
+
+	start = sm.clock.Now()
+	results, err := sm.client.MGet(ctx, keys...)
+	sm.metrics.Commands.WithLabelValues("mget").Inc()
+	sm.metrics.CommandLatency.WithLabelValues("mget").Observe(time.Since(start).Seconds())
+	if err != nil {
+		sm.metrics.Errors.WithLabelValues("mget").Inc()
+		return nil, fmt.Errorf("could not retrieve sessions: %w", err)
+	}
+
+	// 3. Unmarshal and filter sessions
+	var sessions []*types.UserSession
+	for i, result := range results {
+		if result == nil {
+			// Session key missing, lazily cleanup
+			_ = sm.DeleteSession(ctx, userID, sessionIDs[i])
+			continue
+		}
+
+		strResult, ok := result.(string)
+		if !ok {
+			sm.logger.Warn("Unexpected result type from MGet", zap.Any("result", result))
+			continue
+		}
+
+		var session types.UserSession
+		if err := json.Unmarshal([]byte(strResult), &session); err != nil {
+			sm.logger.Warn("Could not unmarshal session", zap.Error(err))
+			continue
+		}
+
+		if sm.clock.Now().After(session.ExpiresAt) {
+			// Session expired, cleanup
+			_ = sm.DeleteSession(ctx, userID, sessionIDs[i])
+			continue
+		}
+
+		sessions = append(sessions, &session)
+	}
+
+	return sessions, nil
+}
+
+// RevokeSession revokes a specific session by ID.
+// It verifies that the session belongs to the user if userID is provided (optional).
+func (sm *SessionManager) RevokeSession(ctx context.Context, userID, sessionID string) error {
+	// If userID is provided, we can directly call DeleteSession which cleans up both key and user set
+	if userID != "" {
+		return sm.DeleteSession(ctx, userID, sessionID)
+	}
+
+	// If userID is unknown, we need to fetch the session first to find the owner
+	session, err := sm.GetSession(ctx, sessionID, nil) // r is nil, skipping fingerprint check
+	if err != nil {
+		if err == types.ErrNotFound {
+			// Already gone
+			return nil
+		}
+		return err
+	}
+
+	return sm.DeleteSession(ctx, session.UserID, sessionID)
+}
+
+// RevokeAllUserSessions revokes all sessions for a specific user.
+func (sm *SessionManager) RevokeAllUserSessions(ctx context.Context, userID string) error {
+	userSessionsKey := fmt.Sprintf("user_sessions:%s", userID)
+
+	// Get all session IDs
+	sessionIDs, err := sm.client.ZRange(ctx, userSessionsKey, 0, -1)
+	if err != nil {
+		return err
+	}
+
+	for _, id := range sessionIDs {
+		_ = sm.DeleteSession(ctx, userID, id)
+	}
+
+	return nil
+}

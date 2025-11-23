@@ -22,6 +22,11 @@ import (
 func TestLoginRenderIsolation(t *testing.T) {
 	// Step 1: Manually parse ONLY the layout and login templates.
 	// This avoids parsing other potentially broken templates.
+	// Note: We need to match all templates to ensure inheritance works if layout depends on others
+	// but TestLoginRenderIsolation specifically wants isolated.
+	// However, NewRenderer uses glob patterns now.
+	// Let's use the NewRenderer logic if possible or update the test.
+	// "templates/*.html" covers layout.html and login.html.
 	templates, err := template.ParseFS(web.TemplateFS, "templates/*.html")
 	require.NoError(t, err, "Failed to parse layout.html and login.html")
 
@@ -37,6 +42,8 @@ func TestLoginRenderIsolation(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code, "Expected a 200 OK status for the login page")
 
 	// Step 5: Use goquery to verify the HTML content.
+	// Debug logging
+	t.Logf("Rendered Body: %s", rr.Body.String())
 	for _, tmpl := range renderer.templates.Templates() {
 		t.Log(tmpl.Name())
 	}

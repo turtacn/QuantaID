@@ -1,0 +1,36 @@
+{{ define "content" }}
+<div class="card">
+    <div class="card-header">
+        <h2>Security Log</h2>
+        <p class="text-muted">Recent security events for your account.</p>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>IP Address</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Logs }}
+                <tr>
+                    <td>{{ .Timestamp }}</td>
+                    <td>{{ .Action }}</td>
+                    <td>{{ .IPAddress }}</td>
+                    <td>
+                        {{ if eq .Status "success" }}
+                            <span class="badge badge-success">Success</span>
+                        {{ else }}
+                            <span class="badge badge-danger">Failed</span>
+                        {{ end }}
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{ end }}
