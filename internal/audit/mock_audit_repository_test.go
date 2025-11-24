@@ -4,34 +4,36 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 )
 
 // mockAuditRepository is a mock implementation of AuditRepository for testing.
 type mockAuditRepository struct {
 	mu          sync.Mutex
-	syncWrites  []*AuditEvent
-	batchWrites [][]*AuditEvent
+	syncWrites  []*events.AuditEvent
+	batchWrites [][]*events.AuditEvent
 }
 
-func (m *mockAuditRepository) WriteBatch(ctx context.Context, events []*AuditEvent) error {
+func (m *mockAuditRepository) WriteBatch(ctx context.Context, batch []*events.AuditEvent) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.batchWrites = append(m.batchWrites, events)
+	m.batchWrites = append(m.batchWrites, batch)
 	return nil
 }
 
-func (m *mockAuditRepository) WriteSync(ctx context.Context, event *AuditEvent) error {
+func (m *mockAuditRepository) WriteSync(ctx context.Context, event *events.AuditEvent) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.syncWrites = append(m.syncWrites, event)
 	return nil
 }
 
-func (m *mockAuditRepository) Query(ctx context.Context, filter QueryFilter) ([]*AuditEvent, error) {
+func (m *mockAuditRepository) Query(ctx context.Context, filter QueryFilter) ([]*events.AuditEvent, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	var results []*AuditEvent
+	var results []*events.AuditEvent
 
 	allWrites := m.syncWrites
 	for _, batch := range m.batchWrites {

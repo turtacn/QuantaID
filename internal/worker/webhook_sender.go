@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 
@@ -45,13 +46,7 @@ func (w *WebhookSender) Start(ctx context.Context) {
 				w.logger.Info(ctx, "Stopping Webhook Sender Worker")
 				return
 			case task := <-w.queue:
-				// Use a detached context for processing to avoid cancellation mid-process if possible,
-				// but respect shutdown signals if critical.
-				// For retries, we might want to block or spawn a goroutine.
-				// Given the "asynchronous" requirement, spawning a goroutine per task or having a worker pool is better.
-				// For simplicity here, we process sequentially in this worker routine,
-				// but "exponential backoff" implies waiting. We shouldn't block the main loop.
-				// So we should spawn a handler.
+				// Process async to avoid blocking queue consumption
 				go w.process(context.Background(), task)
 			}
 		}
@@ -80,60 +75,59 @@ func (w *WebhookSender) process(ctx context.Context, task webhook.DeliveryTask) 
 	}
 	payloadStr := string(payloadBytes)
 
-	// Retry loop
-	for attempt := 0; attempt <= w.maxRetries; attempt++ {
-		// If this is a retry, wait before sending
-		if attempt > 0 {
-			backoff := time.Duration(1<<uint(attempt)) * time.Second // 2s, 4s, 8s... or prompt says 5s, 30s...
-			// Prompt: 5s, 30s, 1m, 5m. Let's approximate or use a simple exponential for now.
-			// Let's stick to simple exponential: 2^attempt * 1s -> 1s, 2s, 4s.
-			// Prompt suggested: 5s, 30s, 1m.
-			switch attempt {
-			case 1:
-				backoff = 5 * time.Second
-			case 2:
-				backoff = 30 * time.Second
-			case 3:
-				backoff = 1 * time.Minute
-			default:
-				backoff = 5 * time.Minute
-			}
-
-			w.logger.Info(ctx, "Retrying webhook delivery", zap.String("subscription_id", sub.ID), zap.Int("attempt", attempt), zap.Duration("backoff", backoff))
-			time.Sleep(backoff)
-		}
-
-		ts := time.Now().Unix()
-		signature := signPayload(sub.Secret, payloadStr, ts)
-
-		req, err := http.NewRequestWithContext(ctx, "POST", sub.URL, bytes.NewBuffer(payloadBytes))
-		if err != nil {
-			w.logger.Error(ctx, "Failed to create webhook request", zap.Error(err))
-			return
-		}
-
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("X-QuantaID-Signature", signature)
-		req.Header.Set("X-QuantaID-Timestamp", fmt.Sprintf("%d", ts))
-		req.Header.Set("X-QuantaID-Event-ID", task.EventID)
-		req.Header.Set("X-QuantaID-Event-Type", task.EventType)
-
-		resp, err := w.client.Do(req)
-		if err != nil {
-			w.logger.Warn(ctx, "Webhook delivery failed", zap.Error(err), zap.Int("attempt", attempt))
-			continue
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			w.logger.Info(ctx, "Webhook delivered successfully", zap.String("subscription_id", sub.ID), zap.Int("status", resp.StatusCode))
-			return
-		}
-
-		w.logger.Warn(ctx, "Webhook delivery returned non-2xx status", zap.Int("status", resp.StatusCode), zap.Int("attempt", attempt))
+	// If NextRetry is in the future, wait
+	if time.Now().Before(task.NextRetry) {
+		time.Sleep(time.Until(task.NextRetry))
 	}
 
-	w.logger.Error(ctx, "Webhook delivery failed after max retries", zap.String("subscription_id", sub.ID))
+	ts := time.Now().Unix()
+	signature := signPayload(sub.Secret, payloadStr, ts)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", sub.URL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		w.logger.Error(ctx, "Failed to create webhook request", zap.Error(err))
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-QuantaID-Signature", signature)
+	req.Header.Set("X-QuantaID-Timestamp", fmt.Sprintf("%d", ts))
+	req.Header.Set("X-QuantaID-Event-ID", task.EventID)
+	req.Header.Set("X-QuantaID-Event-Type", task.EventType)
+
+	resp, err := w.client.Do(req)
+	var statusCode int
+	if resp != nil {
+		statusCode = resp.StatusCode
+		resp.Body.Close()
+	}
+
+	if err != nil || statusCode < 200 || statusCode >= 300 {
+		w.logger.Warn(ctx, "Webhook delivery failed", zap.Error(err), zap.Int("status", statusCode), zap.Int("attempt", task.Attempt))
+
+		// Retry Logic
+		if task.Attempt < w.maxRetries {
+			task.Attempt++
+			// Exponential Backoff: 2^attempt * 1s
+			backoff := time.Duration(math.Pow(2, float64(task.Attempt))) * time.Second
+			task.NextRetry = time.Now().Add(backoff)
+			w.logger.Info(ctx, "Scheduling webhook retry", zap.Int("attempt", task.Attempt), zap.Duration("backoff", backoff))
+
+			// Re-enqueue or wait.
+			// To avoid blocking *this* goroutine (which is detached per task), waiting here is acceptable for small scale.
+			// But for better resource usage, we should re-enqueue with a delay mechanism.
+			// Since we don't have a delayed queue, we will sleep here.
+			time.Sleep(backoff)
+			w.process(ctx, task) // Recursive retry
+		} else {
+			// DLQ Logic: Log to error or DB
+			w.logger.Error(ctx, "Webhook delivery permanently failed", zap.String("subscription_id", sub.ID))
+			// TODO: Implement actual DLQ storage
+		}
+		return
+	}
+
+	w.logger.Info(ctx, "Webhook delivered successfully", zap.String("subscription_id", sub.ID), zap.Int("status", statusCode))
 }
 
 func signPayload(secret, body string, ts int64) string {

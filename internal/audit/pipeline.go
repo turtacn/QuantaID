@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"os"
+
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 )
 
 // Sink is the interface for audit event destinations.
+// This Sink interface in pipeline.go seems redundant with sinks/interface.go but let's fix it for now.
 type Sink interface {
-	Write(event *AuditEvent) error
+	Write(event *events.AuditEvent) error
 	Close() error
 }
 
@@ -21,7 +24,7 @@ type Pipeline struct {
 }
 
 // Emit sends an audit event to all sinks in the pipeline.
-func (p *Pipeline) Emit(ctx context.Context, event *AuditEvent) {
+func (p *Pipeline) Emit(ctx context.Context, event *events.AuditEvent) {
 	for _, sink := range p.sinks {
 		if err := sink.Write(event); err != nil {
 			p.logger.Error("failed to write audit event to sink", zap.Error(err))
@@ -57,7 +60,7 @@ type fileSink struct {
 }
 
 // Write serializes the event to JSON and writes it to the file.
-func (s *fileSink) Write(event *AuditEvent) error {
+func (s *fileSink) Write(event *events.AuditEvent) error {
 	data, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal audit event: %w", err)
@@ -77,7 +80,7 @@ func (s *fileSink) Close() error {
 type stdoutSink struct{}
 
 // Write serializes the event to JSON and writes it to standard output.
-func (s *stdoutSink) Write(event *AuditEvent) error {
+func (s *stdoutSink) Write(event *events.AuditEvent) error {
 	data, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal audit event: %w", err)

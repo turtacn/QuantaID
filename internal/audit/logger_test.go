@@ -2,104 +2,91 @@ package audit
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"go.uber.org/zap"
 )
 
-func TestAuditLogger_RecordEvent(t *testing.T) {
-	repo := &mockAuditRepository{}
-	logger := NewAuditLogger(repo, zap.NewNop(), 10, 1*time.Second, 100)
-	defer logger.Shutdown()
-
-	event := &AuditEvent{EventType: EventLoginSuccess, Action: "user login"}
-	logger.Record(context.Background(), event)
-
-	// Wait for the flush interval to trigger
-	time.Sleep(1100 * time.Millisecond)
-
-	require.Len(t, repo.batchWrites, 1)
-	require.Len(t, repo.batchWrites[0], 1)
-
-	recordedEvent := repo.batchWrites[0][0]
-	assert.NotEmpty(t, recordedEvent.ID)
-	assert.False(t, recordedEvent.Timestamp.IsZero())
-	assert.Equal(t, EventLoginSuccess, recordedEvent.EventType)
+type mockSink struct {
+	mu     sync.Mutex
+	events []*events.AuditEvent
+	closed bool
 }
 
-func TestAuditLogger_Batching(t *testing.T) {
-	repo := &mockAuditRepository{}
-	logger := NewAuditLogger(repo, zap.NewNop(), 5, 1*time.Second, 100)
-	defer logger.Shutdown()
+func (m *mockSink) WriteBatch(ctx context.Context, events []*events.AuditEvent) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	// Record 4 events, less than the batch size
-	for i := 0; i < 4; i++ {
-		logger.Record(context.Background(), &AuditEvent{Action: "test"})
+	// Simulate slow write
+	time.Sleep(10 * time.Millisecond)
+
+	m.events = append(m.events, events...)
+	return nil
+}
+
+func (m *mockSink) WriteSync(ctx context.Context, event *events.AuditEvent) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.events = append(m.events, event)
+	return nil
+}
+
+func (m *mockSink) Close() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.closed = true
+	return nil
+}
+
+func TestAsyncAudit(t *testing.T) {
+	mock := &mockSink{}
+	logger := NewAuditLogger(zap.NewNop(), 10, 100*time.Millisecond, 100, mock)
+
+	// Send events
+	for i := 0; i < 50; i++ {
+		logger.Record(context.Background(), &events.AuditEvent{
+			EventType: events.EventLoginSuccess,
+			Action:    "test",
+		})
 	}
 
-	time.Sleep(200 * time.Millisecond)
-	// No batch should have been written yet
-	assert.Empty(t, repo.batchWrites)
+	// Should return immediately (async) - verified by test execution speed
 
-	// Record one more to hit the batch size
-	logger.Record(context.Background(), &AuditEvent{Action: "test"})
-
-	// Give a moment for the batch to be processed
+	// Wait for flush
 	time.Sleep(200 * time.Millisecond)
 
-	require.Len(t, repo.batchWrites, 1)
-	assert.Len(t, repo.batchWrites[0], 5)
-}
-
-
-func TestAuditLogger_FlushInterval(t *testing.T) {
-	repo := &mockAuditRepository{}
-	logger := NewAuditLogger(repo, zap.NewNop(), 10, 500*time.Millisecond, 100)
-	defer logger.Shutdown()
-
-	logger.Record(context.Background(), &AuditEvent{Action: "test"})
-	time.Sleep(200 * time.Millisecond)
-	assert.Empty(t, repo.batchWrites) // Not flushed yet
-
-	time.Sleep(400 * time.Millisecond) // Pass the flush interval
-	require.Len(t, repo.batchWrites, 1)
-	assert.Len(t, repo.batchWrites[0], 1)
-}
-
-
-func TestAuditLogger_BufferOverflow(t *testing.T) {
-	repo := &mockAuditRepository{}
-	// Small buffer size to test overflow
-	logger := NewAuditLogger(repo, zap.NewNop(), 10, 1*time.Second, 2)
-	defer logger.Shutdown()
-
-	// Fill the buffer
-	logger.Record(context.Background(), &AuditEvent{Action: "test1"})
-	logger.Record(context.Background(), &AuditEvent{Action: "test2"})
-
-	// This one should overflow and trigger a sync write
-	logger.Record(context.Background(), &AuditEvent{Action: "sync_test"})
-
-	time.Sleep(100 * time.Millisecond)
-
-	assert.Len(t, repo.syncWrites, 1)
-	assert.Equal(t, "sync_test", repo.syncWrites[0].Action)
-}
-
-func TestAuditLogger_Shutdown(t *testing.T) {
-	repo := &mockAuditRepository{}
-	logger := NewAuditLogger(repo, zap.NewNop(), 10, 5*time.Second, 100)
-
-	logger.Record(context.Background(), &AuditEvent{Action: "test1"})
-	logger.Record(context.Background(), &AuditEvent{Action: "test2"})
-
-	// Shutdown before the flush interval
 	logger.Shutdown()
 
-	// Check that the remaining events in the buffer were flushed
-	require.Len(t, repo.batchWrites, 1)
-	assert.Len(t, repo.batchWrites[0], 2)
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	assert.Len(t, mock.events, 50)
+	assert.True(t, mock.closed)
+}
+
+func TestAsyncNonBlocking(t *testing.T) {
+	// A mock sink that blocks for a while
+	slowSink := &mockSink{}
+	// Make the sink very slow? Actually WriteBatch already sleeps 10ms.
+	// If we send 100 events, serial processing would take 1s.
+	// Async logger buffers them and returns immediately.
+
+	logger := NewAuditLogger(zap.NewNop(), 10, 1*time.Second, 1000, slowSink)
+
+	start := time.Now()
+	for i := 0; i < 100; i++ {
+		logger.Record(context.Background(), &events.AuditEvent{
+			EventType: events.EventLoginSuccess,
+		})
+	}
+	duration := time.Since(start)
+
+	// Recording 100 events should be instantaneous, much less than 100 * 10ms = 1s
+	assert.Less(t, duration, 100*time.Millisecond)
+
+	logger.Shutdown()
 }

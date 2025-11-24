@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"github.com/turtacn/QuantaID/internal/api/admin"
 	i_audit "github.com/turtacn/QuantaID/internal/audit"
+	"github.com/turtacn/QuantaID/internal/audit/sinks"
 	"github.com/turtacn/QuantaID/internal/auth/adaptive"
 	"github.com/turtacn/QuantaID/internal/auth/mfa"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
@@ -331,8 +332,12 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	}
 
 	// Audit Logger
-	auditRepoForLogger := postgresql.NewPostgresAuditLogRepository(db)
-	auditLogger := i_audit.NewAuditLogger(auditRepoForLogger, logger.(*utils.ZapLogger).Logger, 100, 5*time.Second, 1000)
+	// auditRepoForLogger is used for the sink.
+	// We cast it to a GORM DB if possible, but postgresql.NewPostgresAuditLogRepository returns *PostgresAuditLogRepository
+	// which we can't easily turn into a Sink unless we implement Sink on it or use PostgresSink.
+	// The prompt asked for `internal/audit/sinks/postgres_sink.go`. We should use that.
+	postgresSink := sinks.NewPostgresSink(db)
+	auditLogger := i_audit.NewAuditLogger(logger.(*utils.ZapLogger).Logger, 100, 5*time.Second, 1000, postgresSink)
 
 	// UI Renderer
 	renderer, err := ui.NewRenderer()

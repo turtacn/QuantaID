@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"go.uber.org/zap"
 )
 
@@ -70,8 +71,8 @@ func TestCheckGDPRDataRetention_Fail(t *testing.T) {
 
 func TestCheckSOC2MonitoringCoverage_Pass(t *testing.T) {
 	mockAuditRepo := &mockAuditRepository{}
-	mockAuditRepo.WriteSync(context.Background(), &AuditEvent{
-		EventType: EventConfigChanged,
+	mockAuditRepo.WriteSync(context.Background(), &events.AuditEvent{
+		EventType: events.EventConfigChanged,
 		Timestamp: time.Now().UTC(),
 	})
 

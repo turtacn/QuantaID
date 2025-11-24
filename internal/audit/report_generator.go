@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 )
 
 // ReportFormat defines the output format for a generated report.
@@ -93,7 +94,7 @@ func (rg *ReportGenerator) GenerateReport(ctx context.Context, req *ReportReques
 }
 
 // exportCSV converts a slice of audit events to a CSV byte slice.
-func (rg *ReportGenerator) exportCSV(events []*AuditEvent) ([]byte, error) {
+func (rg *ReportGenerator) exportCSV(logEvents []*events.AuditEvent) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
@@ -107,7 +108,7 @@ func (rg *ReportGenerator) exportCSV(events []*AuditEvent) ([]byte, error) {
 	}
 
 	// Write data rows
-	for _, event := range events {
+	for _, event := range logEvents {
 		record := []string{
 			event.ID,
 			event.Timestamp.Format(time.RFC3339),
@@ -135,17 +136,17 @@ func (rg *ReportGenerator) exportCSV(events []*AuditEvent) ([]byte, error) {
 }
 
 // exportTextSummary creates a human-readable text summary of audit events.
-func (rg *ReportGenerator) exportTextSummary(events []*AuditEvent) []byte {
+func (rg *ReportGenerator) exportTextSummary(logEvents []*events.AuditEvent) []byte {
 	var buf bytes.Buffer
 
 	buf.WriteString("========================================\n")
 	buf.WriteString("       Audit Log Report Summary\n")
 	buf.WriteString("========================================\n")
 	buf.WriteString(fmt.Sprintf("Report Generated: %s\n", time.Now().UTC().Format(time.RFC1123)))
-	buf.WriteString(fmt.Sprintf("Total Events: %d\n", len(events)))
+	buf.WriteString(fmt.Sprintf("Total Events: %d\n", len(logEvents)))
 	buf.WriteString("----------------------------------------\n\n")
 
-	for i, event := range events {
+	for i, event := range logEvents {
 		buf.WriteString(fmt.Sprintf("Event #%d\n", i+1))
 		buf.WriteString(fmt.Sprintf("  ID: %s\n", event.ID))
 		buf.WriteString(fmt.Sprintf("  Timestamp: %s\n", event.Timestamp.Format(time.RFC3339)))

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"go.uber.org/zap"
 )
 
@@ -102,6 +103,22 @@ func (cc *ComplianceChecker) getRulesByStandard(standard ComplianceStandard) []C
 	return filteredRules
 }
 
+// ValidateAction performs runtime verification to intercept potential compliance violations.
+// This allows preventing non-compliant actions (e.g., unauthorized data export) before they happen.
+func (cc *ComplianceChecker) ValidateAction(ctx context.Context, action string, metadata map[string]interface{}) error {
+	// Example: Prevent data export during non-business hours (e.g., 8 PM - 6 AM)
+	if action == "data.export" {
+		now := time.Now().UTC()
+		hour := now.Hour()
+		if hour < 6 || hour >= 20 {
+			cc.logger.Warn("Blocked data export during non-business hours", zap.Time("time", now))
+			return fmt.Errorf("data export is restricted to business hours (06:00 - 20:00 UTC)")
+		}
+	}
+
+	return nil
+}
+
 // --- Check Functions ---
 
 var (
@@ -140,7 +157,7 @@ func CheckSOC2MonitoringCoverage(ctx context.Context, checker *ComplianceChecker
 	// Check for a critical system event (e.g., config change) in the last 7 days.
 	filter := QueryFilter{
 		StartTimestamp: time.Now().UTC().Add(-7 * 24 * time.Hour),
-		EventTypes:     []EventType{EventConfigChanged, EventKeyRotated},
+		EventTypes:     []events.EventType{events.EventConfigChanged, events.EventKeyRotated},
 	}
 
 	events, err := checker.auditRepo.Query(ctx, filter)

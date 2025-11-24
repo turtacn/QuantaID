@@ -118,6 +118,15 @@ session:
 audit:
   # Number of days to retain audit logs (0 for forever)
   retention_days: 90
+  # Buffer size for async audit logging
+  buffer_size: 1000
+  # Flush interval for async logging in milliseconds
+  flush_interval_ms: 5000
+
+# Webhook configuration
+webhook:
+  # Maximum number of retries for failed deliveries
+  max_retries: 3
 
 # Observability configuration
 observability:
