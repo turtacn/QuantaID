@@ -92,8 +92,8 @@ func (s *ApplicationService) DeleteUser(ctx context.Context, userID string) erro
 	return s.identityDomain.DeleteUser(ctx, userID)
 }
 
-func (s *ApplicationService) GetUserByExternalID(ctx context.Context, externalID string) (*types.User, error) {
-	return s.identityDomain.GetUserByExternalID(ctx, externalID)
+func (s *ApplicationService) GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*types.User, error) {
+	return s.identityDomain.GetUserByExternalID(ctx, externalID, sourceID)
 }
 
 func (s *ApplicationService) CreateGroup(ctx context.Context, group *types.UserGroup) error {

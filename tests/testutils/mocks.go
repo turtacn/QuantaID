@@ -8,8 +8,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
-	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"github.com/turtacn/QuantaID/pkg/types"
 )
 
@@ -25,11 +25,11 @@ func (m *MockRiskEngine) Evaluate(ctx context.Context, ac auth.AuthContext) (aut
 // MockSink is a simple in-memory sink for testing the pipeline.
 type MockSink struct {
 	mu     sync.Mutex
-	Events []*audit.AuditEvent
+	Events []*events.AuditEvent
 	Err    error // Optional error to simulate sink failure
 }
 
-func (s *MockSink) Write(event *audit.AuditEvent) error {
+func (s *MockSink) Write(event *events.AuditEvent) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.Err != nil {
@@ -201,10 +201,6 @@ func (m *MockRedisClient) Get(ctx context.Context, key string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockRedisClient) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
-	args := m.Called(ctx, keys)
-	return args.Get(0).([]interface{}), args.Error(1)
-}
 
 func (m *MockRedisClient) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
 	args := m.Called(ctx, key, member)
@@ -294,4 +290,34 @@ func (m *MockRedisClient) Close() error {
 func (m *MockRedisClient) HealthCheck(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
+}
+
+func (m *MockRedisClient) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+	args := m.Called(ctx, key, expiration)
+	return args.Get(0).(*redis.BoolCmd)
+}
+
+func (m *MockRedisClient) GeoAdd(ctx context.Context, key string, locations ...*redis.GeoLocation) (int64, error) {
+	args := m.Called(ctx, key, locations)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockRedisClient) GeoPos(ctx context.Context, key string, members ...string) ([]*redis.GeoPos, error) {
+	args := m.Called(ctx, key, members)
+	return args.Get(0).([]*redis.GeoPos), args.Error(1)
+}
+
+func (m *MockRedisClient) HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd {
+	args := m.Called(ctx, key, values)
+	return args.Get(0).(*redis.BoolCmd)
+}
+
+func (m *MockRedisClient) HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd {
+	args := m.Called(ctx, key)
+	return args.Get(0).(*redis.MapStringStringCmd)
+}
+
+func (m *MockRedisClient) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
+	args := m.Called(ctx, keys)
+	return args.Get(0).([]interface{}), args.Error(1)
 }

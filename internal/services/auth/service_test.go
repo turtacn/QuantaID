@@ -12,6 +12,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/config"
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	storage_redis "github.com/turtacn/QuantaID/internal/storage/redis"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"github.com/turtacn/QuantaID/tests/testutils"
@@ -40,8 +41,9 @@ func TestApplicationService_Login(t *testing.T) {
 	tracer := trace.NewNoopTracerProvider().Tracer("test")
 	policyEngine := new(MockPolicyEngine)
 	redisClient := new(testutils.MockRedisClient)
+	geoManager := storage_redis.NewGeoManager(redisClient)
 
-	riskEngine := adaptive.NewRiskEngine(config.RiskConfig{}, redisClient, logger.(*utils.ZapLogger).Logger)
+	riskEngine := adaptive.NewRiskEngine(config.RiskConfig{}, redisClient, geoManager, nil, logger.(*utils.ZapLogger).Logger)
 	mfaManager := &mfa.MFAManager{}
 	authDomain := auth.NewService(
 		identityService,
@@ -58,7 +60,7 @@ func TestApplicationService_Login(t *testing.T) {
 		redisClient,
 	)
 	auditPipeline := i_audit.NewPipeline(logger.(*utils.ZapLogger).Logger, &testutils.MockSink{})
-	auditService := audit.NewService(auditPipeline)
+	auditService := audit.NewService(auditPipeline, nil)
 	appService := NewApplicationService(
 		authDomain,
 		auditService,
@@ -82,6 +84,11 @@ func TestApplicationService_Login(t *testing.T) {
 	tokenFamilyRepo.On("CreateFamily", mock.Anything, mock.Anything).Return(nil)
 	redisClient.On("SIsMember", mock.Anything, mock.Anything, mock.Anything).Return(redis.NewBoolResult(false, nil))
 	redisClient.On("Get", mock.Anything, mock.Anything).Return(redis.NewStringResult("", redis.Nil))
+	// Mock geo calls
+	redisClient.On("ZRange", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]string{}, nil)
+	redisClient.On("GeoAdd", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+	redisClient.On("ZAdd", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	redisClient.On("Expire", mock.Anything, mock.Anything, mock.Anything).Return(redis.NewBoolResult(true, nil))
 
 	loginReq := LoginRequest{
 		Username: "test@example.com",

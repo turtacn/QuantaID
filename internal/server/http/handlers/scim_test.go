@@ -60,7 +60,7 @@ func TestSCIMHandler_CreateUser(t *testing.T) {
 			return &types.User{
 				ID:       "123",
 				Username: username,
-				Email:    email,
+				Email:    types.EncryptedString(email),
 				Status:   types.UserStatusActive,
 			}, nil
 		},

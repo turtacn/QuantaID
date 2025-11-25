@@ -101,14 +101,20 @@ func (m *ClaimsMapper) extractUserAttribute(user *types.User, claimName string) 
 
 func (m *ClaimsMapper) registerBuiltinTransforms() {
 	m.transforms["mask_email"] = func(v interface{}) (interface{}, error) {
-		email, ok := v.(string)
-		if !ok {
+		var email string
+		switch val := v.(type) {
+		case string:
+			email = val
+		case types.EncryptedString:
+			email = string(val)
+		default:
 			return v, nil
 		}
+
 		parts := strings.Split(email, "@")
 		if len(parts) != 2 {
 			return v, nil
 		}
-		return parts[0][:1] + "***@" + parts[1], nil
+		return types.EncryptedString(parts[0][:1] + "***@" + parts[1]), nil
 	}
 }

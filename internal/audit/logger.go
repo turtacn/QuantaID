@@ -22,19 +22,35 @@ type AuditLogger struct {
 	flushInterval time.Duration
 	// Keep a primary repo if needed for non-sink operations, but effectively we only use sinks now.
 	// We expose GetRepo for legacy support if needed, but it's better to pass repo directly where needed.
+	repo AuditRepository
+}
+
+// GetRepo returns the primary audit repository if available.
+func (al *AuditLogger) GetRepo() AuditRepository {
+	return al.repo
 }
 
 // NewAuditLogger creates and starts a new AuditLogger.
 func NewAuditLogger(logger *zap.Logger, batchSize int, flushInterval time.Duration, bufferSize int, sinks ...sinks.Sink) *AuditLogger {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	var repo AuditRepository
+	// Try to find a sink that implements AuditRepository to use as the primary repo
+	for _, s := range sinks {
+		if r, ok := s.(AuditRepository); ok {
+			repo = r
+			break
+		}
+	}
+
 	al := &AuditLogger{
-		sinks:        sinks,
-		buffer:       make(chan *events.AuditEvent, bufferSize),
-		cancel:       cancel,
-		logger:       logger.Named("audit-logger"),
-		batchSize:    batchSize,
+		sinks:         sinks,
+		buffer:        make(chan *events.AuditEvent, bufferSize),
+		cancel:        cancel,
+		logger:        logger.Named("audit-logger"),
+		batchSize:     batchSize,
 		flushInterval: flushInterval,
+		repo:          repo,
 	}
 
 	al.wg.Add(1)

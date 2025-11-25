@@ -30,6 +30,11 @@ func (m *MockIdentityRepository) GetUserByEmail(ctx context.Context, email strin
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
+func (m *MockIdentityRepository) GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*types.User, error) {
+	args := m.Called(ctx, externalID, sourceID)
+	return args.Get(0).(*types.User), args.Error(1)
+}
+
 func (m *MockIdentityRepository) UpdateUser(ctx context.Context, user *types.User) error {
 	args := m.Called(ctx, user)
 	return args.Error(0)

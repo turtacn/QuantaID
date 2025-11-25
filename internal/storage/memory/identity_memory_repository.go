@@ -126,6 +126,18 @@ func (r *IdentityMemoryRepository) GetUserByEmail(ctx context.Context, email str
 	return nil, fmt.Errorf("user with email '%s' not found", email)
 }
 
+func (r *IdentityMemoryRepository) GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*types.User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, user := range r.users {
+		if user.ExternalID == externalID && user.SourceType == sourceID {
+			return user, nil
+		}
+	}
+	return nil, types.ErrUserNotFound
+}
+
 func (r *IdentityMemoryRepository) UpdateUser(ctx context.Context, user *types.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

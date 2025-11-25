@@ -9,6 +9,7 @@ import (
 
 	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/storage/postgresql"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"github.com/urfave/cli/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -93,7 +94,7 @@ func exportAction(c *cli.Context) error {
 		filter.EndTimestamp = parsedTime
 	}
 	if c.IsSet("event-type") {
-		filter.EventTypes = []audit.EventType{audit.EventType(c.String("event-type"))}
+		filter.EventTypes = []events.EventType{events.EventType(c.String("event-type"))}
 	}
 
 	req := &audit.ReportRequest{

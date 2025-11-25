@@ -50,6 +50,46 @@ func (m *MockIService) ListUsers(ctx context.Context, filter types.UserFilter) (
 	return args.Get(0).([]*types.User), args.Int(1), args.Error(2)
 }
 
+func (m *MockIService) UpdateUser(ctx context.Context, user *types.User) error {
+	args := m.Called(ctx, user)
+	return args.Error(0)
+}
+
+func (m *MockIService) DeleteUser(ctx context.Context, userID string) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockIService) GetUserByExternalID(ctx context.Context, externalID, sourceID string) (*types.User, error) {
+	args := m.Called(ctx, externalID, sourceID)
+	return args.Get(0).(*types.User), args.Error(1)
+}
+
+func (m *MockIService) CreateGroup(ctx context.Context, group *types.UserGroup) error {
+	args := m.Called(ctx, group)
+	return args.Error(0)
+}
+
+func (m *MockIService) GetGroup(ctx context.Context, groupID string) (*types.UserGroup, error) {
+	args := m.Called(ctx, groupID)
+	return args.Get(0).(*types.UserGroup), args.Error(1)
+}
+
+func (m *MockIService) UpdateGroup(ctx context.Context, group *types.UserGroup) error {
+	args := m.Called(ctx, group)
+	return args.Error(0)
+}
+
+func (m *MockIService) DeleteGroup(ctx context.Context, groupID string) error {
+	args := m.Called(ctx, groupID)
+	return args.Error(0)
+}
+
+func (m *MockIService) ListGroups(ctx context.Context, offset, limit int) ([]*types.UserGroup, error) {
+	args := m.Called(ctx, offset, limit)
+	return args.Get(0).([]*types.UserGroup), args.Error(1)
+}
+
 func (m *MockIService) GetUserRepo() UserRepository {
 	return nil
 }

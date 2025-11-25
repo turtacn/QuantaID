@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"github.com/turtacn/QuantaID/internal/server/http/handlers"
 	"github.com/turtacn/QuantaID/internal/server/middleware"
 	"github.com/turtacn/QuantaID/pkg/types"
@@ -75,11 +76,11 @@ func (h *AdminUserHandler) BanUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.auditLogger.Record(r.Context(), &audit.AuditEvent{
-		EventType: audit.EventDataModified,
-		Actor:     audit.Actor{ID: r.Context().Value(middleware.UserIDContextKey).(string), Type: "user"},
-		Target:    audit.Target{ID: userID, Type: "user"},
-		Result:    audit.ResultSuccess,
+	h.auditLogger.Record(r.Context(), &events.AuditEvent{
+		EventType: events.EventDataModified,
+		Actor:     events.Actor{ID: r.Context().Value(middleware.UserIDContextKey).(string), Type: "user"},
+		Target:    events.Target{ID: userID, Type: "user"},
+		Result:    events.ResultSuccess,
 	})
 
 	handlers.WriteJSON(w, http.StatusOK, nil)
@@ -96,11 +97,11 @@ func (h *AdminUserHandler) UnbanUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.auditLogger.Record(r.Context(), &audit.AuditEvent{
-		EventType: audit.EventDataModified,
-		Actor:     audit.Actor{ID: r.Context().Value(middleware.UserIDContextKey).(string), Type: "user"},
-		Target:    audit.Target{ID: userID, Type: "user"},
-		Result:    audit.ResultSuccess,
+	h.auditLogger.Record(r.Context(), &events.AuditEvent{
+		EventType: events.EventDataModified,
+		Actor:     events.Actor{ID: r.Context().Value(middleware.UserIDContextKey).(string), Type: "user"},
+		Target:    events.Target{ID: userID, Type: "user"},
+		Result:    events.ResultSuccess,
 	})
 
 	handlers.WriteJSON(w, http.StatusOK, nil)

@@ -105,7 +105,7 @@ func (e *RiskEngine) Evaluate(ctx context.Context, ac auth.AuthContext) (auth.Ri
 	level := score.Level(e.config.Thresholds)
 
 	// 5. Async update Geo Location
-	if ac.UserID != "" {
+	if ac.UserID != "" && e.geoManager != nil {
 		go func() {
 			bgCtx := context.Background()
 			if err := e.geoManager.SaveLoginGeo(bgCtx, ac.UserID, lat, lon, ac.Timestamp); err != nil {

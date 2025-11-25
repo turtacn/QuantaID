@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"time"
 	"github.com/spf13/viper"
 	"github.com/turtacn/QuantaID/internal/config"
 	"github.com/turtacn/QuantaID/internal/storage/redis"
@@ -80,6 +81,16 @@ type Config struct {
 	Notification NotificationConfig `mapstructure:"notification"`
 	OPA          OPAConfig          `mapstructure:"opa"`
 	WebAuthn     WebAuthnConfig     `mapstructure:"webauthn"`
+	Lifecycle    LifecycleConfig    `mapstructure:"lifecycle"`
+}
+
+type LifecycleConfig struct {
+	Enabled        bool          `mapstructure:"enabled"`
+	Interval       time.Duration `mapstructure:"interval"`
+	BatchSize      int           `mapstructure:"batch_size"`
+	DryRun         bool          `mapstructure:"dry_run"`
+	LifecycleRules []interface{} `mapstructure:"lifecycle_rules"` // Parsed by worker manually
+	Governance     interface{}   `mapstructure:"governance"`      // Parsed by worker manually
 }
 
 type DataEncryptionConfig struct {

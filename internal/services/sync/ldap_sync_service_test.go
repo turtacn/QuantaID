@@ -110,7 +110,7 @@ func Test_FullSync_UpdatesExistingUsers_WithPreferRemote(t *testing.T) {
 
 	updatedUser, err := userRepo.GetUserByUsername(ctx, "existinguser")
 	assert.NoError(t, err)
-	assert.Equal(t, "updated@test.com", updatedUser.Email)
+	assert.Equal(t, types.EncryptedString("updated@test.com"), updatedUser.Email)
 }
 
 func Test_FullSync_RespectsLifecycleRules(t *testing.T) {

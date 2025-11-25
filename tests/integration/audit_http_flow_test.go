@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/server/http"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"io"
 	"net/http/httptest"
@@ -75,7 +75,7 @@ func TestLogin_AuditEventsEmitted(t *testing.T) {
 	decoder := json.NewDecoder(logFile)
 	var foundEvent bool
 	for {
-		var event audit.AuditEvent
+		var event events.AuditEvent
 		if err := decoder.Decode(&event); err == io.EOF {
 			break
 		}
@@ -85,7 +85,7 @@ func TestLogin_AuditEventsEmitted(t *testing.T) {
 			foundEvent = true
 			assert.Equal(t, "auth", event.Category)
 			assert.Equal(t, "testuser", event.UserID)
-			assert.Equal(t, "fail", event.Result)
+			assert.Equal(t, events.ResultFailure, event.Result)
 			break
 		}
 	}

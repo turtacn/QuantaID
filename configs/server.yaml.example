@@ -186,3 +186,37 @@ ui:
   static_path: "web/static"
   # Base path for HTML templates. Handled by Go's embed in this phase.
   template_path: "web/templates"
+
+# Identity Lifecycle and Data Governance configuration
+lifecycle:
+  # Enable lifecycle job
+  enabled: true
+  # Run interval
+  interval: "24h"
+  # Batch size for user scanning
+  batch_size: 100
+  # Dry run mode (do not execute actions)
+  dry_run: false
+  # Lifecycle rules
+  lifecycle_rules:
+    - name: "Disable inactive users"
+      description: "Disable users who haven't logged in for 90 days"
+      conditions:
+        - attribute: "lastLoginAt"
+          operator: "gt"
+          value: "2160h" # 90 days
+      actions:
+        - type: "disable"
+    - name: "Delete expired users"
+      description: "Delete users who expired"
+      conditions:
+        - attribute: "attributes.expiredAt"
+          operator: "lt"
+          value: "0s" # Now
+      actions:
+        - type: "delete"
+  # Data governance configuration
+  governance:
+    required_fields:
+      - "email"
+      - "username"

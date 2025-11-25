@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/turtacn/QuantaID/internal/audit"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 )
 
 // AuditorMiddleware logs HTTP requests.
@@ -37,10 +38,10 @@ func AuditorMiddleware(logger *audit.AuditLogger) func(http.Handler) http.Handle
 			maskedBody := maskSensitiveData(bodyBytes)
 
 			// Log the audit event
-			logger.Record(r.Context(), &audit.AuditEvent{
-				EventType: audit.EventDataModified,
-				Actor:     audit.Actor{ID: userID, Type: "user"},
-				Target:    audit.Target{Type: "http-request"},
+			logger.Record(r.Context(), &events.AuditEvent{
+				EventType: events.EventDataModified,
+				Actor:     events.Actor{ID: userID, Type: "user"},
+				Target:    events.Target{Type: "http-request"},
 				Result:    getResult(lrw.StatusCode()),
 				Metadata: map[string]interface{}{
 					"path":   r.URL.Path,
@@ -79,11 +80,11 @@ func maskSensitiveData(body []byte) []byte {
 }
 
 // getResult converts an HTTP status code to an audit result.
-func getResult(statusCode int) audit.Result {
+func getResult(statusCode int) events.Result {
 	if statusCode >= 200 && statusCode < 300 {
-		return audit.ResultSuccess
+		return events.ResultSuccess
 	}
-	return audit.ResultFailure
+	return events.ResultFailure
 }
 
 // responseWriter is a wrapper around http.ResponseWriter to capture the status code.

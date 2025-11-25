@@ -29,7 +29,7 @@ func TestIdentityMemoryRepository_CreateAndGetUser(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, user.ID, retrievedUser.ID)
 
-    retrievedUser, err = repo.GetUserByEmail(ctx, user.Email)
+	retrievedUser, err = repo.GetUserByEmail(ctx, string(user.Email))
     assert.NoError(t, err)
     assert.Equal(t, user.ID, retrievedUser.ID)
 }
@@ -45,7 +45,7 @@ func TestIdentityMemoryRepository_UpdateUser(t *testing.T) {
 	assert.NoError(t, err)
 
 	retrievedUser, _ := repo.GetUserByID(ctx, user.ID)
-	assert.Equal(t, "updated@example.com", retrievedUser.Email)
+	assert.Equal(t, types.EncryptedString("updated@example.com"), retrievedUser.Email)
 }
 
 func TestIdentityMemoryRepository_DeleteUser(t *testing.T) {

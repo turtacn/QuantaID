@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/services/webhook"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"time"
 )
@@ -43,14 +44,14 @@ func generateAuditID() string {
 
 // RecordLoginSuccess records a successful user login event.
 func (s *Service) RecordLoginSuccess(ctx context.Context, userID, ip, traceID string, details map[string]any) {
-	event := &audit.AuditEvent{
+	event := &events.AuditEvent{
 		ID:        generateAuditID(),
 		Timestamp: time.Now().UTC(),
 		Category:  "auth",
 		Action:    "login_success",
 		UserID:    userID,
 		IP:        ip,
-		Result:    "success",
+		Result:    events.ResultSuccess,
 		TraceID:   traceID,
 		Details:   details,
 	}
@@ -65,14 +66,14 @@ func (s *Service) RecordLoginFailed(ctx context.Context, userID, ip, traceID str
 	}
 	details["reason"] = reason
 
-	event := &audit.AuditEvent{
+	event := &events.AuditEvent{
 		ID:        generateAuditID(),
 		Timestamp: time.Now().UTC(),
 		Category:  "auth",
 		Action:    "login_failed",
 		UserID:    userID,
 		IP:        ip,
-		Result:    "fail",
+		Result:    events.ResultFailure,
 		TraceID:   traceID,
 		Details:   details,
 	}
@@ -82,14 +83,14 @@ func (s *Service) RecordLoginFailed(ctx context.Context, userID, ip, traceID str
 
 // RecordUserCreated records a user creation event.
 func (s *Service) RecordUserCreated(ctx context.Context, user *types.User, ip, traceID string) {
-	event := &audit.AuditEvent{
+	event := &events.AuditEvent{
 		ID:        generateAuditID(),
 		Timestamp: time.Now().UTC(),
 		Category:  "identity",
 		Action:    "user.created",
 		UserID:    user.ID,
 		IP:        ip,
-		Result:    "success",
+		Result:    events.ResultSuccess,
 		TraceID:   traceID,
 		Details: map[string]any{
 			"username": user.Username,
@@ -102,7 +103,7 @@ func (s *Service) RecordUserCreated(ctx context.Context, user *types.User, ip, t
 
 // RecordPolicyDecision records the outcome of a policy evaluation.
 func (s *Service) RecordPolicyDecision(ctx context.Context, userID, ip, resource, traceID string, result string, details map[string]any) {
-	event := &audit.AuditEvent{
+	event := &events.AuditEvent{
 		ID:        generateAuditID(),
 		Timestamp: time.Now().UTC(),
 		Category:  "policy",
@@ -110,7 +111,7 @@ func (s *Service) RecordPolicyDecision(ctx context.Context, userID, ip, resource
 		UserID:    userID,
 		IP:        ip,
 		Resource:  resource,
-		Result:    audit.Result(result), // "success", "fail", "deny"
+		Result:    events.Result(result), // "success", "fail", "deny"
 		TraceID:   traceID,
 		Details:   details,
 	}
@@ -118,7 +119,7 @@ func (s *Service) RecordPolicyDecision(ctx context.Context, userID, ip, resource
 }
 
 // GetLogsForUser retrieves audit logs for a specific user.
-func (s *Service) GetLogsForUser(ctx context.Context, userID string, limit int) ([]*audit.AuditEvent, error) {
+func (s *Service) GetLogsForUser(ctx context.Context, userID string, limit int) ([]*events.AuditEvent, error) {
 	if s.repo == nil {
 		return nil, fmt.Errorf("audit repository not configured")
 	}
@@ -161,7 +162,7 @@ func (s *Service) GetLogsForUser(ctx context.Context, userID string, limit int) 
 
 // RecordAdminAction records an action performed by an administrator.
 func (s *Service) RecordAdminAction(ctx context.Context, userID, ip, resource, action, traceID string, details map[string]any) {
-	event := &audit.AuditEvent{
+	event := &events.AuditEvent{
 		ID:        generateAuditID(),
 		Timestamp: time.Now().UTC(),
 		Category:  "admin",
@@ -169,7 +170,7 @@ func (s *Service) RecordAdminAction(ctx context.Context, userID, ip, resource, a
 		UserID:    userID,
 		IP:        ip,
 		Resource:  resource,
-		Result:    "success", // Assume admin actions are successful unless otherwise specified
+		Result:    events.ResultSuccess, // Assume admin actions are successful unless otherwise specified
 		TraceID:   traceID,
 		Details:   details,
 	}
@@ -184,14 +185,14 @@ func (s *Service) RecordHighRiskLogin(ctx context.Context, userID, ip, traceID s
 	details["risk_score"] = score
 	details["risk_factors"] = factors
 
-	event := &audit.AuditEvent{
+	event := &events.AuditEvent{
 		ID:        generateAuditID(),
 		Timestamp: time.Now().UTC(),
 		Category:  "risk",
 		Action:    "high_risk_login",
 		UserID:    userID,
 		IP:        ip,
-		Result:    "success", // The event is about flagging, not the login outcome itself
+		Result:    events.ResultSuccess, // The event is about flagging, not the login outcome itself
 		TraceID:   traceID,
 		Details:   details,
 	}

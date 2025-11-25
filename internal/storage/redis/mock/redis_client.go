@@ -42,6 +42,11 @@ func (m *RedisClient) Get(ctx context.Context, key string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+func (m *RedisClient) MGet(ctx context.Context, keys ...string) ([]interface{}, error) {
+	args := m.Called(ctx, keys)
+	return args.Get(0).([]interface{}), args.Error(1)
+}
+
 func (m *RedisClient) Del(ctx context.Context, keys ...string) error {
 	args := m.Called(ctx, keys)
 	return args.Error(0)
@@ -105,4 +110,29 @@ func (m *RedisClient) SetEx(ctx context.Context, key string, value interface{}, 
 func (m *RedisClient) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
 	args := m.Called(ctx, key, member)
 	return args.Get(0).(*redis.BoolCmd)
+}
+
+func (m *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+	args := m.Called(ctx, key, expiration)
+	return args.Get(0).(*redis.BoolCmd)
+}
+
+func (m *RedisClient) GeoAdd(ctx context.Context, key string, locations ...*redis.GeoLocation) (int64, error) {
+	args := m.Called(ctx, key, locations)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *RedisClient) GeoPos(ctx context.Context, key string, members ...string) ([]*redis.GeoPos, error) {
+	args := m.Called(ctx, key, members)
+	return args.Get(0).([]*redis.GeoPos), args.Error(1)
+}
+
+func (m *RedisClient) HMSet(ctx context.Context, key string, values ...interface{}) *redis.BoolCmd {
+	args := m.Called(ctx, key, values)
+	return args.Get(0).(*redis.BoolCmd)
+}
+
+func (m *RedisClient) HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd {
+	args := m.Called(ctx, key)
+	return args.Get(0).(*redis.MapStringStringCmd)
 }

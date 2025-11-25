@@ -1,3 +1,5 @@
+//go:build integration
+
 package e2e
 
 import (
@@ -8,6 +10,7 @@ import (
 
 	"github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/storage/postgresql"
+	"github.com/turtacn/QuantaID/pkg/audit/events"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -45,7 +48,7 @@ func setupTestDatabase(t *testing.T) *gorm.DB {
 	require.NoError(t, err)
 
 	// Run migrations (simplified for test)
-	err = db.AutoMigrate(&audit.AuditEvent{})
+	err = db.AutoMigrate(&events.AuditEvent{})
 	require.NoError(t, err)
 
 	return db
@@ -61,15 +64,16 @@ func TestE2E_AuditLog_EndToEnd(t *testing.T) {
 
 	// Create a real logger that writes to the test DB
 	// We use a small flush interval for the test to get results quickly
-	logger := audit.NewAuditLogger(repo, zap.NewNop(), 5, 200*time.Millisecond, 20)
+	// NewAuditLogger args: (logger, batchSize, flushInterval, bufferSize, sinks...)
+	logger := audit.NewAuditLogger(zap.NewNop(), 5, 200*time.Millisecond, 20, repo)
 	defer logger.Shutdown()
 
 	// 1. Perform an action that should be audited
-	eventToRecord := &audit.AuditEvent{
-		EventType: audit.EventLoginFailure,
-		Actor:     audit.Actor{ID: "user-123", Type: "user"},
+	eventToRecord := &events.AuditEvent{
+		EventType: events.EventLoginFailure,
+		Actor:     events.Actor{ID: "user-123", Type: "user"},
 		Action:    "login",
-		Result:    audit.ResultFailure,
+		Result:    events.ResultFailure,
 		Metadata:  map[string]interface{}{"reason": "invalid_password"},
 	}
 	logger.Record(context.Background(), eventToRecord)
@@ -78,14 +82,14 @@ func TestE2E_AuditLog_EndToEnd(t *testing.T) {
 	time.Sleep(300 * time.Millisecond)
 
 	// 3. Query the database to verify the audit log was written correctly
-	events, err := repo.Query(context.Background(), audit.QueryFilter{ActorID: "user-123"})
+	evs, err := repo.Query(context.Background(), audit.QueryFilter{ActorID: "user-123"})
 	require.NoError(t, err)
 
-	require.Len(t, events, 1)
-	recordedEvent := events[0]
+	require.Len(t, evs, 1)
+	recordedEvent := evs[0]
 
-	assert.Equal(t, audit.EventLoginFailure, recordedEvent.EventType)
+	assert.Equal(t, events.EventLoginFailure, recordedEvent.EventType)
 	assert.Equal(t, "user-123", recordedEvent.Actor.ID)
-	assert.Equal(t, audit.ResultFailure, recordedEvent.Result)
+	assert.Equal(t, events.ResultFailure, recordedEvent.Result)
 	assert.Equal(t, "invalid_password", recordedEvent.Metadata["reason"])
 }
