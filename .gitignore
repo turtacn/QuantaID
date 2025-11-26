@@ -10,3 +10,8 @@ _obj
 _cgo_gotypes.go
 _cgo_export.c
 _cgo_export.h
+
+/ai/
+/demo/cli/
+/demo/web/
+/docs/architecture-v1.0.md
