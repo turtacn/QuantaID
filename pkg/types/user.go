@@ -21,12 +21,16 @@ type User struct {
 	Status UserStatus `json:"status" gorm:"not null"`
 	// Attributes stores custom user profile information as a JSON object.
 	Attributes map[string]interface{} `json:"attributes,omitempty" gorm:"type:jsonb"`
+	// PrivacySettings stores user-specific privacy preferences.
+	PrivacySettings map[string]interface{} `json:"privacySettings,omitempty" gorm:"type:jsonb"`
 	// Groups lists the groups the user is a member of.
 	Groups []UserGroup `json:"groups,omitempty" gorm:"many2many:user_group_memberships;"`
 	// CreatedAt is the timestamp when the user was created.
 	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
 	// UpdatedAt is the timestamp of the last update.
 	UpdatedAt time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
+	// DeletedAt is the timestamp when the user was soft-deleted.
+	DeletedAt *time.Time `json:"deletedAt,omitempty" gorm:"index"`
 	// LastLoginAt records the timestamp of the user's last successful login.
 	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
 	// MergeHistory records the history of merges for this user.
@@ -63,6 +67,7 @@ const (
 	UserStatusInactive UserStatus = "inactive"
 	UserStatusLocked   UserStatus = "locked"
 	UserStatusPending  UserStatus = "pending_verification"
+	UserStatusDeleted  UserStatus = "deleted"
 )
 
 // UserGroup represents a collection of users, used for assigning permissions or managing policies collectively.

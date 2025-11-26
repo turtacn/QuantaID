@@ -82,6 +82,7 @@ type Config struct {
 	OPA          OPAConfig          `mapstructure:"opa"`
 	WebAuthn     WebAuthnConfig     `mapstructure:"webauthn"`
 	Lifecycle    LifecycleConfig    `mapstructure:"lifecycle"`
+	Privacy      PrivacyConfig      `mapstructure:"privacy"`
 }
 
 type LifecycleConfig struct {
@@ -103,6 +104,10 @@ type AuditConfig struct {
 
 type MetricsConfig struct {
 	Enabled bool `mapstructure:"enabled"`
+}
+
+type PrivacyConfig struct {
+	PolicyVersions map[string]string `mapstructure:"policy_versions"`
 }
 
 // ConfigManager is a wrapper around the Viper library that handles loading,

@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gorm.io/gorm"
 	"github.com/turtacn/QuantaID/internal/api/admin"
+	"github.com/turtacn/QuantaID/internal/api/privacy"
 	i_audit "github.com/turtacn/QuantaID/internal/audit"
 	"github.com/turtacn/QuantaID/internal/audit/sinks"
 	"github.com/turtacn/QuantaID/internal/auth/adaptive"
@@ -18,6 +19,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/domain/auth"
 	"github.com/turtacn/QuantaID/internal/domain/identity"
 	"github.com/turtacn/QuantaID/internal/domain/policy"
+	domain_privacy "github.com/turtacn/QuantaID/internal/domain/privacy"
 	"github.com/turtacn/QuantaID/internal/metrics"
 	"github.com/turtacn/QuantaID/internal/policy/engine"
 	"github.com/turtacn/QuantaID/internal/protocols/saml"
@@ -28,6 +30,7 @@ import (
 	identity_service "github.com/turtacn/QuantaID/internal/services/identity"
 	"github.com/turtacn/QuantaID/internal/services/platform"
 	policy_service "github.com/turtacn/QuantaID/internal/services/policy"
+	privacy_service "github.com/turtacn/QuantaID/internal/services/privacy"
 	webhook_service "github.com/turtacn/QuantaID/internal/services/webhook"
 	"github.com/turtacn/QuantaID/internal/domain/webhook"
 	"github.com/turtacn/QuantaID/internal/worker"
@@ -85,6 +88,7 @@ type Services struct {
 	SessionManager        *redis.SessionManager
 	Renderer              *ui.Renderer
 	WebAuthnProvider      *mfa.WebAuthnProvider
+	PrivacyService        *privacy_service.Service
 }
 
 // NewServer creates a new HTTP server instance.
@@ -124,6 +128,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	var rbacRepo policy.RBACRepository
 	var appRepo types.ApplicationRepository
 	var webhookRepo webhook.Repository
+	var privacyRepo domain_privacy.Repository
 	var db *gorm.DB
 	var err error
 	var redisClient redis.RedisClientInterface
@@ -157,6 +162,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		rbacRepo = postgresql.NewRBACRepository(db)
 		appRepo = postgresql.NewPostgresApplicationRepository(db)
 		webhookRepo = postgresql.NewWebhookRepository(db)
+		privacyRepo = postgresql.NewPostgresPrivacyRepository(db)
 
 		// Redis Connection
 		redisMetrics := metrics.NewRedisMetrics("quantid")
@@ -352,6 +358,8 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 	})
 	recoveryService := auth.NewRecoveryService(idRepo, otpProvider, cryptoManager, sessionManager, logger.(*utils.ZapLogger).Logger)
 
+	privacyService := privacy_service.NewService(db, sessionManager, auditService, privacyRepo, idRepo, auditRepo, appCfg)
+
 	services := Services{
 		IdentityService:       identityAppService,
 		AuthService:           authAppService,
@@ -368,6 +376,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		SessionManager:        sessionManager,
 		Renderer:              renderer,
 		WebAuthnProvider:      webAuthnProvider,
+		PrivacyService:        privacyService,
 	}
 
 	return NewServer(httpCfg, logger, services, appCfg, db, redisClient), nil
@@ -476,6 +485,12 @@ func (s *Server) registerRoutes(services Services, appCfg *utils.Config) {
 		apiV1.HandleFunc("/webauthn/login/begin", webauthnHandler.BeginLogin).Methods("POST")
 		apiV1.HandleFunc("/webauthn/login/finish", webauthnHandler.FinishLogin).Methods("POST")
 	}
+
+	// Privacy routes
+	privacyHandler := privacy.NewHandlers(services.PrivacyService)
+	privacyRouter := apiV1.PathPrefix("/privacy").Subrouter()
+	privacyRouter.Use(authMiddleware.Execute)
+	privacyHandler.RegisterRoutes(privacyRouter)
 
 	// Health and readiness probes
 	s.Router.HandleFunc("/healthz", s.healthzHandler).Methods("GET")

@@ -128,6 +128,12 @@ webhook:
   # Maximum number of retries for failed deliveries
   max_retries: 3
 
+# Privacy settings
+privacy:
+  policy_versions:
+    terms_of_service: "1.0.0"
+    privacy_policy: "1.0.0"
+
 # Observability configuration
 observability:
   # Enable Prometheus metrics endpoint
