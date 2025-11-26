@@ -113,6 +113,9 @@ func NewServer(config Config, logger utils.Logger, services Services, appCfg *ut
 		services.WebhookWorker.Start(context.Background())
 	}
 
+	// Register global middleware first
+	router.Use(middleware.IPBlacklistMiddleware(redisClient))
+
 	server.registerRoutes(services, appCfg)
 	return server
 }
@@ -299,7 +302,7 @@ func NewServerWithConfig(httpCfg Config, appCfg *utils.Config, logger utils.Logg
 		// But NewWebAuthnProvider might fail on config only.
 	}
 
-	mfaManager := &mfa.MFAManager{}
+	mfaManager := mfa.NewMFAManager()
 	if webAuthnProvider != nil {
 		mfaManager.RegisterProvider("webauthn", webAuthnProvider)
 	}

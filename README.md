@@ -30,66 +30,11 @@
 
 QuantaID revolutionizes enterprise identity management by providing a **lightweight**, **plugin-based**, and **standards-compliant** unified authentication platform. It addresses the critical pain points of fragmented identity systems, high customization costs, and complex integration challenges across diverse enterprise environments.
 
-## ✨ Getting Started: 5-Minute Tutorial
+## ✨ Getting Started
 
-For a complete guide on how to deploy and run QuantaID, please see the [Deployment Guide](docs/deployment_guide.md).
+For a fast and easy setup, please follow our **[Quickstart Guide](quickstart.md)**.
 
-### 1. Run the Server
-
-First, clone the repository and install the dependencies:
-```bash
-git clone https://github.com/turtacn/QuantaID.git
-cd QuantaID
-go mod download
-```
-
-Now, run the server. No database or other dependencies are needed; it will start with an in-memory store by default.
-```bash
-go run ./cmd/qid-server/
-```
-You should see a log message indicating the server has started on port `8080`.
-
-### 2. Create a User
-Open a new terminal. We'll use `curl` to interact with the API. Let's create a new user:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/users \
--H "Content-Type: application/json" \
--d '{
-  "username": "testuser",
-  "email": "test@example.com",
-  "password": "password123"
-}'
-```
-You should receive a JSON response with the details of the created user.
-
-### 3. Log In
-Now, log in with the user you just created to get an access token:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
--H "Content-Type: application/json" \
--d '{
-  "username": "testuser",
-  "password": "password123"
-}'
-```
-The response will contain an `accessToken`. Copy it for the next step.
-
-### 4. Access a Protected Route
-Finally, use the access token to access a protected endpoint, like retrieving the user's own details. Replace `YOUR_TOKEN_HERE` with the token you copied.
-
-```bash
-# First, get the user ID from the login response. Let's assume it's "user-123" for this example.
-# Then, make the authenticated request:
-USER_ID="user-123" # Replace with the actual ID from the previous step
-TOKEN="YOUR_TOKEN_HERE"
-
-curl http://localhost:8080/api/v1/users/$USER_ID \
--H "Authorization: Bearer $TOKEN"
-```
-
-You've successfully started the server, created a user, logged in, and used a token for an authenticated API call.
+This guide will walk you through cloning the repository, building the binary, and running the server with its dependencies in under 5 minutes.
 
 ## 🛠️ Development Setup
 

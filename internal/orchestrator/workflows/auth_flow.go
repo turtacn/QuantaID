@@ -3,11 +3,13 @@ package workflows
 import (
 	"context"
 	"fmt"
-	"github.com/turtacn/QuantaID/internal/orchestrator"
-	"github.com/turtacn/QuantaID/pkg/types"
 	"time"
+
 	auth_domain "github.com/turtacn/QuantaID/internal/domain/auth"
+	"github.com/turtacn/QuantaID/internal/orchestrator"
+	"github.com/turtacn/QuantaID/internal/security/automator"
 	auth_service "github.com/turtacn/QuantaID/internal/services/auth"
+	"github.com/turtacn/QuantaID/pkg/types"
 )
 
 // AuthWorkflow defines the standard authentication workflow by registering a sequence of steps
@@ -16,6 +18,7 @@ type AuthWorkflow struct {
 	engine      *orchestrator.Engine
 	authService *auth_service.ApplicationService
 	riskEngine  auth_domain.RiskEngine
+	automator   *automator.Engine
 }
 
 // NewAuthWorkflow creates a new AuthWorkflow instance and registers the authentication
@@ -27,11 +30,12 @@ type AuthWorkflow struct {
 //
 // Returns:
 //   A new instance of AuthWorkflow.
-func NewAuthWorkflow(engine *orchestrator.Engine, authService *auth_service.ApplicationService, riskEngine auth_domain.RiskEngine) *AuthWorkflow {
+func NewAuthWorkflow(engine *orchestrator.Engine, authService *auth_service.ApplicationService, riskEngine auth_domain.RiskEngine, automator *automator.Engine) *AuthWorkflow {
 	awf := &AuthWorkflow{
 		engine:      engine,
 		authService: authService,
 		riskEngine:  riskEngine,
+		automator:   automator,
 	}
 	awf.register()
 	return awf
@@ -108,6 +112,23 @@ func (awf *AuthWorkflow) assessRisk(ctx context.Context, state orchestrator.Stat
 
 	state["risk_score"] = score
 	state["risk_level"] = level
+
+	// Execute automated security responses.
+	actionInput := automator.ActionInput{
+		UserID:    user.ID,
+		IP:        clientIP,
+		RiskScore: float64(score),
+		Metadata:  map[string]any{"user_agent": userAgent},
+	}
+	isBlocking, err := awf.automator.Execute(ctx, actionInput)
+	if err != nil {
+		// Log the error but don't fail the workflow, as the response actions
+		// might not be critical to the login flow itself.
+	}
+
+	if isBlocking {
+		return fmt.Errorf("login blocked by security policy")
+	}
 
 	if level == auth_domain.RiskLevelHigh {
 		return fmt.Errorf("login blocked due to high risk")

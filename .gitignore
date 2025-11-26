@@ -1,0 +1,12 @@
+# Binaries
+qid-server
+
+# Go build cache
+*.o
+*.a
+*.so
+_test
+_obj
+_cgo_gotypes.go
+_cgo_export.c
+_cgo_export.h

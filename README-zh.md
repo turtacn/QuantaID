@@ -118,50 +118,11 @@ graph TB
 
 详细架构文档请参见 [docs/architecture.md](docs/architecture.md)。
 
-## 🛠️ 安装
+## 🛠️ 快速入门
 
-### 前置要求
+为了快速、轻松地完成本地环境设置，请遵循我们的 **[快速入门指南 (Quickstart Guide)](quickstart.md)**。
 
-* Go 1.21 或更高版本
-* Docker（可选，用于容器化部署）
-* PostgreSQL 12+（生产环境部署）
-
-### 快速开始
-
-```bash
-# 安装 QuantaID CLI
-go install github.com/turtacn/QuantaID/cmd/qid@latest
-
-# 初始化新的部署
-qid init --config-dir ./qid-config
-
-# 启动 QuantaID 服务器
-qid server start --config ./qid-config/server.yaml
-```
-
-### 使用 Docker
-
-```bash
-# 拉取最新镜像
-docker pull quantaid/quantaid:latest
-
-# 使用 docker-compose 运行
-curl -O https://raw.githubusercontent.com/turtacn/QuantaID/main/deployments/docker-compose.yml
-docker-compose up -d
-```
-
-### Kubernetes 部署
-
-```bash
-# 添加 QuantaID Helm 仓库
-helm repo add quantaid https://helm.quantaid.dev
-helm repo update
-
-# 安装 QuantaID
-helm install quantaid quantaid/quantaid \
-  --set postgresql.enabled=true \
-  --set redis.enabled=true
-```
+该指南将引导您在 5 分钟内完成克隆仓库、构建二进制文件以及运行服务器及其依赖项的全部过程。
 
 ## 📖 使用示例
 
