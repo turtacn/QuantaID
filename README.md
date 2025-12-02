@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="README-zh.md">简体中文</a> |
-  <a href="#-getting-started-5-minute-tutorial">Getting Started</a> |
+  <a href="docs/quickstart.md">Getting Started</a> |
   <a href="#-development-setup">Development Setup</a> |
   <a href="#-architecture-overview">Architecture</a> |
   <a href="#-contributing">Contributing</a>
@@ -32,7 +32,7 @@ QuantaID revolutionizes enterprise identity management by providing a **lightwei
 
 ## ✨ Getting Started
 
-For a fast and easy setup, please follow our **[Quickstart Guide](quickstart.md)**.
+For a fast and easy setup, please follow our **[Quickstart Guide](docs/quickstart.md)**.
 
 This guide will walk you through cloning the repository, building the binary, and running the server with its dependencies in under 5 minutes.
 
@@ -43,30 +43,11 @@ QuantaID is designed to be easy to set up for development.
 ### Prerequisites
 * Go 1.21 or higher
 * Docker (optional, for containerized deployment)
-* PostgreSQL 12+ (optional, for production-like deployment)
+* PostgreSQL 13+ (optional, for production-like deployment)
+* Redis 6+ (optional, for distributed rate limiting and sessions)
 
 ### Running for Development
-The server is configured to use an in-memory database by default, so you can run it without any external dependencies.
-
-### Persistence Modes
-
-QuantaID supports two persistence modes for its data storage: `memory` and `postgres`. The mode can be configured in the `configs/server.yaml` file using the `storage.mode` key.
-
--   **memory**: This is the default mode. Data is stored in-memory and will be lost when the server restarts. This mode is useful for quick local testing and development.
--   **postgres**: In this mode, QuantaID uses a PostgreSQL database for persistent storage and Redis for session and token management. This is the recommended mode for production environments.
-
-To use the `postgres` mode, you'll need a running PostgreSQL and Redis instance. We've provided a Docker Compose setup for a convenient local development environment.
-
-**Running with Docker Compose:**
-
-1.  **Start the infrastructure:**
-    ```bash
-    docker-compose -f deployments/docker-compose/infrastructure.yaml up -d
-    ```
-    This will start a PostgreSQL container on port 5432 and a Redis container on port 6379.
-
-2.  **Configure QuantaID:**
-    Ensure your `configs/server.yaml` is configured to use the `postgres` mode and that the connection details match the ones in the Docker Compose file.
+The server supports both in-memory (quick start) and persistent (PostgreSQL + Redis) modes.
 
 1.  **Clone the repository:**
     ```bash
@@ -173,4 +154,4 @@ We welcome contributions from the community! Please read our [Contributing Guide
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file.

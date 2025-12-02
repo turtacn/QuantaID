@@ -6,26 +6,25 @@ import (
 	"github.com/turtacn/QuantaID/internal/services/application"
 	"github.com/turtacn/QuantaID/internal/services/authorization"
 	"github.com/turtacn/QuantaID/pkg/auth/mfa"
-	"github.com/turtacn/QuantaID/pkg/plugins"
 	"github.com/turtacn/QuantaID/pkg/types"
 )
 
 type DevCenterService struct {
 	appSvc      application.Service
-	pluginManager *plugins.Manager
+	apiKeySvc   *APIKeyService
 	policySvc   *authorization.Service
 	mfaSvc      *mfa.Manager
 }
 
 func NewDevCenterService(
 	appSvc application.Service,
-	pluginManager *plugins.Manager,
+	apiKeySvc *APIKeyService,
 	policySvc *authorization.Service,
 	mfaSvc *mfa.Manager,
 ) *DevCenterService {
 	return &DevCenterService{
 		appSvc:      appSvc,
-		pluginManager: pluginManager,
+		apiKeySvc:   apiKeySvc,
 		policySvc:   policySvc,
 		mfaSvc:      mfaSvc,
 	}

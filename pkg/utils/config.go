@@ -34,8 +34,15 @@ type RedisConfig struct {
 }
 
 type SecurityConfig struct {
-	Session redis.SessionConfig `mapstructure:"session"`
-	Risk    config.RiskConfig   `mapstructure:"adaptive_risk"`
+	Session   redis.SessionConfig `mapstructure:"session"`
+	Risk      config.RiskConfig   `mapstructure:"adaptive_risk"`
+	RateLimit RateLimitConfig     `mapstructure:"rate_limit"` // Added RateLimitConfig
+}
+
+type RateLimitConfig struct {
+	Enabled       bool `mapstructure:"enabled"`
+	DefaultLimit  int  `mapstructure:"default_limit"`
+	DefaultWindow int  `mapstructure:"default_window"`
 }
 
 // StorageConfig holds the configuration for the storage layer.

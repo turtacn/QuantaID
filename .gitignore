@@ -15,3 +15,7 @@ _cgo_export.h
 /demo/cli/
 /demo/web/
 /docs/architecture-v1.0.md
+qid
+qid-server
+qid-migrate-fle
+audit-exporter

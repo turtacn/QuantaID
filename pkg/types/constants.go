@@ -99,3 +99,11 @@ const (
 	CryptoAlgoArgon2 CryptoAlgorithm = "argon2"
 	CryptoAlgoSHA256 CryptoAlgorithm = "sha256"
 )
+
+// ContextKey defines keys used in context.Context
+type ContextKey string
+
+const (
+	ContextKeyAppID  ContextKey = "AppID"
+	ContextKeyAPIKey ContextKey = "APIKey"
+)

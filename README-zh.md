@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="README.md">English</a> |
-  <a href="#安装">安装</a> |
+  <a href="docs/quickstart.md">快速入门</a> |
   <a href="docs/architecture.md">架构文档</a> |
   <a href="docs/apis.md">API 参考</a> |
   <a href="#贡献">贡献指南</a>
@@ -120,7 +120,7 @@ graph TB
 
 ## 🛠️ 快速入门
 
-为了快速、轻松地完成本地环境设置，请遵循我们的 **[快速入门指南 (Quickstart Guide)](quickstart.md)**。
+为了快速、轻松地完成本地环境设置，请遵循我们的 **[快速入门指南 (Quickstart Guide)](docs/quickstart.md)**。
 
 该指南将引导您在 5 分钟内完成克隆仓库、构建二进制文件以及运行服务器及其依赖项的全部过程。
 
@@ -255,10 +255,10 @@ cd QuantaID
 go mod download
 
 # 运行测试
-make test
+go test ./...
 
 # 启动开发服务器
-make dev
+go run ./cmd/qid-server
 ```
 
 ### 贡献领域

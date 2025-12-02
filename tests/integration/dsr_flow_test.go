@@ -12,7 +12,7 @@ import (
 	"github.com/turtacn/QuantaID/internal/services/privacy"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
-	"net/http/httptest"
+	http2 "net/http"
 	"os"
 	"strconv"
 )
@@ -46,13 +46,17 @@ func createTestServer(t *testing.T) *http.Server {
 	}, &appCfg, logger, cryptoManager)
 	assert.NoError(t, err)
 
-	return httpServer.httpServer
+	return httpServer
 }
 
 func Test_Export_Flow(t *testing.T) {
 	server := createTestServer(t)
-	go server.ListenAndServe()
-	defer server.Close()
+	go server.Start() // Using Start() instead of ListenAndServe() on internal server struct
+	defer func() {
+		// Stop graceful shutdown logic or just close raw listener?
+		// internal server has Stop(ctx)
+		server.Stop(context.Background())
+	}()
 
 	// 1. Create a user
 	user := createTestUser(t, server, "export_user", "export@example.com", "password")
@@ -61,17 +65,17 @@ func Test_Export_Flow(t *testing.T) {
 	token := createTestJWT(t, user)
 
 	// 3. Make a request to the export endpoint
-	req, err := http.NewRequest("POST", "http://localhost:8081/api/v1/privacy/export", nil)
+	req, err := http2.NewRequest("POST", "http://localhost:8081/api/v1/privacy/export", nil)
 	assert.NoError(t, err)
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	client := &http.Client{}
+	client := &http2.Client{}
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
 	defer resp.Body.Close()
 
 	// 4. Assert the results
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, http2.StatusOK, resp.StatusCode)
 
 	var exportData privacy.ExportData
 	err = json.NewDecoder(resp.Body).Decode(&exportData)
@@ -82,7 +86,7 @@ func Test_Export_Flow(t *testing.T) {
 
 func createTestUser(t *testing.T, server *http.Server, username, email, password string) *types.User {
 	// a bit of a hack to get the service
-	s := server.Handler.(*http.Server).Services.IdentityService
+	s := server.Services.IdentityService
 	user, err := s.CreateUser(context.Background(), username, email, password)
 	assert.NoError(t, err)
 	return user

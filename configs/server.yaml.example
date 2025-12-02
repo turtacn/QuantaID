@@ -186,6 +186,14 @@ security:
     enabled_providers:
       - "totp"
       - "webauthn"
+  # Rate limiting configuration
+  rate_limit:
+    # Enable rate limiting
+    enabled: true
+    # Default rate limit (requests per window)
+    default_limit: 1000
+    # Default window size in seconds
+    default_window: 60
 
 # Sync configuration
 sync:
