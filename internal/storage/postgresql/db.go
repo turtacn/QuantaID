@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/turtacn/QuantaID/internal/domain/policy"
+	"github.com/turtacn/QuantaID/internal/multitenant"
 	"github.com/turtacn/QuantaID/pkg/types"
 	"github.com/turtacn/QuantaID/pkg/utils"
 	"gorm.io/driver/postgres"
@@ -23,6 +24,9 @@ func NewConnection(config utils.PostgresConfig) (*gorm.DB, error) {
 	if err := db.Use(&PrometheusPlugin{}); err != nil {
 		return nil, fmt.Errorf("failed to use prometheus plugin: %w", err)
 	}
+
+	// Register tenant middleware
+	RegisterTenantCallbacks(db)
 
 	sqlDB, err := db.DB()
 	if err != nil {
@@ -81,4 +85,10 @@ func AutoMigrate(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+// EnableRLS enables Row-Level Security for the database tables.
+func EnableRLS(db *gorm.DB) error {
+	isolator := multitenant.NewTenantIsolator()
+	return isolator.EnableRowLevelSecurity(db)
 }

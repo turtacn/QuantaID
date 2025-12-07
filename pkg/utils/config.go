@@ -90,6 +90,18 @@ type Config struct {
 	WebAuthn     WebAuthnConfig     `mapstructure:"webauthn"`
 	Lifecycle    LifecycleConfig    `mapstructure:"lifecycle"`
 	Privacy      PrivacyConfig      `mapstructure:"privacy"`
+	MultiTenant  MultiTenantConfig  `mapstructure:"multitenant"`
+}
+
+type MultiTenantConfig struct {
+	Enabled bool                    `mapstructure:"enabled"`
+	Quotas  map[string]TenantQuotas `mapstructure:"quotas"`
+}
+
+type TenantQuotas struct {
+	MaxUsers          int   `mapstructure:"max_users"`
+	MaxApplications   int   `mapstructure:"max_applications"`
+	MaxAPICallsPerDay int64 `mapstructure:"max_api_calls_per_day"`
 }
 
 type LifecycleConfig struct {
