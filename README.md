@@ -147,6 +147,7 @@ We welcome contributions from the community! Please read our [Contributing Guide
 ### Contribution Areas
 
 * 🔌 **Plugin Development**: Create connectors for new identity providers.
+* 🛡️ **Device Trust**: Enhance device fingerprinting and anomaly detection.
 * 🌐 **Internationalization**: Add support for new languages.
 * 📚 **Documentation**: Improve guides and API documentation.
 * 🐛 **Bug Reports**: Help us identify and fix issues.
