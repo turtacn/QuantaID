@@ -34,9 +34,21 @@ type RedisConfig struct {
 }
 
 type SecurityConfig struct {
-	Session   redis.SessionConfig `mapstructure:"session"`
-	Risk      config.RiskConfig   `mapstructure:"adaptive_risk"`
-	RateLimit RateLimitConfig     `mapstructure:"rate_limit"` // Added RateLimitConfig
+	Session     redis.SessionConfig `mapstructure:"session"`
+	Risk        config.RiskConfig   `mapstructure:"adaptive_risk"`
+	RateLimit   RateLimitConfig     `mapstructure:"rate_limit"` // Added RateLimitConfig
+	DeviceTrust DeviceTrustConfig   `mapstructure:"device_trust"`
+}
+
+type DeviceTrustConfig struct {
+	BaseScore            int     `mapstructure:"base_score"`
+	AgeBonus             int     `mapstructure:"age_bonus"`
+	MaxAgeBonus          int     `mapstructure:"max_age_bonus"`
+	BoundBonus           int     `mapstructure:"bound_bonus"`
+	FrequencyBonus       int     `mapstructure:"frequency_bonus"`
+	VerifiedBonus        int     `mapstructure:"verified_bonus"`
+	MaxSpeedKmH          float64 `mapstructure:"max_speed_kmh"`
+	FingerprintThreshold float64 `mapstructure:"fingerprint_threshold"`
 }
 
 type RateLimitConfig struct {
