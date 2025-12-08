@@ -22,12 +22,13 @@ We use PostgreSQL's native Row-Level Security to ensure that tenants can only ac
   CREATE POLICY tenant_isolation ON table_name
   USING (tenant_id = current_setting('app.current_tenant'))
   ```
-- **Context Propagation**: The application middleware extracts the Tenant ID from the request (e.g., header, token) and sets the PostgreSQL session variable `app.current_tenant` for the duration of the request/transaction.
+- **Context Propagation**: The application middleware extracts the Tenant ID from the request (e.g., header, token).
+- **Session Variable**: To enforce RLS, the PostgreSQL session variable `app.current_tenant` must be set for the transaction. This is handled via `isolator.SetTenantContext(tx, tenantID)` within the service layer or transaction boundaries.
 
 ### Code Components
 
 - `internal/multitenant/tenant_isolator.go`: Handles RLS enablement and session variable setting.
-- `internal/storage/postgresql/tenant_middleware.go`: GORM middleware that adds `WHERE tenant_id = ?` clause for additional safety and query optimization.
+- `internal/storage/postgresql/tenant_middleware.go`: GORM middleware that automatically adds `WHERE tenant_id = ?` clause to queries based on the context, providing application-level isolation and query optimization.
 - `internal/multitenant/context.go`: Helpers for passing Tenant ID through Go `context.Context`.
 
 ## Quota Management
