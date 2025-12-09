@@ -133,6 +133,7 @@ func TestSessionEvaluator_Integration_Logic(t *testing.T) {
 
 		result, err := evaluator.Evaluate(ctx, sess)
 		assert.NoError(t, err)
+		assert.NotNil(t, result)
 
 		// IP Reputation < 30 -> Suspicious. < 15 -> High severity.
 		// High severity signal = 30 points.
