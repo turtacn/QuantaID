@@ -104,6 +104,34 @@ type Config struct {
 	Privacy      PrivacyConfig      `mapstructure:"privacy"`
 	MultiTenant  MultiTenantConfig  `mapstructure:"multitenant"`
 	Portal       PortalConfig       `mapstructure:"portal"`
+	Profile      ProfileConfig      `mapstructure:"profile"`
+}
+
+type ProfileConfig struct {
+	Enabled       bool                     `mapstructure:"enabled"`
+	RiskScorer    RiskScorerConfig         `mapstructure:"risk_scorer"`
+	QualityWeights QualityWeightsConfig    `mapstructure:"quality_weights"`
+	AutoTagRules  []map[string]interface{} `mapstructure:"auto_tag_rules"`
+}
+
+type RiskScorerConfig struct {
+	AnomalyWeight       float64 `mapstructure:"anomaly_weight"`
+	GeoJumpWeight       float64 `mapstructure:"geo_jump_weight"`
+	FailedMFAWeight     float64 `mapstructure:"failed_mfa_weight"`
+	SuspiciousIPWeight  float64 `mapstructure:"suspicious_ip_weight"`
+	NewDeviceWeight     float64 `mapstructure:"new_device_weight"`
+	DecayDays           int     `mapstructure:"decay_days"`
+	DecayRate           float64 `mapstructure:"decay_rate"`
+}
+
+type QualityWeightsConfig struct {
+	Email           int `mapstructure:"email"`
+	EmailVerified   int `mapstructure:"email_verified"`
+	Phone           int `mapstructure:"phone"`
+	PhoneVerified   int `mapstructure:"phone_verified"`
+	MFA             int `mapstructure:"mfa"`
+	RecoveryEmail   int `mapstructure:"recovery_email"`
+	ProfileComplete int `mapstructure:"profile_complete"`
 }
 
 type MultiTenantConfig struct {
@@ -233,6 +261,23 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("opa.policy_file", "policies/authz.rego")
 	v.SetDefault("opa.url", "http://localhost:8181/v1/data/quantaid/authz/allow")
 	v.SetDefault("portal.access_history_retention_days", 90)
+
+	// Profile Defaults
+	v.SetDefault("profile.enabled", true)
+	v.SetDefault("profile.risk_scorer.anomaly_weight", 15.0)
+	v.SetDefault("profile.risk_scorer.geo_jump_weight", 20.0)
+	v.SetDefault("profile.risk_scorer.failed_mfa_weight", 10.0)
+	v.SetDefault("profile.risk_scorer.suspicious_ip_weight", 25.0)
+	v.SetDefault("profile.risk_scorer.new_device_weight", 5.0)
+	v.SetDefault("profile.risk_scorer.decay_days", 30)
+	v.SetDefault("profile.risk_scorer.decay_rate", 0.9)
+	v.SetDefault("profile.quality_weights.email", 15)
+	v.SetDefault("profile.quality_weights.email_verified", 10)
+	v.SetDefault("profile.quality_weights.phone", 15)
+	v.SetDefault("profile.quality_weights.phone_verified", 10)
+	v.SetDefault("profile.quality_weights.mfa", 20)
+	v.SetDefault("profile.quality_weights.recovery_email", 10)
+	v.SetDefault("profile.quality_weights.profile_complete", 20)
 }
 
 // LoadConfigFromBytes creates a new ConfigManager by reading configuration data from a byte slice.

@@ -139,6 +139,16 @@ graph TB
 
 Detailed architecture documentation available at [docs/architecture.md](docs/architecture.md).
 
+## 👤 Identity Profiling & Risk
+
+QuantaID now includes a comprehensive **Identity Profile & Data Quality** module (Phase 4), featuring:
+*   **Behavioral Profiling**: Aggregates user login habits and device usage.
+*   **Risk Scoring**: Real-time risk assessment (0-100) based on anomalies.
+*   **Data Quality**: Scores identity data completeness and verification status.
+*   **Tagging**: Automated and manual user segmentation.
+
+Learn more in the [Identity Profile Documentation](docs/identity-profile.md).
+
 
 ## 🤝 Contributing
 

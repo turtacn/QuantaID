@@ -11,6 +11,7 @@ require (
 	github.com/crewjam/saml v0.5.1
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gin-gonic/gin v1.11.0
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-ldap/ldap/v3 v3.4.12
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v9 v9.2.0
