@@ -103,6 +103,7 @@ type Config struct {
 	Lifecycle    LifecycleConfig    `mapstructure:"lifecycle"`
 	Privacy      PrivacyConfig      `mapstructure:"privacy"`
 	MultiTenant  MultiTenantConfig  `mapstructure:"multitenant"`
+	Portal       PortalConfig       `mapstructure:"portal"`
 }
 
 type MultiTenantConfig struct {
@@ -139,6 +140,10 @@ type MetricsConfig struct {
 
 type PrivacyConfig struct {
 	PolicyVersions map[string]string `mapstructure:"policy_versions"`
+}
+
+type PortalConfig struct {
+	AccessHistoryRetentionDays int `mapstructure:"access_history_retention_days"`
 }
 
 // ConfigManager is a wrapper around the Viper library that handles loading,
@@ -227,6 +232,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("opa.mode", "sdk")
 	v.SetDefault("opa.policy_file", "policies/authz.rego")
 	v.SetDefault("opa.url", "http://localhost:8181/v1/data/quantaid/authz/allow")
+	v.SetDefault("portal.access_history_retention_days", 90)
 }
 
 // LoadConfigFromBytes creates a new ConfigManager by reading configuration data from a byte slice.
