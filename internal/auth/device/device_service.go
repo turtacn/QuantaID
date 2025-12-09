@@ -150,6 +150,11 @@ func (s *DeviceService) GetUserDevices(ctx context.Context, userID string) ([]*m
 	return s.repo.GetByUserID(ctx, userID)
 }
 
+// GetByID retrieves a device by its ID
+func (s *DeviceService) GetByID(ctx context.Context, deviceID string) (*models.Device, error) {
+	return s.repo.GetByID(ctx, deviceID)
+}
+
 // GetTrustLevel returns the trust level for a device
 func (s *DeviceService) GetTrustLevel(ctx context.Context, deviceID string) (TrustLevel, error) {
 	device, err := s.repo.GetByID(ctx, deviceID)

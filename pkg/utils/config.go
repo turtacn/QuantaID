@@ -33,11 +33,25 @@ type RedisConfig struct {
 	DB       int    `mapstructure:"db"`
 }
 
+type SessionEvaluationConfig struct {
+	Enabled             bool          `mapstructure:"enabled"`
+	DefaultInterval     time.Duration `mapstructure:"default_interval"`
+	HighRiskInterval    time.Duration `mapstructure:"high_risk_interval"`
+	CriticalInterval    time.Duration `mapstructure:"critical_interval"`
+	LowRiskThreshold    int           `mapstructure:"low_risk_threshold"`
+	MediumRiskThreshold int           `mapstructure:"medium_risk_threshold"`
+	HighRiskThreshold   int           `mapstructure:"high_risk_threshold"`
+	MaxInactiveMinutes  int           `mapstructure:"max_inactive_minutes"`
+	GeoJumpThresholdKm  float64       `mapstructure:"geo_jump_threshold_km"`
+	GeoJumpTimeMinutes  int           `mapstructure:"geo_jump_time_minutes"`
+}
+
 type SecurityConfig struct {
-	Session     redis.SessionConfig `mapstructure:"session"`
-	Risk        config.RiskConfig   `mapstructure:"adaptive_risk"`
-	RateLimit   RateLimitConfig     `mapstructure:"rate_limit"` // Added RateLimitConfig
-	DeviceTrust DeviceTrustConfig   `mapstructure:"device_trust"`
+	Session           redis.SessionConfig     `mapstructure:"session"`
+	SessionEvaluation SessionEvaluationConfig `mapstructure:"session_evaluation"`
+	Risk              config.RiskConfig       `mapstructure:"adaptive_risk"`
+	RateLimit         RateLimitConfig         `mapstructure:"rate_limit"`
+	DeviceTrust       DeviceTrustConfig       `mapstructure:"device_trust"`
 }
 
 type DeviceTrustConfig struct {
@@ -261,6 +275,18 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("opa.policy_file", "policies/authz.rego")
 	v.SetDefault("opa.url", "http://localhost:8181/v1/data/quantaid/authz/allow")
 	v.SetDefault("portal.access_history_retention_days", 90)
+
+	// Session Evaluation Defaults
+	v.SetDefault("security.session_evaluation.enabled", true)
+	v.SetDefault("security.session_evaluation.default_interval", 5*time.Minute)
+	v.SetDefault("security.session_evaluation.high_risk_interval", 1*time.Minute)
+	v.SetDefault("security.session_evaluation.critical_interval", 30*time.Second)
+	v.SetDefault("security.session_evaluation.low_risk_threshold", 25)
+	v.SetDefault("security.session_evaluation.medium_risk_threshold", 50)
+	v.SetDefault("security.session_evaluation.high_risk_threshold", 75)
+	v.SetDefault("security.session_evaluation.max_inactive_minutes", 30)
+	v.SetDefault("security.session_evaluation.geo_jump_threshold_km", 500.0)
+	v.SetDefault("security.session_evaluation.geo_jump_time_minutes", 60)
 
 	// Profile Defaults
 	v.SetDefault("profile.enabled", true)
