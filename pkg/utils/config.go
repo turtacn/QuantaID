@@ -102,6 +102,27 @@ type WebAuthnConfig struct {
 	RPDisplayName string `mapstructure:"rp_display_name"`
 }
 
+type RADIUSConfig struct {
+	Enabled      bool          `mapstructure:"enabled"`
+	AuthPort     int           `mapstructure:"auth_port"`
+	AcctPort     int           `mapstructure:"acct_port"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	WorkerCount  int           `mapstructure:"worker_count"`
+	Proxy        ProxyConfig   `mapstructure:"proxy"`
+}
+
+type ProxyConfig struct {
+	Enabled         bool             `mapstructure:"enabled"`
+	UpstreamServers []UpstreamServer `mapstructure:"upstream_servers"`
+}
+
+type UpstreamServer struct {
+	Address string `mapstructure:"address"`
+	Secret  string `mapstructure:"secret"`
+	Weight  int    `mapstructure:"weight"`
+}
+
 // Config holds all configuration for the application.
 type Config struct {
 	Postgres     PostgresConfig     `mapstructure:"postgres"`
@@ -119,6 +140,7 @@ type Config struct {
 	MultiTenant  MultiTenantConfig  `mapstructure:"multitenant"`
 	Portal       PortalConfig       `mapstructure:"portal"`
 	Profile      ProfileConfig      `mapstructure:"profile"`
+	RADIUS       RADIUSConfig       `mapstructure:"radius"`
 }
 
 type ProfileConfig struct {
@@ -275,6 +297,15 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("opa.policy_file", "policies/authz.rego")
 	v.SetDefault("opa.url", "http://localhost:8181/v1/data/quantaid/authz/allow")
 	v.SetDefault("portal.access_history_retention_days", 90)
+
+	// RADIUS defaults
+	v.SetDefault("radius.enabled", false)
+	v.SetDefault("radius.auth_port", 1812)
+	v.SetDefault("radius.acct_port", 1813)
+	v.SetDefault("radius.read_timeout", "5s")
+	v.SetDefault("radius.write_timeout", "5s")
+	v.SetDefault("radius.worker_count", 10)
+	v.SetDefault("radius.proxy.enabled", false)
 
 	// Session Evaluation Defaults
 	v.SetDefault("security.session_evaluation.enabled", true)
