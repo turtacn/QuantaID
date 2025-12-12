@@ -139,9 +139,17 @@ graph TB
 
 Detailed architecture documentation available at [docs/architecture.md](docs/architecture.md).
 
-## 👤 Identity Profiling & Risk
+## 🛡️ Security Features
 
-QuantaID now includes a comprehensive **Identity Profile & Data Quality** module (Phase 4), featuring:
+### Continuous Session Evaluation (Phase 5)
+QuantaID implements a **Continuous Session Evaluation (CSE)** mechanism to dynamically assess and mitigate session risks in real-time.
+*   **Real-time Risk Monitoring**: Detects IP changes, geo-jumps, device changes, and inactivity.
+*   **Dynamic Policy Enforcement**: Automatically downgrades permissions, requires MFA (Step-Up), or terminates sessions based on risk levels.
+*   **Adaptive Scheduling**: Evaluates high-risk sessions more frequently.
+
+For more details, see [Session Evaluation Documentation](docs/session-evaluation.md).
+
+### Identity Profiling & Risk (Phase 4)
 *   **Behavioral Profiling**: Aggregates user login habits and device usage.
 *   **Risk Scoring**: Real-time risk assessment (0-100) based on anomalies.
 *   **Data Quality**: Scores identity data completeness and verification status.
@@ -165,4 +173,4 @@ We welcome contributions from the community! Please read our [Contributing Guide
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
