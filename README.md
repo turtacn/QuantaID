@@ -149,6 +149,13 @@ QuantaID implements a **Continuous Session Evaluation (CSE)** mechanism to dynam
 
 For more details, see [Session Evaluation Documentation](docs/session-evaluation.md).
 
+### LDAP Protocol Support (Phase 7)
+QuantaID acts as an LDAPv3-compliant server, allowing legacy applications to authenticate users and query directory information.
+*   **Protocol Support**: LDAPv3, Bind, Search, Unbind, Abandon.
+*   **Security**: Supports both standard TCP and LDAPS (LDAP over TLS).
+*   **Authentication**: Simple Bind using existing user credentials.
+*   **Virtual Directory**: Maps internal user/group data to a virtual LDAP tree (`inetOrgPerson`).
+
 ### Identity Profiling & Risk (Phase 4)
 *   **Behavioral Profiling**: Aggregates user login habits and device usage.
 *   **Risk Scoring**: Real-time risk assessment (0-100) based on anomalies.
